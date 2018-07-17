@@ -1,0 +1,1784 @@
+#!/usr/bin/env python
+#encoding:utf-8
+# -*- coding: utf-8 -*-
+# -----M20180321-----
+import os
+import re
+import sys
+import json
+import subprocess
+import _subprocess
+import time
+import logging
+import uuid
+import pprint
+import shutil
+import gzip
+import traceback
+import json
+import locale
+import cPickle
+import glob
+import codecs
+import argparse
+import collections
+# reload(sys)
+# print sys.setdefaultencoding('utf8')
+
+if os.path.basename(sys.executable.lower()) in ["mayabatch.exe", "maya.exe"]:
+    import pymel.core as pm
+    import maya.cmds as cmds
+    import maya.mel as mel
+
+
+def print_def_name(func):
+    #fname = func.func_name
+    
+    def print_name(*args,**kw) :
+        print "strat %s " % func.__name__
+        func(*args,**kw)
+        print "end %s " % func.__name__
+    
+    return print_name
+class Maya(object):
+    def __init__(self):
+
+        self.scene_info_dict = collections.OrderedDict()
+        self.asset_info_dict = collections.OrderedDict()
+        self.tips_info_dict = collections.OrderedDict()
+        self.asset_dict = collections.OrderedDict()
+
+
+    def print_info(self,info,exit_code='', sleep=0.2):
+        print ("%s" %(info))
+
+
+    def writing_error(self, error_code, info=""):
+        info = self.unicode_to_str(info)
+        error_code = str(error_code)
+        if error_code in self.tips_info_dict:
+            if isinstance(self.tips_info_dict[error_code],list) and len(self.tips_info_dict[error_code])>0 and self.tips_info_dict[error_code][0] != info:
+                error_list = self.tips_info_dict[error_code]
+                error_list.append(info)
+                self.tips_info_dict[error_code] = error_list
+        else:
+            if type(info) == str and info != "":
+                r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
+                if r:
+                    self.tips_info_dict["25009"] = [r[0]]
+                else:
+                    self.tips_info_dict[error_code] = [info]
+            else:
+                self.tips_info_dict[error_code] = []
+
+
+
+    def bytes_to_str(self, str1, str_decode='default'):
+        if not isinstance(str1, str):
+            try:
+                if str_decode != 'default':
+                    str1 = str1.decode(str_decode.lower())
+                else:
+                    try:
+                        str1 = str1.decode('utf-8')
+                    except:
+                        try:
+                            str1 = str1.decode('gbk')
+                        except:
+                            str1 = str1.decode(sys.getfilesystemencoding())
+            except Exception as e:
+                print('[err]bytes_to_str:decode %s to str failed' % (str1))
+                print(e)
+        return str1
+
+    def to_unicode(self,string):
+        locale_encoding = locale.getpreferredencoding()
+        if locale_encoding == "cp936":
+            locale_encoding = "gb18030"
+
+        if type(string) == unicode:
+            return string
+        elif type(string) == str:
+            try:
+                return string.decode("utf-8")
+            except:
+                return string.decode(locale_encoding)
+        elif type(string) == pm.Path:
+            return unicode(string)
+
+
+
+    def get_encode(self,encode_str):
+        if isinstance(encode_str, unicode):
+            return "unicode"
+        else:
+            for code in ["utf-8",sys.getfilesystemencoding(), "gb18030","ascii","gbk","gb2312"]:
+                try:
+                    encode_str.decode(code)
+                    return code
+                except:
+                    pass
+
+
+    def str_to_unicode(self,encode_str):
+        if isinstance(encode_str, unicode):
+            return encode_str
+        else:
+            code = self.get_encode(encode_str)
+            return encode_str.decode(code)
+
+
+
+
+    def write_file(self, file_content, my_file, my_code='UTF-8', my_mode='w'):
+
+        if isinstance(file_content, str):
+            file_content_u = self.bytes_to_str(file_content)
+            fl = codecs.open(my_file, my_mode, my_code)
+            fl.write(file_content_u)
+            fl.close()
+            return True
+        elif isinstance(file_content, (list, tuple)):
+            fl = codecs.open(my_file, my_mode, my_code)
+            for line in file_content:
+                fl.write(line + '\r\n')
+            fl.close()
+            return True
+        else:
+            return False
+
+
+
+    def encode_str(self, my_str):
+        if my_str:
+            my_str = my_str.encode('unicode-escape').decode('string_escape')
+        else:
+            my_str = str(None)
+        print (my_str)
+        return my_str
+
+    def unicode_to_str(self, str1, str_encode='system'):
+        if str1 == None or str1 == "" or str1 == 'Null' or str1 == 'null':
+            str1 = ""
+            return str1
+        elif isinstance(str1, unicode):
+            try:
+                if str_encode.lower() == 'system':
+                    str1 = str1.encode(sys.getfilesystemencoding())
+                elif str_encode.lower() == 'utf-8':
+                    str1 = str1.encode('utf-8')
+                elif str_encode.lower() == 'gbk':
+                    str1 = str1.encode('gbk')
+                else:
+                    str1 = str1.encode(str_encode)
+            except Exception as e:
+                print ('[err]unicode_to_str:encode %s to %s failed' % (str1, str_encode))
+                print (e)
+        else:
+            print ('%s is not unicode ' % (str1))
+        return str(str1)
+
+
+
+class Analyze(dict,Maya):
+    def __init__(self,options):
+        Maya.__init__(self)
+        dict.__init__(self)
+        for i in options:
+            self[i] = options[i]
+
+
+    def show_hide_node(self):
+        mel.eval("outlinerEditor -edit -showDagOnly false outlinerPanel1;showMinorNodes true;")
+
+
+    def is_renderable_layer(self,render_layer):
+        for layer in pm.PyNode("renderLayerManager.renderLayerId").outputs():
+            if layer == render_layer:
+                if layer.type() == "renderLayer":
+                    if layer.renderable.get():
+                        return '1'
+                    else:
+                        return '0'
+            
+    def get_default_render_globals(self,layer):
+        scene_info_common_dict = collections.OrderedDict()
+        default_globals = pm.PyNode("defaultRenderGlobals")
+        scene_info_common_dict['renderer'] = str(self.GetCurrentRenderer())
+        scene_info_common_dict['image_file_prefix'] = str(self.GetMayaOutputPrefix(layer))
+        if self.is_absolute_path(scene_info_common_dict['image_file_prefix']):
+            self.writing_error(25002,"renderlayer: %s --- %s" %(layer,scene_info_common_dict['image_file_prefix']) )
+        scene_info_common_dict['start'] = str(int(cmds.getAttr("defaultRenderGlobals.startFrame")))
+        scene_info_common_dict['end'] = str(int(cmds.getAttr("defaultRenderGlobals.endFrame")))
+        scene_info_common_dict['by_frame'] = str(int(cmds.getAttr("defaultRenderGlobals.byFrame")))
+        if layer == "defaultRenderLayer":
+            pass
+        else:
+            if pm.mel.eval('editRenderLayerAdjustment -remove "defaultRenderGlobals.endFrame";') or pm.mel.eval('editRenderLayerAdjustment -remove "defaultRenderGlobals.startFrame";') or pm.mel.eval('editRenderLayerAdjustment -remove "defaultRenderGlobals.byFrame";'):
+                self.writing_error(25015,"render layer: %s \'s startFrame/endFrame/byFrame has Layer Override attribute ,advice Layered submitting" %(layer))
+        scene_info_common_dict['all_camera'] = self.GetRenderableCameras(False)
+        scene_info_common_dict['render_camera'] = [i.name() for i in pm.ls(type="camera") if i.renderable.get()]
+        if not scene_info_common_dict['render_camera']:
+            self.writing_error(25011,"render layer: %s  there is  no camera  " %(layer))
+        scene_info_common_dict["renumber_frames"] = str(default_globals.modifyExtension.get())
+        if default_globals.modifyExtension.get():
+            self.writing_error(25001)
+        scene_info_common_dict['width'] = str(int(cmds.getAttr("defaultResolution.width")))
+        scene_info_common_dict['height'] = str(int(cmds.getAttr("defaultResolution.height")))      
+        scene_info_common_dict["image_format"] = str(self.get_image_format())
+        if scene_info_common_dict["image_format"] not in ['png','iff','exr','tga','jpg','tif','jpeg','deepexr']:
+            self.writing_error(20004,"render layer\'s imageformat is %s " %(scene_info_common_dict["image_format"]))
+        scene_info_common_dict["animation"] = str(default_globals.animation.get())
+        scene_info_common_dict["file_name"] = str(pm.renderSettings(fin=1, cam='', lyr=layer))
+        if len(str(int(default_globals.endFrame.get()))) > default_globals.extensionPadding.get():
+            self.writing_error(25010)
+        # self["renderSettings"]['all_layer'] = ",".join([i.name() for i in pm.PyNode("renderLayerManager.renderLayerId").outputs() if i.type() == "renderLayer"])
+        # self["renderSettings"]['render_layer'] = ",".join([i.name() for i in pm.PyNode("renderLayerManager.renderLayerId").outputs() if i.type() == "renderLayer" if i.renderable.get()])
+        # self.scene_info_dict[layer]["common"] = scene_info_common_dict
+        return scene_info_common_dict
+
+
+    def get_arnold_setting(self,layer):
+        try:
+            arnold_options_node = pm.PyNode('defaultArnoldRenderOptions')
+        except :
+            arnold_options_node = pm.createNode('aiOptions', name='defaultArnoldRenderOptions', skipSelect=True, shared=True)
+        try:
+            arnold_filter_node = pm.PyNode('defaultArnoldFilter')
+        except:
+            arnold_filter_node = pm.createNode('aiAOVFilter', name='defaultArnoldFilter', skipSelect=True, shared=True)
+        try:
+            arnold_driver_node = pm.PyNode('defaultArnoldDriver')
+        except:
+            arnold_driver_node = pm.createNode('aiAOVDriver', name='defaultArnoldDriver', skipSelect=True, shared=True)
+        try:
+            arnold_display_driver_node = pm.PyNode('defaultArnoldDisplayDriver')
+        except:
+            arnold_display_driver_node = pm.createNode('aiAOVDriver', name='defaultArnoldDisplayDriver', skipSelect=True, shared=True)            
+        try:
+            resolution_node = pm.PyNode('defaultResolution')
+        except :
+            resolution_node = pm.createNode('resolution', name = 'defaultResolution', skipSelect=True, shared=True)
+        scene_info_option_dict = collections.OrderedDict()
+        scene_info_option_dict["append"] = str(arnold_driver_node.append.get())       
+        scene_info_option_dict["aov_output_mode"] = str(arnold_driver_node.outputMode.get())
+        scene_info_option_dict["motion_blur_enable"] = str(arnold_options_node.motion_blur_enable.get())
+        scene_info_option_dict["merge_aovs"] = str(arnold_driver_node.mergeAOVs.get())
+        scene_info_option_dict["abort_on_error"] = str(arnold_options_node.abortOnError.get())
+        scene_info_option_dict["log_verbosity"] = str(arnold_options_node.log_verbosity.get())
+        AASamples = str(arnold_options_node.AASamples.get())
+        GIDiffuseSamples = str(arnold_options_node.GIDiffuseSamples.get())
+        GISpecularSamples = str(arnold_options_node.GISpecularSamples.get())
+        GITransmissionSamples = str(arnold_options_node.GITransmissionSamples.get())
+        GISssSamples = str(arnold_options_node.GISssSamples.get())
+        GIVolumeSamples = str(arnold_options_node.GIVolumeSamples.get())
+        scene_info_option_dict["sampling"] = [AASamples,GIDiffuseSamples,GISpecularSamples,GITransmissionSamples,GISssSamples, GIVolumeSamples]
+        if arnold_options_node.hasAttr("autotx"):
+            scene_info_option_dict["auto_tx"] = str(arnold_options_node.autotx.get())
+            if scene_info_option_dict["auto_tx"] == '0':
+                scene_info_option_dict["use_existing_tiled_textures"] = str(arnold_options_node.use_existing_tiled_textures.get())
+        if arnold_options_node.hasAttr("textureMaxMemoryMB"):
+            scene_info_option_dict["texture_max_memory_mb"] = str(arnold_options_node.textureMaxMemoryMB.get())
+        if arnold_options_node.hasAttr("threads_autodetect"):
+            scene_info_option_dict["threads_autodetect"] = str(arnold_options_node.threads_autodetect.get())            
+        if arnold_options_node.hasAttr("renderType"):
+            scene_info_option_dict["render_type"] = str(arnold_options_node.renderType.get())
+            if arnold_options_node.renderType.get() in [1,2]:
+                self.writing_error(25005)
+        if arnold_options_node.hasAttr("absoluteTexturePaths"):
+            scene_info_option_dict["absolute_texture_paths"] = str(arnold_options_node.absoluteTexturePaths.get()) 
+        if arnold_options_node.hasAttr("absoluteProceduralPaths"):
+            scene_info_option_dict["absolute_procedural_paths"] = str(arnold_options_node.absoluteProceduralPaths.get())    
+        scene_info_option_dict['pre_render_mel'] = self.unicode_to_str(self.defaultRG.preMel.get())
+        scene_info_option_dict['post_render_mel'] = self.unicode_to_str(self.defaultRG.postMel.get())
+        scene_info_option_dict['pre_render_layer_mel'] = self.unicode_to_str(self.defaultRG.preRenderLayerMel.get())
+        scene_info_option_dict['post_render_layer_mel'] = self.unicode_to_str(self.defaultRG.postRenderLayerMel.get())
+        scene_info_option_dict['pre_render_frame_mel'] = self.unicode_to_str(self.defaultRG.preRenderMel.get())
+        scene_info_option_dict['post_render_frame_mel'] = self.unicode_to_str(self.defaultRG.postRenderMel.get())
+        # self.scene_info_dict[layer]["option"] = scene_info_option_dict
+        return scene_info_option_dict
+
+
+    def get_vray_setting(self,layer):
+        try:
+            vraySettings_node = pm.PyNode('vraySettings')
+        except :
+            vraySettings_node = pm.createNode('VRaySettingsNode', name='vraySettings', skipSelect=True, shared=True)
+        scene_info_option_dict = collections.OrderedDict()
+        scene_info_option_dict["dynMemLimit"] = str(vraySettings_node.sys_rayc_dynMemLimit.get())
+        scene_info_option_dict["animType"] = str(vraySettings_node.animType.get())
+        if vraySettings_node.animType.get() == 2:
+            self.writing_error(25004)
+        scene_info_option_dict["sys_distributed_rendering_on"] = str(vraySettings_node.sys_distributed_rendering_on.get())
+        if vraySettings_node.sys_distributed_rendering_on.get():
+            self.writing_error(25003)
+        scene_info_option_dict["vrscene_on"] = str(vraySettings_node.vrscene_on.get())
+        if vraySettings_node.vrscene_on.get():
+            self.writing_error(25007)
+        scene_info_option_dict['pre_render_mel'] = self.unicode_to_str(self.defaultRG.preMel.get())
+        scene_info_option_dict['post_render_mel'] = self.unicode_to_str(self.defaultRG.postMel.get())
+        scene_info_option_dict['pre_render_layer_mel'] = self.unicode_to_str(self.defaultRG.preRenderLayerMel.get())
+        scene_info_option_dict['post_render_layer_mel'] = self.unicode_to_str(self.defaultRG.postRenderLayerMel.get())
+        scene_info_option_dict['pre_render_frame_mel'] = self.unicode_to_str(self.defaultRG.preRenderMel.get())
+        scene_info_option_dict['post_render_frame_mel'] = self.unicode_to_str(self.defaultRG.postRenderMel.get())
+        scene_info_option_dict['pre_key_frame_mel'] = self.unicode_to_str(vraySettings_node.preKeyframeMel.get())
+        scene_info_option_dict['rt_image_ready_mel'] = self.unicode_to_str(vraySettings_node.rtImageReadyMel.get())
+        # self.scene_info_dict[layer]["option"] = scene_info_option_dict
+        return scene_info_option_dict
+
+
+    def get_redshift_setting(self,layer):
+        scene_info_option_dict = collections.OrderedDict()
+        redshift_options = pm.PyNode("redshiftOptions")
+        if redshift_options.hasAttr("motionBlurEnable"):
+            scene_info_option_dict["absolute_procedural_paths"] = redshift_options.motionBlurEnable.get()
+        if redshift_options.hasAttr("motionBlurDeformationEnable"):
+            scene_info_option_dict["motion_blur_deformation_enable"] = redshift_options.motionBlurDeformationEnable.get()             
+        scene_info_option_dict['pre_render_mel'] = self.unicode_to_str(redshift_options.preRenderMel.get())
+        scene_info_option_dict['post_render_mel'] = self.unicode_to_str(redshift_options.postRenderMel.get())
+        scene_info_option_dict['pre_render_layer_mel'] = self.unicode_to_str(redshift_options.preRenderLayerMel.get())
+        scene_info_option_dict['post_render_layer_mel'] = self.unicode_to_str(redshift_options.postRenderLayerMel.get())
+        scene_info_option_dict['pre_render_frame_mel'] = self.unicode_to_str(redshift_options.preRenderFrameMel.get())
+        scene_info_option_dict['post_render_frame_mel'] = self.unicode_to_str(redshift_options.postRenderFrameMel.get())
+        # self.scene_info_dict[layer]["option"] = scene_info_option_dict
+        return scene_info_option_dict
+
+
+    def get_renderman_setting(self,layer):
+        scene_info_option_dict = collections.OrderedDict()
+        # self.scene_info_dict[layer]["option"] = scene_info_option_dict
+        return scene_info_option_dict
+
+
+    def get_krakatoa_setting(self,layer):
+        scene_info_option_dict = collections.OrderedDict()
+        # self.scene_info_dict[layer]["option"] = scene_info_option_dict
+        return scene_info_option_dict
+
+
+
+    def get_layer_settings(self,render_layer = None):
+        self.defaultRG = pm.PyNode("defaultRenderGlobals")
+        self.show_hide_node()
+        self.has_renderable_layer()
+        all_render_layer = cmds.listConnections("renderLayerManager.renderLayerId")
+        render_layer_list = render_layer if render_layer else all_render_layer
+        if isinstance(render_layer_list,str):
+            render_layer_list = [render_layer_list]
+        for layer in render_layer_list:
+            if layer:
+                layer_dict = layer
+                layer_dict = collections.OrderedDict()
+                pm.PyNode(layer).setCurrent()
+                self.get_image_namespace()
+                if self.check_layer_renderer(layer):
+                    layer_dict['renderable'] = self.is_renderable_layer(layer)
+                    renderer = str(self.GetCurrentRenderer())
+                    layer_dict['is_default_camera'] = '1'
+                    layer_dict['common'] = self.get_default_render_globals(layer)
+                    if renderer == "vray":
+                        layer_dict['option'] = self.get_vray_setting(layer)
+                    elif renderer == "arnold":
+                        layer_dict['option'] = self.get_arnold_setting(layer)
+                    elif renderer == "redshift":
+                        layer_dict['option'] = self.get_redshift_setting(layer)
+                    elif renderer == "renderman":
+                        layer_dict['option'] = self.get_renderman_setting(layer)
+                    elif renderer == "MayaKrakatoa":
+                        layer_dict['option'] = self.get_krakatoa_setting(layer)
+                    else:
+                        layer_dict['option'] = ''
+                    self.scene_info_dict[layer] = layer_dict
+                else:
+                    pass
+            else:
+                print (traceback.format_exc())
+                self.writing_error(25018)
+                raise Exception("Can't switch renderlayer :  " + layer)
+
+
+    def getArnoldElementNames(self):
+        elementNames = [""]
+        arnold_options_node = pm.PyNode("defaultArnoldRenderOptions")
+        aovMode = int(arnold_options_node.aovMode.get())
+        # aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
+        mergeAOV = int(pm.getAttr("defaultArnoldDriver.mergeAOVs"))
+        imfType = str(pm.mel.getImfImageType())
+        if aovMode:
+            if not mergeAOV:
+                elementNames = []
+                AOVnames = pm.ls(type='aiAOV')
+                for aovName in AOVnames:
+                    enabled = int(pm.getAttr(str(aovName) + ".enabled"))
+                    if enabled == 1:
+                        elementNames.insert(0, pm.getAttr(str(aovName) + ".name"))
+                elementNames.insert(0, "beauty")
+        return elementNames
+
+    def getArnoldElements(self):
+        elementNames = [""]
+        aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
+        mergeAOV = int(pm.getAttr("defaultArnoldDriver.mergeAOVs"))
+        imfType = str(pm.mel.getImfImageType())
+        if aovMode:
+            if not mergeAOV:
+                elementNames = []
+                AOVnames = pm.ls(type='aiAOV')
+                for aovName in AOVnames:
+                    enabled = int(pm.getAttr(str(aovName) + ".enabled"))
+                    if enabled == 1:
+                        elementNames.insert(0, aovName)
+
+        return elementNames
+
+    def getRedshiftElements(self):
+
+        elementNames = [""]
+        REs = pm.ls(type='RedshiftAOV')
+        for RE in REs:
+            enabled = int(pm.getAttr(str(RE) + ".enabled"))
+            if enabled == 1:
+                elementNames.insert(0, RE)
+
+        return elementNames
+
+    def getMentalRayElementNames(self,currentRenderLayer):
+
+        elementNames = [""]
+        # Format's in Maya are stored as integers.  For Mental ray EXR is stored as 51.
+        exrFormat = 51
+        if currentRenderLayer != "":
+            format = int(pm.getAttr('defaultRenderGlobals.imageFormat'))
+            prefix = str(pm.getAttr('defaultRenderGlobals.imageFilePrefix'))
+            # If the format is exr and there is not a renderPass token in the output prefix then the output is rendered as a single multichannel exr so we do not have to handle the elements separately.
+            if format != exrFormat or pm.mel.match("<RenderPass>", prefix) != "":
+                renderLayers = []
+                renderLayers = pm.ls(type='renderLayer')
+                if currentRenderLayer in renderLayers:
+                    connectedPasses = pm.listConnections(currentRenderLayer + ".rps")
+                    if len(connectedPasses) > 0:
+                        elementNames = []
+                        elementNames.insert(0, "MasterBeauty")
+                        for pass_ in connectedPasses:
+                            elementNames.insert(0, pass_)
+
+        return elementNames
+
+    def getVRayElementNames(self):
+        elementNames = [""]
+        isMultichannelExr = int(False)
+        multichannel = " (multichannel)"
+        ext = ""
+        REs = pm.ls(type=['VRayRenderElement', 'VRayRenderElementSet'])
+        if pm.optionMenuGrp('vrayImageFormatMenu', exists=1):
+            ext = str(pm.optionMenuGrp('vrayImageFormatMenu', q=1, v=1))
+        else:
+            ext = str(pm.getAttr('vraySettings.imageFormatStr'))
+        if ext == "":
+            ext = "png"
+        # for some reason this happens if you have not changed the format
+        if ext.endswith(multichannel):
+            ext = ext[0:-len(multichannel)]
+            isMultichannelExr = int(True)
+        enableAll = int(pm.getAttr("vraySettings.relements_enableall"))
+        useReferenced = int(pm.getAttr("vraySettings.relements_usereferenced"))
+        if not isMultichannelExr and enableAll:
+            for RE in REs:
+                enabled = int(pm.getAttr(str(RE) + ".enabled"))
+                isReferenced = int(pm.referenceQuery(RE, isNodeReferenced=1))
+                if isReferenced == 1 and useReferenced == 0:
+                    continue
+                if enabled == 1:
+                    reType = str(pm.getAttr(str(RE) + ".vrayClassType"))
+                    REName = ""
+                    if reType == "ExtraTexElement" or reType == "MaterialSelectElement":
+                        RENameFunction = pm.listAttr(RE, st="vray_explicit_name_*")
+                        REName = str(pm.getAttr(str(RE) + "." + RENameFunction[0]))
+                        if REName == "":
+                            RENameFunction = pm.listAttr(RE, st="vray_name_*")
+                            REName = str(pm.getAttr(str(RE) + "." + RENameFunction[0]))
+                            if reType == "ExtraTexElement":
+                                textures = pm.listConnections(str(RE) + ".vray_texture_extratex")
+                                if len(textures) > 0:
+                                    if REName != "":
+                                        REName += "_"
+
+                                    REName += textures[0]
+                            elif reType == "MaterialSelectElement":
+                                materials = pm.listConnections(str(RE) + ".vray_mtl_mtlselect")
+                                if len(materials) > 0:
+                                    if REName != "":
+                                        REName += "_"
+
+                                    REName += materials[0]
+
+                    else:
+                        RENameFunction = pm.listAttr(RE, st="vray_name_*")
+                        if len(RENameFunction) == 0:
+                            RENameFunction = pm.listAttr(RE, st="vray_filename_*")
+
+                        REName = str(pm.getAttr(str(RE) + "." + RENameFunction[0]))
+
+                    REName = str(pm.mel.substituteAllString(REName, " ", "_"))
+                    elementNames.insert(0, REName)
+
+            separateAlpha = int(pm.getAttr("vraySettings.separateAlpha"))
+            if separateAlpha == 1:
+                elementNames.insert(0, "Alpha")
+
+        return elementNames
+
+
+    def get_assets(self, assets_node_list):
+        asset_dict = {}
+        for asset_node_dict in assets_node_list:
+            for node_type in asset_node_dict:
+                attr_name = asset_node_dict[node_type]
+                # node_type='ExocortexAlembicXform'
+                # attr_name='fileName'
+                all_node = pm.ls(type=node_type)
+                if all_node:
+                    print all_node
+                    for node in all_node:
+                        if node_type == 'cacheFile':
+                            b = cmds.getAttr(node + ".cacheName")
+                            c = cmds.getAttr(node + ".cachePath")
+                            if c.endswith("/"):
+                                c = c.strip()
+                                c = c[:-1]
+                            print (c + "/" + b + ".xml")
+                            file_path = c + "/" + b + ".xml"
+                        else:
+                            file_path = cmds.getAttr(node + "." + attr_name)
+                        # node.attr(attr_name).set(l=0)
+                        # file_path = node.attr(attr_name).get()
+                        asset_dict_keys = node_type + '::' + attr_name
+                        asset_dict_value = node + '::' + file_path
+                        asset_dict[asset_dict_keys] = asset_dict_value
+
+        print '+' * 40
+        print asset_dict
+        return asset_dict
+
+    def gather_asset(self, asset_type, asset_list, asset_dict):
+        self.G_DEBUG_LOG.info('\r\n\r\n[-----------------maya.RBanalyse.gather_asset_by_file_path]')
+        self.G_DEBUG_LOG.info(asset_type)
+        asset_input_server_str = 'asset_input_server'
+        asset_input_str = 'asset_input'
+        asset_input_missing_str = 'asset_input_missing'
+        asset_item_missing_str = asset_type + '_missing'
+        asset_input_list = []
+        asset_input_missing_list = []
+        asset_input_server_list = []
+
+        for asset in asset_list:
+            asset_input_list.append(asset)
+            if self.ASSET_WEB_COOLECT_BY_PATH:
+                if not os.path.exists(asset):
+                    asset_input_missing_list.append(asset)
+            else:
+                asset_item_server = self.get_file_from_project_by_name(asset)
+                if asset_item_server:
+                    asset_input_server_list.append(asset_item_server)
+                else:
+                    asset_input_missing_list.append(asset)
+                '''
+                asset_name=os.path.basename(asset)
+                #if  asset_name   in self.ASSET_INPUT_KEY_LIST:
+                if self.G_INPUT_PROJECT_ASSET_DICT.has_key(asset_name):    
+                    self.get_file_from_project_by_name()
+                    asset_input_server_list.append(self.G_INPUT_PROJECT_ASSET_DICT[asset_name])
+                else:
+                    asset_input_missing_list.append(asset)
+                '''
+        if asset_input_server_list:
+            if asset_dict.has_key(asset_input_server_str):
+                # asset_dict[asset_input_server_str].extend(asset_input_server_list)  # notice yinyong
+                asset_dict[asset_input_server_str] = asset_dict[asset_input_server_str] + asset_input_server_list
+            else:
+                asset_dict[asset_input_server_str] = asset_input_server_list
+
+        if asset_input_list:
+            if asset_dict.has_key(asset_input_str):
+                # asset_dict[asset_input_str].extend(asset_input_list)  # notice yinyong
+                asset_dict[asset_input_str] = asset_dict[asset_input_str] + asset_input_list
+            else:
+                asset_dict[asset_input_str] = asset_input_list
+        if asset_input_missing_list:
+            if asset_dict.has_key(asset_input_missing_str):
+                # asset_dict[asset_input_missing_str].extend(asset_input_missing_list)  # notice yinyong
+                asset_dict[asset_input_missing_str] = asset_dict[asset_input_missing_str] + asset_input_missing_list
+            else:
+                asset_dict[asset_input_missing_str] = asset_input_missing_list
+
+            asset_dict[asset_item_missing_str] = asset_input_missing_list
+
+    def GetCurrentRenderer(self):
+        """Returns the current renderer."""
+        renderer=str(pm.mel.currentRenderer())
+        if renderer == "_3delight":
+            renderer="3delight"
+            
+        return renderer
+
+    def GetOutputExt(self):
+
+        renderer = str(self.GetCurrentRenderer())
+        if renderer == "vray":
+            pm.melGlobals.initVar('string[]', 'g_vrayImgExt')
+            # Need to special case vray, because they like to do things differently.
+            ext = ""
+            if pm.optionMenuGrp('vrayImageFormatMenu', exists=1):
+                ext = str(pm.optionMenuGrp('vrayImageFormatMenu', q=1, v=1))
+            else:
+                ext = str(pm.getAttr('vraySettings.imageFormatStr'))
+            if ext == "":
+                ext = "png"
+                # for some reason this happens if you have not changed the format
+                # VRay can append this to the end of the render settings display, but we don't want it in the file name.
+
+            isMultichannelExr = int(False)
+            multichannel = " (multichannel)"
+            if ext.endswith(multichannel):
+                ext = ext[0:-len(multichannel)]
+                isMultichannelExr = int(True)
+
+        else:
+
+            if renderer == "renderMan" or renderer == "renderManRIS":
+                pat = str(pm.mel.rmanGetImagenamePattern(1))
+                # $prefixString = `rmanGetImageName 1`;
+                ext = str(pm.mel.rmanGetImageExt(""))
+
+            elif renderer == "mentalRay":
+                ext = str(cmds.getAttr("defaultRenderGlobals.imfkey"))
+
+            else:
+                ext = str(cmds.getAttr("defaultRenderGlobals.imageFormat"))
+
+        return ext
+
+    def get_image_format(self):
+        render_engine = str(self.GetCurrentRenderer())
+        if render_engine == 'arnold':
+            return cmds.getAttr('defaultArnoldDriver.aiTranslator')
+        if render_engine == 'redshift':
+            redshift_format_number = cmds.getAttr('redshiftOptions.imageFormat')
+            redshift_Image_format = {
+                0: 'iff',
+                1: 'exr',
+                2: 'png',
+                3: 'tga',
+                4: 'jpg',
+                5: 'tif'}
+            return redshift_Image_format.get(redshift_format_number)
+        if render_engine == 'vray':
+            vray_format = pm.getAttr('vraySettings.imageFormatStr')
+            if vray_format == None:
+                return 'png'
+            return vray_format
+        if render_engine == 'mentalRay' or render_engine == 'mayaSoftware' or render_engine == 'mayaHardware' or render_engine == 'mayaHardware2' or render_engine == 'turtle':
+            Image_format_number = cmds.getAttr("defaultRenderGlobals.imageFormat")
+            Image_Format = {
+                0: 'gif',
+                1: 'pic',
+                2: 'rla',
+                3: 'tif',
+                4: 'tif16',
+                5: 'sgi',
+                6: 'als',
+                7: 'iff',
+                8: 'jpg',
+                9: 'eps',
+                10: 'iff16',
+                11: 'cin',
+                12: 'yuv',
+                13: 'sgi16',
+                16: 'sgi16',
+                19: 'tga',
+                20: 'bmp',
+                23: 'avi',
+                31: 'psd',
+                32: 'png',
+                35: 'dds',
+                36: 'Layered(psd)',
+                51: 'exr'}
+            return Image_Format.get(Image_format_number)
+
+
+    def get_image_namespace(self):
+        index = 0
+        render_engine = str(self.GetCurrentRenderer())
+        name_space = {
+            1:'name',
+            2:'name.ext',
+            3:'name.#.ext',
+            4:'name.ext.#',
+            5:'name.#',
+            6:'name#.ext',
+            7:'name_#.ext',
+            8:'namec',
+            9:'namec.ext'}
+        if render_engine != 'vray':
+            if cmds.getAttr("defaultRenderGlobals.animation") == False and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 1 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1:
+                index = 1
+            elif cmds.getAttr("defaultRenderGlobals.animation") == False and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1:
+                index = 2
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1 and cmds.getAttr("defaultRenderGlobals.putFrameBeforeExt") == 1:
+                index = 3
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1 and cmds.getAttr("defaultRenderGlobals.putFrameBeforeExt") == 0:
+                index = 4
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 1 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1:
+                index = 5
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 0 and cmds.getAttr("defaultRenderGlobals.putFrameBeforeExt") == 1:
+                index = 6
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 2 and cmds.getAttr("defaultRenderGlobals.putFrameBeforeExt") == 1:
+                index = 7
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 1 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1:
+                index = 8
+            elif cmds.getAttr("defaultRenderGlobals.animation") == True and cmds.getAttr("defaultRenderGlobals.outFormatControl") == 0 and cmds.getAttr("defaultRenderGlobals.periodInExt") == 1:
+                index = 9
+        else:
+            pass
+        if index not in [0,3,6,7]:
+            self.writing_error(20002,"current namespace is %s ," % (name_space.get(index)))
+
+
+    def has_renderable_layer(self):
+        render_layer = [i.name() for i in pm.PyNode("renderLayerManager.renderLayerId").outputs() if i.type() == "renderLayer" if i.renderable.get()]
+        if len(render_layer) == 0:
+            self.writing_error(20003)
+
+
+    def GetMotionBlur(self):
+        """Returns if motion blur is enabled."""
+
+        renderer = str(self.GetCurrentRenderer())
+        mb = int(False)
+        if renderer == "mentalRay":
+            mb = int(pm.getAttr('miDefaultOptions.motionBlur'))
+
+
+        elif renderer == "mayaHardware" or renderer == "mayaHardware2":
+            mb = int(pm.getAttr('hardwareRenderGlobals.enableMotionBlur'))
+
+
+        elif renderer == "mayaVector":
+            mb = int(False)
+
+
+        elif renderer == "turtle":
+            mb = int(pm.getAttr('TurtleRenderOptions.motionBlur'))
+
+
+        elif renderer == "renderMan" or renderer == "renderManRIS":
+            mb = int(pm.getAttr('renderManGlobals.rman__torattr___motionBlur'))
+
+
+        elif renderer == "finalRender":
+            mb = int(pm.getAttr('defaultFinalRenderSettings.motionBlur'))
+
+
+        elif renderer == "vray":
+            mb = int(pm.getAttr('vraySettings.cam_mbOn'))
+
+
+        else:
+            mb = int(pm.getAttr('defaultRenderGlobals.motionBlur'))
+
+        return mb
+
+
+    def GetStrippedSceneFileName(self):
+
+        fileName = str(cmds.file(q=1, sceneName=1))
+        fileName = str(pm.mel.basename(fileName, ".mb"))
+        fileName = str(pm.mel.basename(fileName, ".ma"))
+        return fileName
+
+    def GetMayaOutputPrefix(self,layer):
+
+        prefix = ""
+        renderer = str(self.GetCurrentRenderer())
+
+        if renderer != "vray":
+            prefix = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+        else:
+            prefix = pm.getAttr('vraySettings.fileNamePrefix')
+
+        if prefix == "" or prefix == None:
+            prefix = self.GetStrippedSceneFileName()
+
+        # if renderer == "arnold" and pm.mel.match("<RenderPass>", prefix) == "":
+            # elements = self.getArnoldElementNames()
+            # if elements[0] != "":
+                # prefix = "<RenderPass>/" + prefix
+        # if renderer == "mentalRay" and pm.mel.match("<RenderPass>", prefix) == "":
+            # elements = self.getMentalRayElementNames(layer)
+            # if elements[0] != "":
+                # prefix = "<RenderPass>/" + prefix
+        # renderableCameras = self.GetRenderableCameras(False)
+        # multipleRenderableCams = (len(renderableCameras) > 1)
+        # # Redshift does not work with multiple renderable cameras so we need to node add <camera>
+        # if multipleRenderableCams:
+            # if (pm.mel.match("<Camera>", prefix) == "") and (
+                # pm.mel.match("%c", prefix) == "") and renderer != "redshift" and (
+                    # renderer != "vray" or pm.mel.match("<camera>", prefix) == ""):
+                # prefix = "<Camera>/" + prefix
+                # # vray accepts <camera> as a token, whereas no one else does
+
+        # if self.IsRenderLayersOn():
+            # if renderer == "vray" and (pm.mel.match("<Layer>", prefix) == "") and (
+                # pm.mel.match("<layer>", prefix) == "") and (pm.mel.match("%l", prefix) == ""):
+                # prefix = "<Layer>/" + prefix
+            # elif renderer != "vray" and (pm.mel.match("<RenderLayer>", prefix) == "") and (
+                # pm.mel.match("<Layer>", prefix) == "") and (pm.mel.match("%l", prefix) == ""):
+                # prefix = "<RenderLayer>/" + prefix
+
+        return prefix
+
+
+    def GetRenderableCameras_bak(self,ignoreDefaultCameras):
+
+        cameraNames = pm.mel.listTransforms('-cameras')
+        renderableCameras = []
+        for cameraName in cameraNames:
+            if self.IsCameraRenderable(cameraName):
+                relatives = pm.listRelatives(cameraName, s=1)
+                cameraShape = relatives[0]
+                # Only submit default cameras if the setting to ignore them is disabled.
+                if not ignoreDefaultCameras or not self.IsDefaultCamera(cameraShape):
+                    renderableCameras.insert(0, cameraName)
+
+        return renderableCameras
+
+
+
+    def GetRenderableCameras(self,ignoreDefaultCameras):
+
+        cameraNames = cmds.ls(type="camera")
+        renderableCameras = []
+        for cameraName in cameraNames:
+            # Only submit default cameras if the setting to ignore them is disabled.
+            if not ignoreDefaultCameras and not self.IsDefaultCamera(cameraName):
+                renderableCameras.insert(0, cameraName)
+
+        return renderableCameras
+
+
+
+    def IsCameraRenderable(self,cameraName):
+
+        relatives = pm.listRelatives(cameraName, s=1)
+        # print( "Checking if camera is renderable: " + $cameraName + "\n" );
+        cameraShape = relatives[0]
+        cameraRenderable = 0
+        # Getting the renderable attribute can throw an error if there are duplicate camera shape names.
+        # The catch blocks are to prevent these erros so that the submission can continue.
+        if not pm.catch(lambda: pm.mel.attributeExists("renderable", cameraShape)):
+            cameraRenderable = int(pm.getAttr(cameraShape + ".renderable"))
+            pm.catch(lambda :cameraRenderable)
+
+        return cameraRenderable
+
+    def IsDefaultCamera_bak(self,cameraName):
+        if cameraName == "frontShape" or cameraName == "perspShape" or cameraName == "sideShape" or cameraName == "topShape":
+            return True
+        elif cameraName == "front" or cameraName == "persp" or cameraName == "side" or cameraName == "top":
+            return True
+        else:
+            return False
+
+
+    def IsDefaultCamera(self,cameraName):
+        if cameraName == "frontShape" or cameraName == "sideShape" or cameraName == "topShape":
+            return True
+        elif cameraName == "front"  or cameraName == "side" or cameraName == "top":
+            return True
+        else:
+            return False
+
+
+    def IsRenderLayersOn(self):
+        """Returns if render layers is on."""
+
+        renderLayers = pm.ls(exactType="renderLayer")
+        referenceLayers = pm.ls(exactType="renderLayer", rn=1)
+        return ((len(renderLayers) - len(referenceLayers)) > 1)
+
+    def check_maya_version(self,maya_file,cg_version):
+        result = None
+        maya_file = self.unicode_to_str(maya_file)
+        if maya_file.endswith(".ma"):
+            infos = []
+            with open(maya_file, "r") as f:
+                while 1:
+                    line = f.readline()
+                    if line.startswith("createNode"):
+                        break
+                    elif line.strip() and not line.startswith("//"):
+                        infos.append(line.strip())
+
+            file_infos = [i for i in infos if i.startswith("fileInfo")]
+            for i in file_infos:
+                if "product" in i:
+                    r = re.findall(r'Maya.* (\d+\.?\d+)', i, re.I)
+                    if r:
+                        result = int(r[0].split(".")[0])
+
+        elif maya_file.endswith(".mb"):
+            with open(maya_file, "r") as f:
+                info = f.readline()
+
+            file_infos = re.findall(r'FINF\x00+\x11?\x12?K?\r?(.+?)\x00(.+?)\x00',
+                                    info, re.I)
+            for i in file_infos:
+                if i[0] == "product":
+                    result = int(i[1].split()[1])
+
+        if result:
+            self.print_info("get maya file version %s" % (result))
+            if int(result) == int(cg_version):
+                pass
+            else:
+                self.writing_error(25013,"maya file version Maya%s" % result)
+
+    def is_absolute_path(self, path):
+        if path:
+            path = path.replace("\\", "/")
+            if ":" in path:
+                return 1
+            if path.startswith("//"):
+                return 1
+
+
+    def check_layer_renderer(self,layer):
+        renderer = str(self.GetCurrentRenderer())
+        self.print_info("current renderer is : %s " % renderer)
+        plugins_rederer = {"arnold": "mtoa",
+                           "vray": "vrayformaya",
+                           "redshift": "redshift_GPU",
+                           "renderman": "RenderMan_for_Maya",
+                           "MayaKrakatoa": "krakatoa"
+                           }
+        plugins_rederer.setdefault(renderer)
+        if plugins_rederer[renderer]:
+            if plugins_rederer[renderer] not in self["cg_plugins"]:
+                self.writing_error(25008,"render layer: %s \'s renderer is %s ,please confirm configure plugins" %(layer,renderer))
+                return False
+        elif renderer == "mentalRay" and int(self["cg_version"]) > 2016.5 and renderer not in self["cg_plugins"]:
+            self.writing_error(25008,"render layer: %s \'s renderer is %s ,above version of maya2017(contain),  please confirm configure mentalRay" %(layer,renderer))
+            return False
+        elif renderer in ["mayaHardware", "mayaHardware2", "mayaVector"]:
+            self.writing_error(25014, "render layer: %s \'s renderer is %s   please change" % (layer, renderer))
+            return False
+        return True
+
+    def check_scene_name(self):
+        scene_name = os.path.splitext(os.path.basename(self["cg_file"]))[0]
+        if not re.findall("^[A-Z][^-]+[0-9]$", scene_name):
+            self.writing_error(25017)
+            return False
+        return True
+
+
+    def start_open_maya(self):
+        self.print_info("start maya ok.")
+        self.print_info("open maya file: " + self["cg_file"])
+        self["cg_project"] = os.path.normpath(self["cg_project"]).replace('\\','/')
+        if self["cg_project"]:
+            if os.path.exists(self["cg_project"]):
+                workspacemel = os.path.join(self["cg_project"],
+                                            "workspace.mel")
+                if not os.path.exists(workspacemel):
+                    try:
+                        with open(workspacemel, "w"):
+                            ''
+                    except:
+                        pass
+                if os.path.exists(workspacemel):
+                    pm.mel.eval('setProject "%s"' % (self["cg_project"]))
+        # ignore some open maya errors.
+        if os.path.exists(self["cg_file"]) and os.path.isfile(self["cg_file"]):
+            try:
+                # pm.openFile(options["cg_file"], force=1, ignoreVersion=1, prompt=0, loadReferenceDepth="all")
+                pm.openFile(self["cg_file"], force=1, ignoreVersion=1, prompt=0)
+                self.print_info("open maya file ok.")
+            except:
+                pass
+        else:
+            raise Exception("Dont Found the maya files error.")
+
+
+    def write_task_info(self):
+        info_file_path = os.path.dirname(self["task_json"])
+        print "write info to task.json"
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self["task_json"]
+            with open(info_file, 'r') as f:
+                json_src = json.load(f)
+            json_src["scene_info"] = self.scene_info_dict
+            with open(info_file, 'w') as f:
+                f.write(json.dumps(json_src))
+        except Exception as err:
+            print  err
+            pass
+
+
+    def write_asset_info(self):
+        info_file_path = os.path.dirname(self["asset_json"])
+        print "write info to asset.json"
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self["asset_json"]
+            self.asset_info_dict['maya'] = [self.str_to_unicode(self["cg_file"])]
+            json_src = self.asset_info_dict
+            print json_src
+            with open(info_file, 'w+') as f:
+                f.write(json.dumps(json_src,ensure_ascii=False).decode('utf8'))
+        except Exception as err:
+            print  err
+            pass
+
+
+    def write_tips_info(self):
+        info_file_path = os.path.dirname(self["tips_json"])
+        print "write info to tips.json"
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self["tips_json"]
+            json_src = self.tips_info_dict
+            print json_src
+            with open(info_file, 'w+') as f:
+                f.write(json.dumps(json_src))
+        except Exception as err:
+            print  err
+            pass
+
+        
+
+class Asset(dict,Maya):
+
+    def __init__(self):
+        Maya.__init__(self)
+        dict.__init__(self)
+        self.func_list = {
+            'reference': self.get_reference,
+            'file': self.get_file,
+             'dynGlobals':self.get_legacy_particle,
+        }
+
+    def ceate_asset(self):
+        for i in self.func_list:
+            self.asset_dict[i] = self.func_list[i]()
+        return self.asset_dict
+        
+        '''
+        # 资产字典   self.asset_dict   所有资产写进这个字典
+        self.asset_dict = {"Node_type":["NodeName_attribute":{"source_path":"sameiamge/a.udim.jpg","local_path":["z:/proj/somiage/a.1001.jpg","z:/proj/somiage/a.1002.jpg"],"missing":[]}],              
+                           "file":[],
+                           "aiImage":[],
+                           "AlembicNode":[]
+                           .
+                           .
+                           .
+                           "env":{}
+        }L
+        # self.func_list = {"file": "get_file", "aiImage": "get_aiImage", "AlembicNode": "get_abc"}
+
+        '''
+
+    def get_all_render_layers(self):
+        return [i.name() for i in pm.PyNode("renderLayerManager.renderLayerId").outputs() if
+                i.type() == "renderLayer"]
+
+    def get_renderable_layer(self):
+        return [i.name() for i in self.get_all_render_layers() if i.renderable.get()]
+    def get_assets_from_name(self, node_name):
+        if pm.objExists(node_name):
+            node_type = pm.PyNode(node_name).type()
+            return self.func_list[node_type](node_name)
+
+    def get_all_assets(self):
+        for i in self.func_list:
+            return self.func_list[i]()
+
+    def get_assets_from_type(self, node_type):
+        # print node_type
+        if node_type in self.func_list:
+            return self.func_list[node_type]()
+
+
+
+    def get_path_env_val(self, source_path):
+        env_re = re.compile(r'^\${?(\w+)}?', re.I)
+        r = env_re.findall(source_path)
+        env_val = {}
+        if r:
+            if os.environ.setdefault(r[0], ""):
+                val = os.path.normpath(os.getenv(r[0]))
+                env_val[r[0]] = val
+                return env_val
+            else:
+                env_val[r[0]] = None
+                return env_val
+        return env_val
+
+    def get_node_overrides_able(self, node, attr):
+        if node.hasAttr(attr):
+            connections = cmds.listConnections(node+"."+attr, plugs=True)
+            if connections:
+                return True
+            else:
+                return False
+        else:
+            return False
+    def get_node_attr_over(self,node,attr,layer=None):
+        
+        if node.hasAttr(attr):
+            if layer:
+                connections = cmds.listConnections(node+"."+attr, plugs=True)
+                if connections:
+                    for connection in connections:
+                        if connection:
+                            
+                            node_name = connection.split('.')[0]
+                            if node_name ==layer and cmds.nodeType(node_name) == 'renderLayer' :
+                                attr_name = '%s.value' % '.'.join(connection.split('.')[:-1])
+                                return cmds.getAttr(attr_name)
+                            else:
+                                return cmds.getAttr(node+"."+attr)
+        
+                else:
+                    return node.attr(attr).get()
+            else:
+                return node.attr(attr).get()
+                
+        else:
+            return ""
+    def get_node_attr_val(self,node, attr):
+        if node.hasAttr(attr):
+            return node.attr(attr).get()
+        else:
+            return ""
+
+    def get_dict_from_path(self,source_path,dict_key,amin_attr=0):
+        textures = {}
+        env_re = re.compile(r'^\${?(\w+)}?', re.I)
+        textures[dict_key] = {}
+        textures[dict_key]["source_path"] = []
+        textures[dict_key]["missing"] = []
+        textures[dict_key]["local_path"] = []
+        textures[dict_key]["env"] = {}
+        
+        if source_path:
+            
+            source_path = os.path.normpath(source_path)
+            textures[dict_key]["source_path"].append(source_path)
+            r = env_re.findall(source_path)
+            if r:
+                if os.environ.setdefault(r[0], ""):
+                    env_val = os.path.normpath(os.getenv(r[0]))
+                    textures[dict_key]["env"][r[0]] = env_val
+                    source_path = source_path.replace("${" + r[0] + "}", env_val)
+                    #print source_path
+        
+            local_path = [i for i in self.file_images(source_path, amin_attr)]
+            #print local_path
+            if local_path:
+                textures[dict_key]["local_path"] += local_path
+            else:
+                textures[dict_key]["missing"].append(source_path)
+        else:
+            textures[dict_key]["source_path"].append(source_path)
+            textures[dict_key]["missing"].append(source_path)
+
+        return textures
+        
+    def get_files_from_folder(self,folder,prefix="*" ,ext="*"):
+        files = []
+        p = re.compile(r'^(?:[a-z][:][\\/]|[\\\\]|(?:\${?))', re.I)
+        if not p.findall(folder):
+            folder = os.path.join(pm.workspace(q=1, fullName=1), folder)
+        #if os.path.exists(folder) and os.path.isdir(folder):
+        file_glob = os.path.normpath( os.path.join(folder, prefix+"*."+ext))
+        #print file_glob
+        for i in glob.glob(file_glob):
+            yield i
+        if os.path.exists(folder) and os.path.isfile(folder):
+            yield folder
+
+    def get_node_paths_to_dict(self, node, attr, amin_attr = 0,layer=None):
+        textures=[]
+        if layer:
+            source_path = self.get_node_attr_over(node, attr, layer)
+            layer = "_"+layer
+        else:
+            source_path = self.get_node_attr_over(node, attr)
+            layer = ""
+        
+        attr = "_" + attr
+        dict_key = node + attr + layer
+
+        textures = self.get_dict_from_path(source_path, dict_key, amin_attr)
+        return textures
+    
+    def file_images(self, udim_str, amin_attr=0):
+        if os.path.exists(udim_str) == 1 and amin_attr == 0:
+            yield udim_str
+        else:
+            p = re.compile(r'^(?:[a-z][:][\\/]|[\\\\]|(?:\${?))', re.I)
+            if not p.findall(udim_str):
+                udim_str = os.path.join(pm.workspace(q=1, fullName=1), udim_str)
+            udim_str = udim_str.replace('\\', '/')
+            dir_path, file_name_src = os.path.split(udim_str)
+            # print file_name_src
+            if os.path.exists(dir_path) == 1:
+                separator = udim_str.replace(dir_path, "").replace(file_name_src, "")
+                file_name = file_name_src.replace('(', "\(").replace(")", "\)").replace(".", "\.").replace("+", "\+")
+                # file_name = file_name_src
+                # \%[\d]+[d]   "%05d"
+                coms = {'<UDIM>': r"[\d]+", '<F>': r"[\d]+",
+                        '\%[\d]+[d]+': r"[\d]+", 'MAPID': r'[\d]+', "<tile>": r"[\d]+", "<uvtile>": r"[\d]+",
+                        "\#": r"[\d]+", "<meshitem>": r"[\d]+", "<u>": r"[\d]+", "<v>": r"[\d]+", "<Frame>": r"[\d]+"}
+                for comp in coms:
+                    file_name = re.sub(re.compile(comp, re.I), coms[comp], file_name)
+                if amin_attr:
+                    sep_num_re = re.compile(r"[0-9]+(?=[^0-9]*$)", re.I)
+                    sep_num = sep_num_re.findall(file_name)
+                    if sep_num:
+                        file_name = re.sub(sep_num[0], r"[\d]+", file_name)
+            
+                if file_name == file_name_src:
+                    if os.path.exists(udim_str):
+                        yield udim_str
+
+                else:
+                    
+                    file_name_glob = file_name.replace(r"[\d]+", "*").replace("\\", "")
+                    
+                    p2 = re.compile(file_name, re.I)
+                    # print glob.glob(os.path.join(dir_path,file_name_glob).replace('\\', separator))
+                    for i in glob.glob(os.path.join(dir_path, file_name_glob)):
+                        file_name_g = os.path.split(i)[1]
+                        # print file_name_g
+                        yield i.replace('\\', separator)
+                        # if p2.match(file_name_g):
+                        # yield i.replace('\\', separator)
+
+    def get_node_asstes(self,node_type, assts_attr=[], seq_attr=[], node_name=None):
+        textures = {}
+        nodes = []
+        if node_name:
+            nodes.append(pm.PyNode(node_name))
+        else:
+            nodes = pm.ls(type=node_type)
+        for node_i in nodes:
+            amin_attr = 0
+            overrides = 0
+        
+            for over_attr_i in list(set(assts_attr + seq_attr)):
+            
+                if self.get_node_overrides_able(node_i, over_attr_i):
+                    overrides = 1
+                    print "the %s is have layer overrides " % node_i
+                    break
+            if overrides:
+                for layer in self.get_all_render_layers():
+                    if seq_attr:
+                        for seq_attr_i in seq_attr:
+                            if self.get_node_attr_over(node_i, seq_attr_i, layer):
+                                amin_attr = 1
+                                break
+                    if assts_attr:
+                        for assts_attr_i in assts_attr:
+                            textures.update(self.get_node_paths_to_dict(node_i, assts_attr_i, amin_attr, layer))
+            
+            else:
+                if seq_attr:
+                    for seq_attr_i in seq_attr:
+                        if self.get_node_attr_over(node_i, seq_attr_i):
+                            amin_attr = 1
+                            break
+                if assts_attr:
+                    for assts_attr_i in assts_attr:
+                        textures.update(self.get_node_paths_to_dict(node_i, assts_attr_i, amin_attr))
+    
+        return textures
+  
+  
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    def get_legacy_particle(self,node_name = None):
+        textures = {}
+        if "particles" not in pm.workspace.fileRules.keys():
+            self.writing_error(2520)
+        else:
+            def_name = sys._getframe().f_code.co_name
+            pprint.pprint("start %s ..." % def_name)
+            nodes = []
+            if node_name:
+                nodes.append(pm.PyNode(node_name))
+            else:
+                nodes = pm.ls(type="dynGlobals")
+                cache_folder_list = []
+                for i in nodes:
+                    dict_key = i.name() + "_cacheDirectory"
+                    textures[dict_key] = {}
+                    textures[dict_key]["missing"] = []
+                    textures[dict_key]["local_path"] = []
+                    textures[dict_key]["env"] = {}
+                    textures[dict_key]["source_path"] = []
+                    if i.cacheDirectory.get():
+                        if i.cacheDirectory.get().strip():
+                            cache_folder = os.path.normpath(os.path.join(pm.workspace.fileRules.get("particles", "cache/particles"),i.cacheDirectory.get().strip()))
+                            cache_folder_strartup = cache_folder + "_startup"
+                            cache_folder_list += [i for i in self.get_files_from_folder(cache_folder,ext=".pdc")]
+                            cache_folder_list += [i for i in self.get_files_from_folder(cache_folder_strartup,ext=".pdc")]
+                            textures[dict_key]["source_path"].append(cache_folder)
+                            if cache_folder_list:
+                                textures[dict_key]["local_path"] += cache_folder_list
+                            else:
+                                textures[dict_key]["missing"].append(cache_folder)
+            
+            
+        pprint.pprint("end %s ..." % def_name)
+        return textures
+    def get_disk_cache(self,node_name  = None):
+        def_name = sys._getframe().f_code.co_name
+        pprint.pprint("start %s ..." % def_name)
+        textures = {}
+        if "diskCache" not in pm.workspace.fileRules.keys():
+            self.writing_error(2520)
+        else:
+            nodes = []
+            if node_name:
+                nodes.append(pm.PyNode(node_name))
+            else:
+                nodes = pm.ls(type="diskCache")
+            for node_i in nodes:
+                dict_key = node_i.name() + "_cacheName"
+                source_path  = self.get_node_attr_val(node_i,"cacheName")
+                if source_path:
+                    source_path = os.path.normpath(os.path.join(pm.workspace.fileRules.get("diskCache"), source_path))
+        
+                    textures.update(self.get_dict_from_path(source_path, dict_key))
+        pprint.pprint("end %s ..." % def_name)
+        return textures
+
+    def get_cacheFile(self, node_name=None):
+        def_name = sys._getframe().f_code.co_name
+        pprint.pprint("start %s ..." % def_name)
+        textures = {}
+        
+        nodes = []
+        if node_name:
+            nodes.append(pm.PyNode(node_name))
+        else:
+            nodes = pm.ls(type="cacheFile")
+        for node_i in nodes:
+            files = []
+            dict_key = node_i.name() + "_cachePath"
+            textures[dict_key] = {}
+            textures[dict_key]["missing"] = []
+            textures[dict_key]["local_path"] = []
+            textures[dict_key]["env"] = {}
+            textures[dict_key]["source_path"] = []
+            
+            
+            source_path = self.get_node_attr_val(node_i, "cachePath")
+            cache_name = self.get_node_attr_val(node_i, "cacheName")
+            if source_path and cache_name:
+                if self.get_path_env_val(source_path):
+                    textures[dict_key]["env"].update(self.get_path_env_val(source_path))
+                    for i in self.get_path_env_val(source_path):
+                        if self.get_path_env_val(source_path)[i]:
+                            source_path = source_path.replace("${" + i + "}", self.get_path_env_val(source_path)[i])
+                if cache_name.lower().endswith(".bin"):
+                    textures[dict_key]["source_path"].append(os.path.join(source_path,cache_name))
+                    cache_name.rsplit(".",2)
+                else:
+                    textures[dict_key]["source_path"].append(os.path.join(source_path, cache_name+".xml"))
+                for i in ["xml","mcc","mcx","bin","mc"]:
+                    files += self.get_files_from_folder(source_path,cache_name,i)
+                if files:
+                    textures[dict_key]["local_path"] += files
+                else:
+                    textures[dict_key]["missing"]+= textures[dict_key]["source_path"]
+
+        pprint.pprint("end %s ..." % def_name)
+        return textures
+    def get_fur(self,node_name =None):
+        def_name = sys._getframe().f_code.co_name
+        pprint.pprint("start %s ..." % def_name)
+        textures = {}
+        nodes = []
+        if node_name:
+            nodes.append(pm.PyNode(node_name))
+        else:
+            nodes = pm.ls(type="FurDescription")
+            for node_i in nodes:
+                for attr in  node_i.listAttr():
+                    
+                    if attr.find("Map") != -1:
+                        
+                        try:
+                            ii = 0
+                            for i in attr.get():
+                                dict_key = str(attr)+str(ii)
+                                
+                                if i:
+                                    ii = ii + 1
+                                    textures.update(self.get_dict_from_path(i, dict_key))
+                        except:
+                            pass
+
+                            
+      
+
+                        
+        
+        
+        pprint.pprint("end %s ..." % def_name)
+        return textures
+    def get_reference(self):
+        def_name = sys._getframe().f_code.co_name
+        pprint.pprint("start %s ..." % def_name)
+        textures = {}
+        env_re = re.compile(r'^\${?(\w+)}?', re.I)
+        all_reference = pm.listReferences(recursive=1)
+
+        for i in all_reference:
+            
+            dict_key_unresolvedPath  =  i.refNode.name() +"_unresolvedPath"
+            unresolvedPath_source_path = str(i.unresolvedPath())
+            textures.update(self.get_dict_from_path(unresolvedPath_source_path, dict_key_unresolvedPath))
+            
+            dict_key_unresolvedPath = i.refNode.name() + "_path"
+            unresolvedPath_source_path = str(i.path)
+            textures.update(self.get_dict_from_path(unresolvedPath_source_path, dict_key_unresolvedPath))
+        pprint.pprint("end %s ..." % def_name)
+        return textures
+    def get_file(self,node_name = None):
+        textures = {}
+        textures.update(self.get_node_asstes("file",assts_attr=["fileTextureName"],seq_attr = ["useFrameExtension","uvTilingMode"]))
+        textures.update(self.get_node_asstes("file",assts_attr=["computedFileTextureNamePattern"],seq_attr = ["useFrameExtension","uvTilingMode"]))
+        
+        
+        return textures
+      
+    def get_AlembicNode(self,node_name =None):
+        textures = {}
+        textures.update(self.get_node_asstes("AlembicNode",assts_attr=["abc_File"]))
+        return textures
+   
+  
+    def get_imagePlane(self, node_name=None):
+
+        textures = {}
+        textures.update(self.get_node_asstes("imagePlane",assts_attr=["imageName"],seq_attr = ["useFrameExtension"]))
+        return textures
+
+
+    def get_psdFileTex(self, node_name=None):
+        textures = {}
+        textures.update(self.get_node_asstes("psdFileTex", assts_attr=["fileTextureName"], seq_attr=["useFrameExtension"]))
+        return textures
+
+    def get_psdFileTex(self, node_name=None):
+        textures = {}
+        textures.update(self.get_node_asstes("psdFileTex", assts_attr=["fileTextureName"], seq_attr=["useFrameExtension"]))
+        return textures
+
+    def get_xgen_with_maya_file(self,maya_files):
+        maya_files = []
+        refer_dict = self.get_reference()
+
+
+        for key in refer_dict:
+            maya_files.append(refer_dict[key]["local_path"])
+        
+        maya_files.append(pm.system.sceneName())
+        files = []
+        for maya_file in maya_files:
+            maya_path = os.path.dirname(maya_file)
+            file_name = os.path.splitext(os.path.basename(maya_file))[0]
+            files += [ i for i in self.get_files_from_folder(maya_path,file_name,"xgen")]
+            files += [i for i in self.get_files_from_folder(maya_path, file_name, "abc")]
+            files += [i for i in self.get_files_from_folder(maya_path, file_name, "json")]
+            print files
+    def get_xgen_re_allattrs(self):
+        import xgenm as xg
+        import xgenm.xgGlobal as xgg
+        if xgg.Maya:
+            xgen_path = []
+            palettes = xg.palettes()
+            # print xg.rootDir()
+            for palette in palettes:
+                p1 = re.compile(r"(?<=map\(\')[\w _\-.:()\\/$/+{}']+(?=\'\))", re.I)
+                p2 = re.compile(r"^\${.*", re.I)
+                # p3 = re.compile(r'[a-z][:][\\/][\w _\-.:()\\/$+]+\.[\w]+',re.I)
+                p3 = re.compile(r'[a-z][:][\\/][\w _\-.:()\\/$+]+', re.I)
+                files_p = re.compile(r'(?<=")(?:[a-z][:][\\/]|[\\\\]|[\${?])(?:[\w _\-.:()\\/$/+{}\'])+(?=")', re.I)
+                attrs = xg.allAttrs(palette)
+                palette_attr_list = []
+                for attr in attrs:
+                    palette_attr = xg.getAttr(attr, palette).strip()
+                    if attr == "xgDataPath":
+                        xgDataPath_path = palette_attr
+                        xgen_path.append(xg.expandFilepath(xgDataPath_path, palette))
+                
+                    if attr == "xgProjectPath":
+                        xgProjectPath_path = palette_attr
+                        continue
+                    if "$" in palette_attr:
+                        r1 = p1.findall(palette_attr)
+                        r2 = p2.findall(palette_attr)
+                        if r1:
+                            for rr in r1:
+                                palette_attr_list.append(rr)
+                        if r2:
+                            for rr in r2:
+                                palette_attr_list.append(rr)
+                    else:
+                        r3 = p3.findall(palette_attr)
+                        if r3:
+                            for rr in r3:
+                                palette_attr_list.append(rr)
+            
+                descriptions = xg.descriptions(palette)
+                for description in descriptions:
+                    # print xgDataPath_path,xgProjectPath_path
+                    desc = xg.expandFilepath("${DESC}", description)
+                
+                    for attr in palette_attr_list:
+                        xgen_path.append(xg.expandFilepath(attr, description))
+                
+                    objects = xg.objects(palette, description, True)
+                    for object in objects:
+                        # print " Object:" + object
+                        attrs = xg.allAttrs(palette, description, object)
+                    
+                        for attr in attrs:
+                            attr_Value = xg.getAttr(attr, palette, description, object)
+                            # print "attr :" + attr
+                            # print "attr_Value : " +attr_Value
+                            if attr == "files":
+                                Archive_files = self.get_xgen_Archive_files(attr_Value,description)
+                                for Archive_file in Archive_files:
+                                    
+                                    print Archive_file
+                                # file_rs = files_p.findall(attr_Value)
+                                # if file_rs:
+                                #     for file_r in file_rs:
+                                #         file_r = os.path.normpath(xg.expandFilepath(file_r, description))
+                                #         if file_r:
+                                #             archives = ["\\ass\\", "\\abc\\", "\\materials\\", "\\mi\\", "\\rib\\"]
+                                #             xgen_path += [file_r.split(i)[0] for i in archives if i in file_r]
+                            if attr == "cacheFileName":
+                                print attr_Value
+                            r1 = p1.findall(attr_Value)
+                            r2 = p2.findall(attr_Value)
+                            r3 = p3.findall(attr_Value)
+                            if r1:
+                                for rr in r1:
+                                    rr = xg.expandFilepath(rr, description)
+                                    if rr:
+                                        xgen_path.append(rr)
+                            if r2:
+                                for rr in r2:
+                                    rr = xg.expandFilepath(rr, description)
+                                    if rr:
+                                        xgen_path.append(rr)
+                        
+                            if r3:
+                                for rr in r3:
+                                    if rr:
+                                        xgen_path.append(rr)
+                    fxModules = xg.fxModules(palette, description)
+                    for fxModule in fxModules:
+                        # print " fxModule:" + fxModule
+                        attrs = xg.allAttrs(palette, description, fxModule)
+                        for attr in attrs:
+                            attr_Value = xg.getAttr(attr, palette, description, fxModule)
+                        
+                            r1 = p1.findall(attr_Value)
+                            r2 = p2.findall(attr_Value)
+                            r3 = p3.findall(attr_Value)
+                            if r1:
+                                for rr in r1:
+                                    # rr = xg.expandFilepath(rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc),description)
+                                    rr = rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc)
+                                    if rr:
+                                        xgen_path.append(rr)
+                            if r2:
+                                for rr in r2:
+                                    # rr = xg.expandFilepath(rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc), description)
+                                    rr = rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc)
+                                    if rr:
+                                        xgen_path.append(rr)
+                            if r3:
+                                for rr in r3:
+                                    # rr = xg.expandFilepath(rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc),description)
+                                    rr = rr.replace("${FXMODULE}", fxModule).replace("${DESC}", desc)
+                                    if rr:
+                                        xgen_path.append(rr)
+            #print xgen_path
+            xgen_path = [os.path.normpath(i.rstrip("/")) for i in set(xgen_path)]
+            return set(xgen_path)
+
+    def get_files_from_xgen(self, xgen_file):
+            
+        
+        
+        file_str = [i for i in open(xgen_file, "r") if not i.startswith("#")]
+        files = set()
+        p = re.compile(r'[a-z][:][\\/][\w _\-.:()\\/$+]+\.[\w]{2,5}(?![\w\W])', re.I)
+        for file_i in file_str:
+            r = p.findall(file_i)
+            if r:
+                for ii in r:
+                    files.add(ii)
+        return [RvPath(i) for i in files]
+
+    
+    def get_xgen_Archive_files(self,Archive_attr,description):
+        Archive_name_re = re.compile(r"(?<=name\=\")[\w _\-.:()\\/$/+{}']+(?=\")", re.I)
+        Archive_file_re = re.compile(r'(?<=")(?:[a-z][:][\\/]|[\\\\]|[\${?])(?:[\w _\-.:()\\/$/+{}\'])+(?=\")', re.I)
+        Archive_files = []
+   
+        files=[]
+        if "#ArchiveGroup" in Archive_attr:
+            line = Archive_attr.strip().strip("files").strip()
+            for li in line.split("#ArchiveGroup "):
+                if li:
+                    if Archive_name_re.findall(li):
+                        Archive_name = Archive_name_re.findall(li)[0]
+                        #print Archive_name
+                    if Archive_file_re.findall(li):
+                        for file in Archive_file_re.findall(li):
+                            file_r = os.path.normpath(xg.expandFilepath(file, description))
+                            
+                            
+                            if "\\mi\\" in file_r:
+                                Archive_files +=  self.get_files_from_folder(os.path.split(file_r)[0], Archive_name+"*", "mi.gz")
+                            
+                            if "\\rib\\" in file_r  or "ribarchives" in file_r:
+                                Archive_files += self.get_files_from_folder(os.path.split(file_r)[0],
+                                                                            Archive_name + "*", "zip")
+
+                                Archive_files += self.get_files_from_folder(os.path.join(os.path.split(file_r)[0],
+                                                                            Archive_name + "*"), "*")
+                            
+                            if "\\ass\\" in file_r:
+                                Archive_files += self.get_files_from_folder(os.path.split(file_r)[0],
+                                                                            Archive_name + "*", "gz")
+                                Archive_files += self.get_files_from_folder(os.path.split(file_r)[0],
+                                                                            Archive_name + "*", "asstoc")
+                                Archive_files += self.get_files_from_folder(os.path.split(file_r)[0],
+                                                                            Archive_name + "*", "ass")
+
+                            if "\\materials\\" in file_r:
+                                Archive_files +=  self.get_files_from_folder(os.path.split(file_r)[0], Archive_name+"*", "ma")
+
+                            if "\\abc\\" in file_r:
+                                Archive_files +=  self.get_files_from_folder(os.path.split(file_r)[0], Archive_name+"*", "abc")
+
+                            Archive_files += self.get_files_from_folder(os.path.split(os.path.split(file_r)[0])[0],
+                                                                            Archive_name + "*", "xarc")
+                            Archive_files += self.get_files_from_folder(os.path.split(os.path.split(file_r)[0])[0],
+                                                                            Archive_name + "*", "log")
+
+
+                            
+        
+        
+        
+        #print len(list(set(Archive_files)))
+        return list(set(Archive_files))
+
+def analyze_maya(options):
+    print "88888888888888"
+    print options
+    print type(options)
+    analyze = Analyze(options)
+
+    analyze.check_maya_version(options["cg_file"],options["cg_version"])
+    analyze.start_open_maya()
+    analyze.get_layer_settings()
+    analyze.print_info("get layer setting info ok.")
+
+    analyze.write_task_info()
+    analyze.print_info("write task info ok.")
+
+    analyze.write_asset_info()
+    analyze.print_info("write asset info ok.")
+
+    analyze.write_tips_info()
+    analyze.print_info("write tips info ok.")
+
+if __name__ == '__main__':
+    options = {}
+    '''
+    import sys
+    sys.path.append("E:\\PycharmProjects\\maya_analyze")
+    import Analyze
+    a = Analyze.Asset()
+    for i in a.ceate_asset():
+        print i, a.ceate_asset()[i]
+    '''
+    # analyze = Analyze(options)
+    # print dir(analyze)
+    # print analyze.get_default_render_globals("defaultRenderLayer")
+    # asset = Asset()
+    a = Asset()
+    # print a.get_reference()
+    # print a.get_file()
+    # for i in a.get_files_from_folder("E:\\fang\\fagng\\cache\\particles\\legacy_par_2014_startup","particleShape",ext=".*"):
+    #     print i
+    #print a.get_file()
+
+    # maya_file = r"E:\\fang\\fagng\\scenes\\xgen_test\\xgen_groon.mb"
+    # a.get_xgen_with_maya_file(maya_file)
+
+    #a.get_xgen_re_allattrs()
+    # xgen_file = r"D:\ddddd\test  fgffff.xarc"
+    # a.get_files_from_xgen(xgen_file)
+    # xgen_file = r"E:\gdc\test_del\133_005_350_CHM008_Light_1006_1067__CHM008ColV02.xgen"
+    # print a.get_files_from_xgen(xgen_file)
+    
+    
+    # Archive_attr = r'	files			#ArchiveGroup 0 name="Archive_test" thumbnail="Archive_test.png" description="No description." materials="${PROJECT}/xgen/archives/materials/Archive_test.ma" color=[1.0,0.0,0.0]\n0 "${PROJECT}/xgen/archives/abc/Archive_test.abc" material=Archive_test:initialShadingGroup objects=|pSphere1\n1 "${PROJECT}/xgen/archives/abc/Archive_test.abc" material=Archive_test:initialShadingGroup objects=|pSphere1\n2 "${PROJECT}/xgen/archives/abc/Archive_test.abc" material=Archive_test:initialShadingGroup objects=|pSphere1\n3 "${PROJECT}/xgen/archives/ass/Archive_test__pSphere1.ass.gz" material=Archive_test:initialShadingGroup objects=|pSphere1\n4 "${PROJECT}/xgen/archives/ass/Archive_test__pSphere1.ass.gz" material=Archive_test:initialShadingGroup objects=|pSphere1\n5 "${PROJECT}/xgen/archives/ass/Archive_test__pSphere1.ass.gz" material=Archive_test:initialShadingGroup objects=|pSphere1\n\n#ArchiveGroup 1 name="Archive" thumbnail="Archive.png" description="No description." materials="${PROJECT}/xgen/archives/materials/Archive.ma" color=[1.0,0.0,0.0]\n0 "${PROJECT}/xgen/archives/abc/Archive.abc" material=Archive:aiStandard1SG objects=|pSphere1\n1 "${PROJECT}/xgen/archives/abc/Archive.abc" material=Archive:aiStandard1SG objects=|pSphere1\n2 "${PROJECT}/xgen/archives/abc/Archive.abc" material=Archive:aiStandard1SG objects=|pSphere1\n3 "${PROJECT}/xgen/archives/mi/Archive__pSphere1.${FRAME}.mi.gz" material=Archive:aiStandard1SG objects=|pSphere1\n4 "${PROJECT}/xgen/archives/mi/Archive__pSphere1.${FRAME}.mi.gz" material=Archive:aiStandard1SG objects=|pSphere1\n5 "${PROJECT}/xgen/archives/mi/Archive__pSphere1.${FRAME}.mi.gz" material=Archive:aiStandard1SG objects=|pSphere1\n3 "${PROJECT}/renderman/ribarchives/ArchiveRibArchiveShape.zip" material=Archive:aiStandard1SG objects=Archive\n4 "${PROJECT}/renderman/ribarchives/ArchiveRibArchiveShape.zip" material=Archive:aiStandard1SG objects=Archive\n5 "${PROJECT}/renderman/ribarchives/ArchiveRibArchiveShape.zip" material=Archive:aiStandard1SG objects=Archive\n3 "${PROJECT}/xgen/archives/ass/Archive__pSphere1.${FRAME}.ass.gz" material=Archive:aiStandard1SG objects=Archive\n4 "${PROJECT}/xgen/archives/ass/Archive__pSphere1.${FRAME}.ass.gz" material=Archive:aiStandard1SG objects=Archive\n5 "${PROJECT}/xgen/archives/ass/Archive__pSphere1.${FRAME}.ass.gz" material=Archive:aiStandard1SG objects=Archive\n\n#ArchiveGroup 2 name="zhui" thumbnail="zhui.png" description="No description." materials="${PROJECT}/xgen/archives/materials/zhui.ma" color=[1.0,0.0,0.0]\n0 "${PROJECT}/xgen/archives/abc/zhui.abc" material=zhui:initialShadingGroup objects=|pCone1\n1 "${PROJECT}/xgen/archives/abc/zhui.abc" material=zhui:initialShadingGroup objects=|pCone1\n2 "${PROJECT}/xgen/archives/abc/zhui.abc" material=zhui:initialShadingGroup objects=|pCone1\n3 "${PROJECT}/xgen/archives/mi/zhui__pCone1.${FRAME}.mi.gz" material=zhui:initialShadingGroup objects=|pCone1\n4 "${PROJECT}/xgen/archives/mi/zhui__pCone1.${FRAME}.mi.gz" material=zhui:initialShadingGroup objects=|pCone1\n5 "${PROJECT}/xgen/archives/mi/zhui__pCone1.${FRAME}.mi.gz" material=zhui:initialShadingGroup objects=|pCone1\n3 "${PROJECT}/renderman/ribarchives/zhuiRibArchiveShape.zip" material=zhui:initialShadingGroup objects=zhui\n4 "${PROJECT}/renderman/ribarchives/zhuiRibArchiveShape.zip" material=zhui:initialShadingGroup objects=zhui\n5 "${PROJECT}/renderman/ribarchives/zhuiRibArchiveShape.zip" material=zhui:initialShadingGroup objects=zhui\n3 "${PROJECT}/xgen/archives/ass/zhui__pCone1.${FRAME}.ass.gz" material=zhui:initialShadingGroup objects=zhui\n4 "${PROJECT}/xgen/archives/ass/zhui__pCone1.${FRAME}.ass.gz" material=zhui:initialShadingGroup objects=zhui\n5 "${PROJECT}/xgen/archives/ass/zhui__pCone1.${FRAME}.ass.gz" material=zhui:initialShadingGroup objects=zhui\n\n'
+    # a.get_xgen_Archive_files(Archive_attr)
+    
+    #print a.get_path_env_val("${maya_app_dir}\\a")
+    #a.get_assets_from_name("file1")
+    # for i in  a.ceate_asset():
+    #     print i,a.ceate_asset()[i]
+
+
+    exprString0 = '\\$(\\w+)\\s*=\\s*map\\([\"\']([\\w${}\\-\\\\/]+)[\"\']\\);\\s*#'
+    exprString1 = '\\$(\\w+)\\s*=\\s*map\\([\"\']([\\w${}\\-\\\\/]+)[\"\']\\);\\s*#file'
+    exprString2 = '\\$(\\w+)\\s*=\\s*vmap\\([\"\']([\\w${}\\-\\\\/]+)[\"\']\\);\\s*#vpaint'
+    exprStrings = [exprString0, exprString1, exprString2]
+
+    attrval = "1.0 # map('${DESC}/density/')"
+
+    for s in exprStrings:
+        p = re.compile(s,re.I)
+        #print p.findall(attrval)
+    a.get_xgen_re_allattrs()
+

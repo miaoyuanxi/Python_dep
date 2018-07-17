@@ -1,0 +1,120 @@
+{
+    "miscellaneous": {
+        "only_photon": "0"
+ 
+    },
+    "system_info": {
+        "common": {
+            "tiles_path": "",
+            "channel": "1",
+            "input_project_path": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001/Z",
+            "kafka_topic": "node-kafka-topic",
+            "task_id": "12",
+            "config_path": "//10.60.100.104/new_render_data/input/p\\config\\100000\\100001\\123456789\\cfg",
+            "auto_commit": 1,
+            "grab_path": "//10.60.100.104/new_render_data/input/d\\grab\\100000\\100001\\123456789",
+            "plugin_path": "//10.60.100.151\\td",
+            "platform": "2",
+            "input_user_path": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001",
+            "zone": "1",
+            "kafka_server": ["10.60.96.142:9092"],
+            "user_id": "100001",
+            "distribute_node": "1",
+            "input_cg_file": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001/Z/test2018.ma",
+            "small_Path": "//10.60.100.104/new_render_data/input/d\\small_pic\\100000\\100001\\123456789",
+            "output_user_path": "\\\\10.60.100.104\\new_render_data\\output\\d\\render_data\\100000\\100001\\test2018ma",
+            "temp_path": "//10.60.100.104/new_render_data/input/d\\temp\\100000\\100001\\123456789",
+            "render_layer_type":'0',
+
+        }
+    },
+    "scene_info_render": {
+        "renderer": {
+            
+        },
+        "common": {
+            
+        }
+    },
+    "software_config": {
+        "plugins": {
+            "mtoa": "2.1.0.2",
+            "redshift": "2.5.56"
+        },
+        "cg_version": "2018",
+        "cg_name": "maya"
+    },
+    "scene_info": {
+        "layer01": {
+            "renderable": "1",
+            "common": {
+                "renderer": "arnold",
+                "image_file_prefix": "<RenderLayer>/<Scence>",
+                "start": "1",
+                "end": "100",
+                "by_frame": "1",
+                "all_camera": ["camera01",
+                "camera02",
+                "camera03"],
+                "render_camera": ["camera03","camera01"],
+                "image_format": "exr",
+                "width": "1920",
+                "height": "1080",
+                "renumber_frames": "0",
+                "animation": "0"
+            },
+            "option": {
+                "append": "0",
+                "motion_blur_enable": "0",
+                "merge_aovs": "0",
+                "abort_on_error": "0",
+                "log_verbosity": "1",
+                "sampling": "[10,5,4,3,2,1]",
+                "auto_tx": "0",
+                "use_existing_tiled_textures": "0",
+                "texture_max_memory_mb": "20480",
+                "render_type": "0",
+                "threads_autodetect": "1",
+                "threads": "32",
+                "absolute_texture_paths": "1",
+                "absolute_procedural_paths": "1",
+                "ignore_motion_blur": "0",
+                "pre_render_mel": "",
+                "post_render_mel": "",
+                "pre_render_layer_mel": "",
+                "post_render_layer_mel": "",
+                "pre_render_frame_mel": "",
+                "post_render_frame_mel": ""
+            }
+        },
+        "layer02": {
+            "renderable": "1",
+            "common": {
+                "renderer": "redshift",
+                "image_file_prefix": "<RenderLayer>/<Scence>",
+                "start": "10",
+                "end": "1000",
+                "by_frame": "1",
+                "all_camera": ["camera01",
+                "camera02",
+                "camera03"],
+                "render_camera": ["camera02"],
+                "image_format": "exr",
+                "width": "1920",
+                "height": "1080",
+                "renumber_frames": "0",
+                "animation": "0"
+            },
+            "option": {
+                "motion_blur_enable": "0",
+                "motion_blur_deformation_enable": "0",
+                "pre_render_mel": "",
+                "post_render_mel": "",
+                "pre_render_layer_mel": "",
+                "post_render_layer_mel": "",
+                "pre_render_frame_mel": "",
+                "post_render_frame_mel": ""
+            }
+        }
+    }
+}

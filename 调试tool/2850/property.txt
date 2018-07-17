@@ -1,0 +1,57 @@
+General 
+	3ds Max Version: 16.00 
+	Uncompressed 
+	Build: 16.0.420.0 
+	Saved As Version: 16.00 
+Mesh Totals 
+	Vertices: 530 
+	Faces: 1024 
+Scene Totals 
+	Objects: 2 
+	Shapes: 0 
+	Lights: 0 
+	Cameras: 1 
+	Helpers: 0 
+	Space Warps: 0 
+	Total: 3 
+External Dependencies 
+Objects 
+	Teapot001 
+	Camera001 
+	Camera001.Target 
+Materials 
+Used Plug-Ins 
+	custattribcontainer.dlo 
+	viewportmanager.gup 
+	mtl.dlt 
+	samplers.dlh 
+	prosound.dlc 
+	ctrl.dlc 
+	prim.dlo 
+	multipassdof.dlv 
+	kernel.dlk 
+	rend.dlr 
+	biped.dlc 
+	peopleorch.dlc 
+	reactor.dlc 
+	parameditor.gup 
+	bitmapproxies.dlu 
+	storageandfilter.bms 
+	acadblocks.dlu 
+	instancemgr.dlu 
+Render Data 
+	User Name=hekaihao 
+	Computer Name=HEKAIHAO 
+	Render Camera 00=Camera001 
+	Render Width=640 
+	Render Height=480 
+	Render Aspect=1.00 
+	Renderer ClassIDA=1 
+	Renderer ClassIDB=0 
+	Renderer Name=Default Scanline Renderer 
+	Animation Start=0 
+	Animation End=0 
+	Render Flags=32 
+	Scene Flags=57032 
+	RenderElements=1 
+

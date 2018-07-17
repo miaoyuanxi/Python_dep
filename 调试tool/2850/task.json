@@ -1,0 +1,94 @@
+{
+    "miscellaneous": {},
+    "system_info": {
+        "common": {
+            "tiles_path": "//10.60.100.104/new_render_data/input/p\\temp_title",
+            "channel": "2",
+            "input_project_path": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001/B",
+            "task_id": "2850",
+            "config_path": "//10.60.100.104/new_render_data/input/p\\config\\100000\\100001",
+            "auto_commit": "2",
+            "fee_path": "//10.60.100.104/new_render_data/input/o\\fee",
+            "api_path": "//10.60.100.104/new_render_data/input/p\\api",
+            "grab_path": "//10.60.100.104/new_render_data/input/d\\grab\\100000\\100001",
+            "plugin_path": "//10.60.100.152\\td",
+            "platform": "2",
+            "input_user_path": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001",
+            "small_path": "//10.60.100.104/new_render_data/input/d\\small_pic\\100000\\100001",
+            "zone": "1",
+            "user_id": "100001",
+            "distribute_node": "1",
+            "input_cg_file": "//10.60.100.104/new_render_data/input/d/render_data/100000/100001/B/testkkkk.max",
+            "output_user_path": "\\\\10.60.100.104\\new_render_data\\output\\d\\render_data\\100000\\100001",
+            "temp_path": "//10.60.100.104/new_render_data/input/d\\temp\\100000\\100001"
+        }
+    },
+    "scene_info_render": {
+        "renderer": {
+            "photonnode": "0",
+            "name": "scanline"
+        },
+        "common": {
+            "frames": "0-10",
+            "out_gamma": "2.2",
+            "output_file_type": ".jpg",
+            "element_type": "png",
+            "output_file": "Renderbus.jpg",
+            "gamma_val": "2.2",
+            "element_active": "1",
+            "animation_range": "0-100",
+            "cgv": "3ds Max 2014",
+            "in_gamma": "2.2",
+            "element_list": [
+                ""
+            ],
+            "output_file_basename": "Renderbus",
+            "all_camera": [
+                "Camera001"
+            ],
+            "width": "640",
+            "renderable_camera": [
+                "Camera001"
+            ],
+            "global_proxy": "0",
+            "gamma": "gamma",
+            "height": "480"
+        }
+    },
+    "software_config": {
+        "plugins": {
+            "rayvision": "1.0.0"
+        },
+        "cg_version": "2014",
+        "cg_name": "3ds Max"
+    },
+    "scene_info": {
+        "renderer": {
+            "name": "scanline"
+        },
+        "common": {
+            "frames": "0",
+            "out_gamma": "2.2",
+            "output_file_type": ".tga",
+            "element_type": "tga",
+            "output_file": "Renderbus.tga",
+            "gamma_val": "2.2",
+            "element_active": "1",
+            "animation_range": "0-100",
+            "cgv": "3ds Max 2014",
+            "in_gamma": "2.2",
+            "element_list": [],
+            "output_file_basename": "Renderbus",
+            "all_camera": [
+                "Camera001"
+            ],
+            "width": "640",
+            "renderable_camera": [
+                "Camera001"
+            ],
+            "global_proxy": "0",
+            "gamma": "gamma",
+            "height": "480"
+        }
+    }
+}

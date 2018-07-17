@@ -1,0 +1,44 @@
+{
+  "asset": [], 
+  "missing_file": [
+    {
+      "node": "file2_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file1_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file3_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file3_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file2_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file1_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }
+  ], 
+  "scene_file": [
+    "//10.60.100.104/stg_data/input/d/inputdata5/10001000/10001130/layer.mb"
+  ]
+}

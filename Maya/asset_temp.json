@@ -1,0 +1,33 @@
+
+
+
+{"Node_type":["NodeName_attribute":{"source_path":"sameiamge/a.udim.jpg","local_path":["z:/proj/somiage/a.1001.jpg","z:/proj/somiage/a.1002.jpg"],"missing":[]},
+              "NodeName1_attribute1":{"source_path":"sameiamge/b.<f>.jpg","local_path":[],"missing":["nodeanme_attrname-->sameiamge/b.<f>.jpg"]}],
+
+
+
+
+"aiImage":["aiImage1_filename":{"source_path":"sameiamge/a.udim.jpg","local_path":["z:/proj/somiage/a.1001.jpg","z:/proj/somiage/a.1002.jpg"],"missing":[]},                                                                      ],
+"env":{}
+}
+
+
+
+
+
+
+
+
+func_list = {"file":"get_file","aiImage":"get_aiImage","AlembicNode":"get_abc"}
+
+
+
+def get_file():
+    pass
+
+
+
+
+
+
+

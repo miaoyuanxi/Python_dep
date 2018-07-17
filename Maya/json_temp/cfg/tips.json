@@ -1,0 +1,40 @@
+{
+  "20001": [
+    {
+      "node": "file2_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file1_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file3_computedFileTextureNamePattern", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file3_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file2_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }, 
+    {
+      "node": "file1_fileTextureName", 
+      "path": [
+        "C:\\Users\\Administrator\\Desktop\\layer\\images\\AE24_006_chair_002_color_01.jpg"
+      ]
+    }
+  ]
+}

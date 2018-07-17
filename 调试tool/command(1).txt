@@ -1,0 +1,1 @@
+"c:\python34\python.exe" "C:\Users\enfuzion\Desktop\2850\0\script_2018032700034_0" "2018032700034" "0" "31562" "11252897107488" "GD239" "0" 

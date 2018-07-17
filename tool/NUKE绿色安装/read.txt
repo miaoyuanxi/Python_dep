@@ -1,0 +1,4 @@
+nuke  包  拷贝到任何位置，
+
+
+拷贝The Foundry    文件夹到 C:\ProgramData  目录下    ，   cmd启动  C:\ProgramData\The Foundry\RLM   目录下的 rlm.exe

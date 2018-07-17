@@ -1,0 +1,59 @@
+
+{
+
+"file_list":[
+
+{"nodename.attributename":"p:/dir1/dir2/abc001.exr"},
+
+{"file1.texturename":"p:/dir1/dir2/abc002.exr"}
+
+    
+]
+
+
+"scene_name":"M:/jdjjdj/XXX.ma"
+
+"miss_files":
+{
+    "path3":{"realflow.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"realflow.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"realflow.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"realflow.texturename":"x:/xxxx/xs/kkk.xml"}
+    
+    "path3":{"phoenifx.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"phoenifx.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"phoenifx.texturename":"x:/xxxx/xs/kkk.xml"}
+    "path3":{"phoenifx.texturename":"x:/xxxx/xs/kkk.xml"}
+}
+}
+
+
+
+
+
+realflow xxx/mmm
+
+
+
+
+
+
+
+
+
+
+
+p:/dir1/dir2/abc001.exr-->>/userid/p/xxxx
+
+
+
+scene : p:/dir1/dir2/abc001.exr
+scene:  p:/xxx/mmm.jpg
+
+
+really  d:/p/xxxx.max
+really: d:/p/abc001.exr
+really:  e:/xxx/mmm.jpg
+
+
+server :  /userid/p/xxxx

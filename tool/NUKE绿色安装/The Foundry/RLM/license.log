@@ -1,0 +1,59 @@
+FOUNDRY LICENSE ERROR REPORT
+----------------------------
+Timestamp: Tue Oct 17 15:34:50 2017
+License(s) Requested:
+nuke 2017.0607 interactive with options all 
+Extended Info: None Provided
+Host : GA004
+System ID(s) : 047d7b5bce02 , 00221917ab28 , 448a5b5d727d
+RLM Environment Info: C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing
+
+
+Reason for failure: 
+A suitable license does not exist.
+
+LICENSE DIAGNOSTICS
+---------------------------
+nuke_i : No license for product (-1)
+License Path:
+C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing;C:\ProgramData\The Foundry\RLM
+FOUNDRY LICENSE ERROR REPORT
+----------------------------
+Timestamp: Tue Oct 17 15:36:22 2017
+License(s) Requested:
+nuke 2017.0607 interactive with options all 
+Extended Info: None Provided
+Host : GA004
+System ID(s) : 047d7b5bce02 , 00221917ab28 , 448a5b5d727d
+RLM Environment Info: C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing
+
+
+Reason for failure: 
+Failed to understand response from server.
+
+LICENSE DIAGNOSTICS
+---------------------------
+nuke_i : Communications error with license server (-17)
+Connection refused at server (-111)
+License Path:
+C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing;C:\ProgramData\The Foundry\RLM
+FOUNDRY LICENSE ERROR REPORT
+----------------------------
+Timestamp: Tue Oct 17 15:37:27 2017
+License(s) Requested:
+nuke 2017.0607 interactive with options all 
+Extended Info: None Provided
+Host : GA004
+System ID(s) : 047d7b5bce02 , 00221917ab28 , 448a5b5d727d
+RLM Environment Info: C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing
+
+
+Reason for failure: 
+Failed to understand response from server.
+
+LICENSE DIAGNOSTICS
+---------------------------
+nuke_i : Communications error with license server (-17)
+Connection refused at server (-111)
+License Path:
+C:\Users\enfuzion\FoundryLicensing\047d7b5bce02;C:\Program Files\The Foundry\RLM;C:\ProgramData\The Foundry\RLM;C:\Program Files (x86)\The Foundry\RLM;C:\Users\enfuzion\FoundryLicensing;C:\ProgramData\The Foundry\RLM

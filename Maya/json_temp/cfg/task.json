@@ -1,0 +1,109 @@
+{
+  "mnt_map": {
+    "A:": "//10.60.100.104/stg_data/input/d/inputdata5/10001000/10001130/maya"
+  }, 
+  "scene_info": {
+    "defaultRenderLayer": {
+      "renderable": "0", 
+      "is_default_camera": "1", 
+      "common": {
+        "renderer": "mayaSoftware", 
+        "image_file_prefix": "", 
+        "start": "1", 
+        "end": "10", 
+        "by_frame": "1", 
+        "all_camera": [
+          "perspShape"
+        ], 
+        "render_camera": [
+          "perspShape"
+        ], 
+        "renumber_frames": "False", 
+        "width": "960", 
+        "height": "540", 
+        "image_format": "iff", 
+        "animation": "True", 
+        "file_name": "[u'masterLayer/layer.0001.iff']"
+      }, 
+      "option": "", 
+      "env": {}
+    }, 
+    "layer1": {
+      "renderable": "1", 
+      "is_default_camera": "1", 
+      "common": {
+        "renderer": "mayaSoftware", 
+        "image_file_prefix": "", 
+        "start": "1", 
+        "end": "10", 
+        "by_frame": "1", 
+        "all_camera": [
+          "perspShape"
+        ], 
+        "render_camera": [
+          "perspShape"
+        ], 
+        "renumber_frames": "False", 
+        "width": "960", 
+        "height": "540", 
+        "image_format": "iff", 
+        "animation": "True", 
+        "file_name": "[u'layer1/layer.0001.iff']"
+      }, 
+      "option": ""
+    }, 
+    "layer2": {
+      "renderable": "1", 
+      "is_default_camera": "1", 
+      "common": {
+        "renderer": "mayaSoftware", 
+        "image_file_prefix": "", 
+        "start": "1", 
+        "end": "10", 
+        "by_frame": "1", 
+        "all_camera": [
+          "perspShape"
+        ], 
+        "render_camera": [
+          "perspShape"
+        ], 
+        "renumber_frames": "False", 
+        "width": "960", 
+        "height": "540", 
+        "image_format": "iff", 
+        "animation": "True", 
+        "file_name": "[u'layer2/layer.0001.iff']"
+      }, 
+      "option": ""
+    }, 
+    "layer3": {
+      "renderable": "1", 
+      "is_default_camera": "1", 
+      "common": {
+        "renderer": "mayaSoftware", 
+        "image_file_prefix": "", 
+        "start": "1", 
+        "end": "10", 
+        "by_frame": "1", 
+        "all_camera": [
+          "perspShape"
+        ], 
+        "render_camera": [
+          "perspShape"
+        ], 
+        "renumber_frames": "False", 
+        "width": "960", 
+        "height": "540", 
+        "image_format": "iff", 
+        "animation": "True", 
+        "file_name": "[u'layer3/layer.0001.iff']"
+      }, 
+      "option": ""
+    }
+  }, 
+  "software_config": {
+    "cg_version": "2015", 
+    "cg_name": "maya", 
+    "plugins": {}
+  }
+}
