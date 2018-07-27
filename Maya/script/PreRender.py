@@ -654,6 +654,11 @@ class PreRender(dict,PreRenderBase):
                 self.mtoa_dict["auto_tx"] = str(arnold_options_node.autotx.get())
                 if self.mtoa_dict["auto_tx"] == 'False':
                     self.mtoa_dict["use_existing_tiled_textures"] = str(arnold_options_node.use_existing_tiled_textures.get())
+
+            else:
+                self.mtoa_dict["auto_tx"] = "No attribute"
+                self.mtoa_dict["use_existing_tiled_textures"] = str(arnold_options_node.use_existing_tiled_textures.get())
+
             if arnold_options_node.hasAttr("textureMaxMemoryMB"):
                 self.mtoa_dict["textureMaxMemoryMB"] = str(arnold_options_node.textureMaxMemoryMB.get())
             if arnold_options_node.hasAttr("threads_autodetect"):

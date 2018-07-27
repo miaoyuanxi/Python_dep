@@ -26,14 +26,12 @@ currentPath = currentPath.lower()
 if "user" in currentPath:
     function_path = os.path.join(currentPath.split('user')[0],"function")
     script_path = os.path.join(currentPath.split('user')[0], "script")
-    os.chdir(script_path)
     sys.path.append(function_path)
     sys.path.append(script_path)
     import RayvisionPluginsLoader
 else:
-    function_path = os.path.join(currentPath,"function")
-    script_path = os.path.join(currentPath, "script")
-    os.chdir(script_path)
+    function_path = currentPath.replace("process","function")
+    script_path = currentPath.replace("process","script")
     sys.path.append(function_path)
     sys.path.append(script_path)
     import RayvisionPluginsLoader
@@ -43,12 +41,21 @@ else:
 class Maya(object):
     def __init__(self):
 		
-        self.current_path = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
-        self.current_path = self.current_path.lower()
-        if "user" in self.current_path:
-            self.current_path = self.current_path.split('user')[0]
-        self.info_json = os.path.join(self.current_path,'info.json')
-        print "json_path : %s" %self.info_json
+        currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
+        currentPath = currentPath.lower()
+        if "user" in currentPath:
+            process_path = os.path.join(currentPath.split('user')[0], "process")
+            function_path = os.path.join(currentPath.split('user')[0], "function")
+            script_path = os.path.join(currentPath.split('user')[0], "script")
+
+        else:
+            process_path = currentPath
+            function_path = currentPath.replace("process", "function")
+            script_path = currentPath.replace("process", "script")
+
+        self.info_json = os.path.join(process_path, 'info.json')
+        print "json_path : %s" % self.info_json
+
 
     def get_platfom(self,platform):
         platform = str(platform)

@@ -891,7 +891,7 @@ if user_id in [1835213,1881622,1859026,1863099,1883450,1877965,1879546,1833958]:
             # print "once you get the crash , the message (log file html and bin files) will save in  D:\temp\REDSHIFT\CACHE\G0\Log/Log.Latest.0. "
             # i.enableDebugCapture.set(1)    
     
-if user_id in [1813649,1857270,1888315]:
+if user_id in [1901996,1813649,1857270,1888315]:
     print "set Redshift VRAM"
     for i in pm.ls(type='RedshiftOptions'):
         if i.hasAttr("automaticMemoryManagement"):

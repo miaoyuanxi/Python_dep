@@ -661,6 +661,12 @@ class PreRender(dict,PreRenderBase):
                 self.mtoa_dict["auto_tx"] = str(arnold_options_node.autotx.get())
                 if self.mtoa_dict["auto_tx"] == 'False':
                     self.mtoa_dict["use_existing_tiled_textures"] = str(arnold_options_node.use_existing_tiled_textures.get())
+
+            else:
+                self.mtoa_dict["auto_tx"] = "No attribute"
+                self.mtoa_dict["use_existing_tiled_textures"] = str(
+                    arnold_options_node.use_existing_tiled_textures.get())
+
             if arnold_options_node.hasAttr("textureMaxMemoryMB"):
                 self.mtoa_dict["textureMaxMemoryMB"] = str(arnold_options_node.textureMaxMemoryMB.get())
             if arnold_options_node.hasAttr("threads_autodetect"):
@@ -2011,7 +2017,7 @@ class PreRender(dict,PreRenderBase):
         if self.user_id in [1833038]:
             print "666666666666666666666666666666666666666"
 
-        if self.user_id in [1835213, 1881622, 1859026, 1863099, 1883450, 1877965, 1879546, 1833958]:
+        if self.user_id in [1917342,1835213, 1881622, 1859026, 1863099, 1883450, 1877965, 1879546, 1833958]:
             print "set Redshift VRAM"
             for i in pm.ls(type='RedshiftOptions'):
                 if i.hasAttr("automaticMemoryManagement"):
@@ -2037,7 +2043,7 @@ class PreRender(dict,PreRenderBase):
                     # print "once you get the crash , the message (log file html and bin files) will save in  D:\temp\REDSHIFT\CACHE\G0\Log/Log.Latest.0. "
                     # i.enableDebugCapture.set(1)
 
-        if self.user_id in [1813649, 1857270, 1888315]:
+        if self.user_id in [1901996,1813649, 1857270, 1888315]:
             print "set Redshift VRAM"
             for i in pm.ls(type='RedshiftOptions'):
                 if i.hasAttr("automaticMemoryManagement"):
@@ -2091,7 +2097,7 @@ class PreRender(dict,PreRenderBase):
 
         if self.user_id in [1844817, 961743, 1844765, 963567, 1860992, 962371, 1854466, 1811755, 1863576, 1878285, 1877869,
                             1864856,
-                            1876209, 1876088, 1903427]:
+                            1876209, 1876088, 1903427,1912043]:
             print "set Redshift VRAM"
             for i in pm.ls(type='RedshiftOptions'):
                 if i.hasAttr("maxNumGPUMBForIrradiancePointCloudHierarchy"):

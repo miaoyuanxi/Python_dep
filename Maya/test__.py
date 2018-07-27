@@ -49,7 +49,56 @@ for i in range(1, 25):
 
     idex_name * i_index > count_money
 
+import pymel.core as pm
+import maya.cmds as cmds
+import os
+import random
 
+te_path = r'c:/maps'
+te_names = os.listdir(te_path)
 
+objs = cmds.ls(sl=1)
+for obj in objs:
+    print obj
+    sdnode = cmds.shadingNode("blinn", asShader=1)
+    filenode = cmds.shadingNode('file', asTexture=1)
+    ptnode = cmds.shadingNode('place2dTexture', asUtility=1)
+    cmds.select(obj)
+    cmds.hyperShade(assign=sdnode)
+    pm.connectAttr(ptnode + ".coverage", filenode + ".coverage")
 
+    pm.connectAttr(ptnode + ".translateFrame", filenode + ".translateFrame")
+
+    pm.connectAttr(ptnode + ".rotateFrame", filenode + ".rotateFrame")
+
+    pm.connectAttr(ptnode + ".mirrorU", filenode + ".mirrorU")
+
+    pm.connectAttr(ptnode + ".mirrorV", filenode + ".mirrorV")
+
+    pm.connectAttr(ptnode + ".stagger", filenode + ".stagger")
+
+    pm.connectAttr(ptnode + ".wrapU", filenode + ".wrapU")
+
+    pm.connectAttr(ptnode + ".wrapV", filenode + ".wrapV")
+
+    pm.connectAttr(ptnode + ".repeatUV", filenode + ".repeatUV")
+
+    pm.connectAttr(ptnode + ".offset", filenode + ".offset")
+
+    pm.connectAttr(ptnode + ".rotateUV", filenode + ".rotateUV")
+
+    pm.connectAttr(ptnode + ".noiseUV", filenode + ".noiseUV")
+
+    pm.connectAttr(ptnode + ".vertexUvOne", filenode + ".vertexUvOne")
+
+    pm.connectAttr(ptnode + ".vertexUvTwo", filenode + ".vertexUvTwo")
+
+    pm.connectAttr(ptnode + ".vertexUvThree", filenode + ".vertexUvThree")
+    pm.connectAttr(ptnode + ".vertexCameraOne", filenode + ".vertexCameraOne")
+    pm.connectAttr(ptnode + ".outUV", filenode + ".uv")
+    pm.connectAttr(ptnode + ".outUvFilterSize", filenode + ".uvFilterSize")
+    pm.connectAttr(filenode + ".outColor", sdnode + ".color")
+
+    path = te_path + te_names[int(random.uniform(1, len(te_names)))]
+    cmds.setAttr((filenode + ".fileTextureName"), path, type="string")
 

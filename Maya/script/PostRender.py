@@ -135,14 +135,14 @@ def copy_texture_to():
         serial = str(current_frame)
     else:
         serial = '0' * (4 - len(str(current_frame))) + str(current_frame)
-    output_frame = os.path.join(options["output_frame"],serial).replace("\\","/")
+    output_frame = os.path.join(post_render_dict["output_frame"],serial).replace("\\","/")
     print output_frame
     if not os.path.exists(output_frame):
         os.makedirs(output_frame)
 
     cmd = '{fcopy_path} /speed=full /cmd=move /force_close /no_confirm_stop /force_start "{source}" /to="{destination}"'.format(
         fcopy_path='c:\\fcopy\\FastCopy.exe',
-        source=os.path.join(options["output"]).replace('/', '\\'),
+        source=os.path.join(post_render_dict["output"]).replace('/', '\\'),
         destination=output_frame.replace("/","\\"),
     )
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     post_start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print "[PostRender start]----%s \n" % post_start_time
     beginTime = datetime.datetime.now()
-    if options["g_one_machine_multiframe"] is True:
+    if post_render_dict["g_one_machine_multiframe"] is True:
         write_post_frame_ini()
         copy_texture_to()
 

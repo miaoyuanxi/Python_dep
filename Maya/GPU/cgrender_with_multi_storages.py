@@ -1273,10 +1273,10 @@ class MayaRender(MayaClass):
                                             1854466, 1811755, 1863576, 1863884, 1863099, 1877869, 1864856, 1883450,
                                             1877965, 1846192, 1876209, 1876088, 1905390, 1909924, 1839312]:
                 if self["common"]["userId"] in [961743]:
-                    cmd += " -preRender \"python \\\"execfile(\\\\\\\"//10.90.100.101/o5/py/model/961743.py\\\\\\\")\\\"\" -r redshift -logLevel 1"
+                    cmd += " -preRender \"python \\\"execfile(\\\\\\\"//10.90.100.101/o5/py/model/961743.py\\\\\\\")\\\"\""
             else:
                 # cmd += " -r redshift -logLevel 1"
-                cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\" -r redshift -logLevel 1 " % (pre_render_dict, PreRender)
+                cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict, PreRender)
 
             if self["common"]["userId"] in [1870840,1870841,1870842,1870844,1872806]:
                 REDSHIFT_LOCALDATAPATH_com="R:\\snow_tex_cache"
@@ -1287,42 +1287,26 @@ class MayaRender(MayaClass):
                 if not os.path.exists(REDSHIFT_LOCALDATAPATH_com):
                     os.makedirs(REDSHIFT_LOCALDATAPATH_com)
 
-                
-            gpu_n = "0,1"   
-            # print "gpu_n: %s" % (gpu_n)
-            # if "gpuid" in os.environ:
-                # gpu_n = int(os.environ["gpuid"]) - 1
-                # print "gpuid is exists !!!"
-                # print os.environ["gpuid"]
-            # else :
-                # print "gpuid is not exists,sigle GPU render"
-                # gpu_n = "0"
-            if self["common"]["userId"] in [1846192]:
-                print "dan ka gpu"
-                gpu_n = "0"
-                
-            # if self["common"]["taskId"] in [16141529]:
-                # print "dan ka gpu"
-                # gpu_n = "0"            
-            
-            # if self["common"]["taskId"] in [16136188]:
-                # print "dan ka gpu"
-                # gpu_n = "0"                
-            print "gpu_n: %s" % (gpu_n)            
+            if "logLevel" in self["renderSettings"]:
+                logLevel = self["renderSettings"]["logLevel"]
+            else:
+                logLevel = "1"
+
+            cmd += " -r redshift -logLevel %s" % (logLevel)
+
+            if "gpu_n" in self["renderSettings"]:
+                gpu_n = self["renderSettings"]["gpu_n"]
+            else:
+                gpu_n = "0,1"
+
             cmd += " -gpu {%s}" % (gpu_n)
+
         else:
-            raise Exception("Plugin redshift is not found, please confirm the plugin!.")
+            # raise Exception("Plugin redshift is not found, please confirm the plugin!.")
+            print ("Plugin redshift is not found, please confirm the plugin!.")
+            sys.exit(55)
 
 
-
-
-        if self["common"]["userId"] in [1859026]:
-            cmd = cmd.replace("-logLevel 1" ," ")
-            
-        if self["common"]["userId"] in [1844817,1873149,1881622,1877965,1898302,1851281,1905390,1909924,1866194]:
-            cmd = cmd.replace("-logLevel 1" ,"-logLevel 2")
-        if self["common"]["taskId"] in [16141529]:
-            cmd = cmd.replace("-logLevel 1" ,"-logLevel 2")
 
 
         if self["server"]["task_mode"] == 1 and self["common"]["parent_id"]:
@@ -1382,10 +1366,6 @@ class MayaRender(MayaClass):
             self["server"]["father_id"] = 1821185
 
 
-
-            
-            
-            
             
         if self["common"]["userId"] in [1870840,1870841,1870842,1870844,1872806]:
             chdir_path=os.path.dirname(self["renderSettings"]["maya_file"])

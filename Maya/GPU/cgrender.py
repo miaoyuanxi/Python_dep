@@ -1414,11 +1414,7 @@ class MayaRender(MayaClass):
                 cmd += " -rl \"%(renderableLayer)s\"" % self["renderSettings"]
 
 
-        if self["common"]["userId"] in [1879546,1857270,1903427,1903427]:
-            cmd += " -preRender \"python \\\"user_id=%s;mapping=%s;plugins=%s;taskid=%s;rendersetting=%s;start=%s;execfile(\\\\\\\"//10.90.100.101/o5/py/model/prerender.py\\\\\\\")\\\"\"" % (self["common"]["userId"],self["mappings"],self["plugins"]["plugins"],self["common"]["taskId"],self["renderSettings"],self["renderSettings"]["start"])
-                
 
-            
         if "redshift_GPU" in self["plugins"]["plugins"]:
 
             PreRender = os.path.join(self["platform"]["py_path"], 'script', 'PreRender.py').replace("\\", "/")
@@ -1440,61 +1436,32 @@ class MayaRender(MayaClass):
                                             1854466, 1811755, 1863576, 1863884, 1863099, 1877869, 1864856, 1883450,
                                             1877965, 1846192, 1876209, 1876088, 1905390, 1909924, 1839312]:
                 if self["common"]["userId"] in [961743]:
-                    cmd += " -preRender \"python \\\"execfile(\\\\\\\"//10.90.100.101/o5/py/model/961743.py\\\\\\\")\\\"\" -r redshift -logLevel 1"
+                    cmd += " -preRender \"python \\\"execfile(\\\\\\\"//10.90.100.101/o5/py/model/961743.py\\\\\\\")\\\"\""
             else:
                 # cmd += " -r redshift -logLevel 1"
-                cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\" -r redshift -logLevel 1 " % (pre_render_dict, PreRender)
+                cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict, PreRender)
 
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            if self["common"]["userId"] in [1903427,1822731]:
-                cmd += " -r redshift -logLevel 2"
+            if "logLevel" in self["renderSettings"]:
+                logLevel = self["renderSettings"]["logLevel"]
             else:
-                cmd += " -r redshift -logLevel 1"        
+                logLevel = "1"
 
-                
-            if "gpuid" in os.environ:
-                gpu_n= int(os.environ["gpuid"]) - 1
-            else :
-                gpu_n="0"             
-            if self["common"]["userId"] in [1868564]:
-                print "shuang ka gpu"
-                gpu_n="0,1"
-            gpu_n="0,1"
-            if self["common"]["taskId"] in [16096461,16096462,16096463]:
-                print "dan ka gpu"
-                gpu_n="0"            
+            cmd += " -r redshift -logLevel %s" % (logLevel)
 
-            # if self["common"]["userId"] in [1868563]:
-                # print "dan ka gpu"
-                # gpu_n="0"
-            if self["common"]["taskId"] in [16076108]:
-                print "dan ka gpu"
-            
+            if "gpu_n" in self["renderSettings"]:
+                gpu_n = self["renderSettings"]["gpu_n"]
+            else:
+                gpu_n = "0,1"
 
-            
-            if self["common"]["userId"] in [1840038,1846192]:
-                print "dan ka gpu"
-                gpu_n="0"
-            cmd += " -gpu {%s}" % (gpu_n)            
+            cmd += " -gpu {%s}" % (gpu_n)
         
-        
-            # if self["common"]["taskId"] in [16095888]:
-                # print "dan ka gpu"
-                # gpu_n="0"
-            # cmd += " -gpu {%s}" % (gpu_n)                
-            # cmd += " -gpu {0,1}"
+        else:
+            # raise Exception("Plugin redshift is not found, please confirm the plugin!.")
+            print ("Plugin redshift is not found, please confirm the plugin!.")
+            sys.exit(55)
+
+
+
         if self["common"]["userId"] in [1820446]:
             self["renderSettings"]["output"] += "<pass>/<scene>_<pass>" \
                                                 "_<aov>_#.<ext>"
@@ -1509,7 +1476,7 @@ class MayaRender(MayaClass):
             
         if "redshift_GPU" in self["plugins"]["plugins"]:        
             if self["common"]["userId"] in [1868564]:            
-                if int(self.renderSettings["end"]) > int(self.renderSettings["start"]):
+                if int(self["renderSettings"]["end"]) > int(self["renderSettings"]["start"]):
                     cmd += " -postFrame \"python \\\"rendersetting=%s;execfile(\\\\\\\"//10.90.100.101/o5/py/model/PostRender.py\\\\\\\")\\\";\"" % (self["renderSettings"])
                     
         if self["renderSettings"]["tile_region"]:
@@ -1525,63 +1492,9 @@ class MayaRender(MayaClass):
             
         cmd += " \"%(maya_file)s\"" % self["renderSettings"]
 
-        if self["common"]["userId"] == 1818936:
-            pre_bat = r"\\10.50.1.22\td\clientFiles\1818936\tools_new\env.bat"
-            pre_mel = os.path.splitext(self["renderSettings"]["maya_file"])[0] + ".mel"
-            self["renderSettings"]["pre_mel"] = pre_mel.replace("\\", "/")
-            os.environ["path"] += r";C:\Python27"
-            os.environ["DONOT_OVERWRITE_FRAMERANGE"] = "1"
-            print os.environ["path"]
-            sys.stdout.flush()
-            cmd = "eco -t rayvision_maya -r \"render.exe -s %(start)s" \
-                  " -e %(end)s -b %(by)s -proj \\\"%(projectPath)s\\\"" \
-                  " -rd \\\"%(output)s\\\"" \
-                  " \\\"%(maya_file)s\\\"" \
-                  % self["renderSettings"]
 
-            cmd = "\"%s\" && %s" % (pre_bat, cmd)
 
-        # if self["common"]["userId"] in [1818936]:
-        #     self["renderSettings"]["ass_dir"] = r"d:\temp"
-        #     if not os.path.exists(self["renderSettings"]["ass_dir"]):
-        #         os.makedirs(self["renderSettings"]["ass_dir"])
-        #
-        #     maya_base = os.path.basename(self["renderSettings"]["maya_file"])
-        #     split_ext = [os.path.splitext(maya_base)[0]]
-        #     split_ext.append(str(self["renderSettings"]["start"]).zfill(4))
-        #     split_ext.append("ass")
-        #     self["renderSettings"]["ass_path"] = os.path.join(self["renderSettings"]["ass_dir"], ".".join(split_ext))
-        #     self["renderSettings"]["image_name"] = maya_base
-        #
-        #     cmd1 = "Render.exe -r arnoldExport -s %(start)s -e %(end)s" \
-        #            " -b %(by)s -pad 4 -x 1920 -y 1080" \
-        #            " -proj \"%(projectPath)s\" -rd \"%(output)s\"" \
-        #            " -im %(image_name)s" \
-        #            " -assDir \"%(ass_dir)s\"" \
-        #            " \"%(maya_file)s\"" % self["renderSettings"]
-        #
-        #     cmd2 = "kick.exe -dw -dp -t 0 -v 5" \
-        #            " -set options.abort_on_license_fail true" \
-        #            " -i \"%(ass_path)s\"" % self["renderSettings"]
-        #
-        #     cmd = [cmd1, cmd2]
-        if "redshift_GPU" in self["plugins"]["plugins"]:        
-            if self["common"]["userId"] in [1868564]:
-                self["renderSettings"]["bat"] = r"B:\scripts\Maya\redshift_cmd\Erender_RS_new.bat"
-                self["renderSettings"]["task_id"] = self["common"]["taskId"]
-                self["renderSettings"]["user_id"] = self["common"]["userId"]
-                self["renderSettings"]["cmdexe"] = r"C:\Windows\System32\cmd.exe"
-                
-                # cmd = "\"%(cmdexe)s\" \"%(bat)s\" %(user_id)s %(task_id)s \"%(render.exe)s\" "\
-                    # "\"%(renderableLayer)s\" %(start)s %(end)s %(by)s " \
-                    # "\"%(projectPath)s\" \"%(maya_file)s\" \"%(output)s\"" \
-                    # % self["renderSettings"]        
-                # cmd=self["renderSettings"]["bat"]
-                # +' "'+self["renderSettings"]["user_id"]+\
-                # '"  "'+self["renderSettings"]["task_id"]+'"  "'+self["renderSettings"]["render.exe"]+\
-                # '" "'+self["renderSettings"]["renderableLayer"]+'" "' + self["renderSettings"]["start"] +\
-                # '" "'+self["renderSettings"]["end"] +'" "'+ self["renderSettings"]["by"] +'" "'+ self["renderSettings"]["projectPath"]+\
-                # '" "'+ self["renderSettings"]["maya_file"]+'" "'+ self["renderSettings"]["output"]+'" '
+
         print "render cmd info:"
         print cmd
         sys.stdout.flush()
@@ -1619,43 +1532,42 @@ class MayaRender(MayaClass):
                 # subprocess.call(cmd)
                 is_complete = 0
                 re_complete = re.compile(r'^Scene.+completed\.$', re.I)
-                if self["common"]["userId"] in [1868564]:
-                    os.system(r"B:\scripts\Maya\redshift_cmd\Erender_RS_new.bat")
-                    # for line in os.system(r"B:\scripts\Maya\redshift_cmd\Erender_RS_new.bat"):
-                    # for line in self.RBcmd(r"B:\scripts\Maya\redshift_cmd\Erender_RS_new.bat",False,True):
-                        # line_str = line.strip()
-                        # if line_str:
-                            # l.write(line)
-                            # l.flush()
-                            # print line_str
-                            # if re_complete.findall(line_str):
-                                # RvOs.kill_children()
-                                # is_complete = 1
-                                # break                            
-                    # if not is_complete:
-                        # exit(1)                
-                
+                if self['common']['userId'] in [1868563]:
+                    for line in RvOs.run_command(cmd,shell = True):
+                        l.write(line)
+                        l.flush()
+                        line_str = line.strip()
+                        if line_str:
+                            pass
+                            print line_str
+                            if re_complete.findall(line_str):
+                                RvOs.kill_children()
+                                is_complete = 1
+                                break
                 
                 else:                
                     for line in RvOs.run_command(cmd):
+                        l.write(line)
+                        l.flush()
                         line_str = line.strip()
                         if line_str:
-                            l.write(line)
-                            l.flush()
+                            pass
                             print line_str
-                            if "ASSERT FAILED" in line_str:
-                                RvOs.kill_children()
-                                is_complete = 0
-                                break
+                            if self['common']['userId'] not in [1905390]:
+                                if "ASSERT FAILED" in line_str:
+                                    RvOs.kill_children()
+                                    is_complete = 0
+                                    break
                             if "failed to render" in line_str:
                                 RvOs.kill_children()
                                 is_complete = 0
                                 break
-                            if "DL inf loop detected" in line_str:
-                                RvOs.kill_children()
-                                is_complete = 0
-                                break
-                                
+                            if self['common']['userId'] not in [1844817,1881622,1909139]:
+                                if "DL inf loop detected" in line_str:
+                                    RvOs.kill_children()
+                                    is_complete = 0
+                                    break
+
                             if self["common"]["userId"] in [963287]:
                                 if "Maya exited with status -1073741818" in line_str:
                                     exit(-1073741818)
