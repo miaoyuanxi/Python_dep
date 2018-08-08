@@ -51,8 +51,8 @@ class Maya(object):
         if type(info) == list:
             pass
         else:
-            info = self.unicode_to_str(info)
-
+            # info = self.unicode_to_str(info)
+            info = self.str_to_unicode(info)
         if error_code in self.tips_info_dict:
             if isinstance(self.tips_info_dict[error_code], list) and len(self.tips_info_dict[error_code]) > 0 and \
                             self.tips_info_dict[error_code][0] != info:
@@ -60,7 +60,7 @@ class Maya(object):
                 error_list.append(info)
                 self.tips_info_dict[error_code] = error_list
         else:
-            if type(info) == str and info != "":
+            if type(info) == unicode and info != "":
                 r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
                 if r:
                     self.tips_info_dict["25009"] = [r[0]]
@@ -117,14 +117,16 @@ class Maya(object):
                     pass
 
     def str_to_unicode(self, encode_str):
-        if isinstance(encode_str, unicode):
+        if encode_str == None or encode_str == "" or encode_str == 'Null' or encode_str == 'null':
+            encode_str = ""
+            return encode_str
+        elif isinstance(encode_str, unicode):
             return encode_str
         else:
             code = self.get_encode(encode_str)
             return encode_str.decode(code)
 
     def write_file(self, file_content, my_file, my_code='UTF-8', my_mode='w'):
-
         if isinstance(file_content, str):
             file_content_u = self.bytes_to_str(file_content)
             fl = codecs.open(my_file, my_mode, my_code)
@@ -183,9 +185,14 @@ class Maya(object):
         check_str = self.str_to_unicode(check_str)
         match = zh_pattern.search(check_str)
         if match:
-            return True
+            return check_str
         else:
             return False
+
+    def check_file_size(self,file):
+        file_mtime = time.ctime(os.stat(file).st_mtime)
+        file_size = os.path.getsize(file)
+        return file_mtime,file_size
 
 
 class Analyze(dict, Maya):
@@ -211,7 +218,7 @@ class Analyze(dict, Maya):
         scene_info_common_dict = collections.OrderedDict()
         default_globals = pm.PyNode("defaultRenderGlobals")
         scene_info_common_dict['renderer'] = str(self.GetCurrentRenderer())
-        scene_info_common_dict['image_file_prefix'] = str(self.GetMayaOutputPrefix(layer))
+        scene_info_common_dict['image_file_prefix'] = self.GetMayaOutputPrefix(layer)
         if self.is_absolute_path(scene_info_common_dict['image_file_prefix']):
             self.writing_error(25002, "renderlayer: %s --- %s" % (layer, scene_info_common_dict['image_file_prefix']))
         scene_info_common_dict['start'] = str(int(cmds.getAttr("defaultRenderGlobals.startFrame")))
@@ -244,7 +251,7 @@ class Analyze(dict, Maya):
         if scene_info_common_dict["image_format"] not in ['png', 'iff', 'exr', 'tga', 'jpg', 'tif', 'jpeg', 'deepexr']:
             self.writing_error(20004, "render layer\'s imageformat is %s " % (scene_info_common_dict["image_format"]))
         scene_info_common_dict["animation"] = str(default_globals.animation.get())
-        scene_info_common_dict["file_name"] = str(pm.renderSettings(fin=1, cam='', lyr=layer))
+        # scene_info_common_dict["file_name"] = str(pm.renderSettings(fin=1, cam='', lyr=layer))
         if len(str(int(default_globals.endFrame.get()))) > default_globals.extensionPadding.get():
             self.writing_error(25010)
         # self["renderSettings"]['all_layer'] = ",".join([i.name() for i in pm.PyNode("renderLayerManager.renderLayerId").outputs() if i.type() == "renderLayer"])
@@ -626,8 +633,6 @@ class Analyze(dict, Maya):
         return asset_dict
 
     def gather_asset(self, asset_type, asset_list, asset_dict):
-        self.G_DEBUG_LOG.info('\r\n\r\n[-----------------maya.RBanalyse.gather_asset_by_file_path]')
-        self.G_DEBUG_LOG.info(asset_type)
         asset_input_server_str = 'asset_input_server'
         asset_input_str = 'asset_input'
         asset_input_missing_str = 'asset_input_missing'
@@ -635,7 +640,6 @@ class Analyze(dict, Maya):
         asset_input_list = []
         asset_input_missing_list = []
         asset_input_server_list = []
-
         for asset in asset_list:
             asset_input_list.append(asset)
             if self.ASSET_WEB_COOLECT_BY_PATH:
@@ -647,15 +651,6 @@ class Analyze(dict, Maya):
                     asset_input_server_list.append(asset_item_server)
                 else:
                     asset_input_missing_list.append(asset)
-                '''
-                asset_name=os.path.basename(asset)
-                #if  asset_name   in self.ASSET_INPUT_KEY_LIST:
-                if self.G_INPUT_PROJECT_ASSET_DICT.has_key(asset_name):    
-                    self.get_file_from_project_by_name()
-                    asset_input_server_list.append(self.G_INPUT_PROJECT_ASSET_DICT[asset_name])
-                else:
-                    asset_input_missing_list.append(asset)
-                '''
         if asset_input_server_list:
             if asset_dict.has_key(asset_input_server_str):
                 # asset_dict[asset_input_server_str].extend(asset_input_server_list)  # notice yinyong
@@ -881,10 +876,8 @@ class Analyze(dict, Maya):
         return fileName
 
     def GetMayaOutputPrefix(self, layer):
-
         prefix = ""
         renderer = str(self.GetCurrentRenderer())
-
         if renderer != "vray":
             prefix = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
         else:
@@ -918,7 +911,7 @@ class Analyze(dict, Maya):
             # elif renderer != "vray" and (pm.mel.match("<RenderLayer>", prefix) == "") and (
             # pm.mel.match("<Layer>", prefix) == "") and (pm.mel.match("%l", prefix) == ""):
             # prefix = "<RenderLayer>/" + prefix
-
+        prefix = self.str_to_unicode(prefix)
         return prefix
 
     def GetRenderableCameras_bak(self, ignoreDefaultCameras):
@@ -985,11 +978,19 @@ class Analyze(dict, Maya):
 
 
     def is_absolute_path(self, path):
+        '''
+        判断一段字符串
+        :param path:  is string
+        :return: true or false
+        '''
         if path:
             path = path.replace("\\", "/")
             if ":" in path:
                 return 1
             if path.startswith("//"):
+                return 1
+            if self.check_contain_chinese(path):
+                print (path)
                 return 1
 
     def check_layer_renderer(self, layer):
@@ -998,7 +999,8 @@ class Analyze(dict, Maya):
         plugins_rederer = {"arnold": "mtoa",
                            "vray": "vrayformaya",
                            "redshift": "redshift",
-                           "renderman": "RenderMan_for_Maya",
+                           "renderManRIS": "RenderMan_for_Maya",
+                           "renderMan": "RenderMan_for_Maya",
                            "MayaKrakatoa": "krakatoa"
                            }
         plugins_rederer.setdefault(renderer)
@@ -1016,17 +1018,6 @@ class Analyze(dict, Maya):
             self.writing_error(25014, "render layer: %s \'s renderer is %s   please change" % (layer, renderer))
             return False
         return True
-
-    def check_scene_name(self):
-        scene_name = os.path.splitext(os.path.basename(self["cg_file"]))[0]
-        if not re.findall("^[A-Z][^-]+[0-9]$", scene_name):
-            self.writing_error(25017)
-            return False
-        return True
-
-
-
-
 
 
 class Asset(dict, Maya):
@@ -1335,8 +1326,7 @@ class Config(dict,Maya):
             self[i] = options[i]
 
     def start_open_maya(self):
-        self.print_info("start maya ok.")
-        self.print_info("open maya file: " + self["cg_file"])
+        self.print_info("start open maya file: " + self["cg_file"])
         self["cg_project"] = os.path.normpath(self["cg_project"]).replace('\\', '/')
         if self["cg_project"]:
             if os.path.exists(self["cg_project"]):
@@ -1361,6 +1351,20 @@ class Config(dict,Maya):
         else:
             raise Exception("Dont Found the maya files error.")
 
+
+    def check_maya_file_exist(self):
+        #检查maya渲染文件是否上传完整
+        pass
+
+    def check_scene_name(self):
+        scene_name = os.path.splitext(os.path.basename(self["cg_file"]))[0]
+        if scene_name.startswith(" "):
+            self.writing_error(25017,"scene name begins with a space")
+        if scene_name.endswith(" "):
+            self.writing_error(25017, "scene name ends with a space")
+        if self.check_contain_chinese(scene_name):
+            self.writing_error(25017, "scene name contains chinese")
+
     def check_maya_version(self, maya_file, cg_version):
         result = None
         maya_file = self.unicode_to_str(maya_file)
@@ -1373,24 +1377,41 @@ class Config(dict,Maya):
                         break
                     elif line.strip() and not line.startswith("//"):
                         infos.append(line.strip())
-
             file_infos = [i for i in infos if i.startswith("fileInfo")]
             for i in file_infos:
                 if "product" in i:
                     r = re.findall(r'Maya.* (\d+\.?\d+)', i, re.I)
                     if r:
                         result = int(r[0].split(".")[0])
-
+                if result == 2016 and "version" in i:
+                    if "2016 Extension" in i:
+                        result = 2016.5
+            file_info_2013 = [i for i in infos if i.startswith("requires")]
+            if result == 2013:
+                for j in file_info_2013:
+                    if "maya \"2013\";" in j:
+                        result = 2013
+                    else:
+                        result = 2013.5
         elif maya_file.endswith(".mb"):
             with open(maya_file, "r") as f:
                 info = f.readline()
-
-            file_infos = re.findall(r'FINF\x00+\x11?\x12?K?\r?(.+?)\x00(.+?)\x00',
-                                    info, re.I)
+            file_infos = re.findall(r'FINF\x00+\x11?\x12?K?\r?(.+?)\x00(.+?)\x00',info, re.I)
             for i in file_infos:
                 if i[0] == "product":
                     result = int(i[1].split()[1])
-
+            
+                if result == 2016 and "version" in i[0]:
+                    if "2016 Extension" in i[1]:
+                        result = 2016.5
+            file_info_2013 = re.findall(r'2013ff10',info, re.I)
+            if result == 2013:
+                print file_info_2013
+                for j in file_info_2013:
+                    if j[0]:
+                        result = 2013.5
+                    else:
+                        result = 2013
         if result:
             self.print_info("get maya file version %s" % (result))
             if float(result) == float(cg_version):
@@ -1427,11 +1448,13 @@ class Config(dict,Maya):
             with open(info_file, 'r') as f:
                 json_src = json.load(f)
             json_src["scene_info"] = self.scene_info_dict
-            with open(info_file, 'w+') as f:
-                f.write(json.dumps(json_src,indent=2))
+            task_json_str = json.dumps(json_src, ensure_ascii=False, indent=4)
+            task_json_str = task_json_str.encode("utf-8")
+            self.write_file(task_json_str,info_file)
         except Exception as err:
             print  err
             pass
+
 
     def write_asset_info(self):
         info_file_path = os.path.dirname(self["asset_json"])
@@ -1441,10 +1464,9 @@ class Config(dict,Maya):
         try:
             info_file = self["asset_json"]
             self.asset_info_dict['scene_file'] = [self.str_to_unicode(self["cg_file"])]
-            json_src = self.asset_info_dict
-            print json_src
-            with open(info_file, 'w+') as f:
-                f.write(json.dumps(json_src,ensure_ascii=False,indent=2).decode('utf8'))
+            asset_json_str = json.dumps(self.asset_info_dict, ensure_ascii=False, indent=4)
+            asset_json_str = asset_json_str.encode("utf-8")
+            self.write_file(asset_json_str, info_file)
         except Exception as err:
             print  err
             pass
@@ -1456,26 +1478,24 @@ class Config(dict,Maya):
             os.makedirs(info_file_path)
         try:
             info_file = self["tips_json"]
-            json_src = self.tips_info_dict
-            print json_src
-            with open(info_file, 'w+') as f:
-                f.write(json.dumps(json_src,indent=2))
+            tips_json_str = json.dumps(self.tips_info_dict, ensure_ascii=False, indent=4)
+            tips_json_str = tips_json_str.encode("utf-8")
+            self.write_file(tips_json_str, info_file)
         except Exception as err:
             print  err
             pass
 
 
 
-
-
-
 def analyze_maya(options):
     print "88888888888888"
-    print options
+    info_dict = json.dumps(options, ensure_ascii=False, indent=4)
+    print info_dict
     print type(options)
     analyze = Config(options)
-
+    
     analyze.check_maya_version(options["cg_file"],options["cg_version"])
+    analyze.check_scene_name()
     analyze.start_open_maya()
 
     analyze.gather_task_dict()

@@ -15,8 +15,8 @@ import platform
 import uuid
 
 
-# from kafka import KafkaProducer
-# from kafka.errors import KafkaError
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
 
 # class FileHandle
 

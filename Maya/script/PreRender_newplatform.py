@@ -537,8 +537,6 @@ class PreRender(dict,PreRenderBase):
         self.plugins = pre_dict["plugins"]
         self.task_id = pre_dict["task_id"]
 
-
-
         #-----------------------------------------log-----------------------------------------------
 
         #-------------global vars-------------
@@ -555,9 +553,6 @@ class PreRender(dict,PreRenderBase):
 
         #-----------unlock   node------
         pm.lockNode( 'defaultRenderGlobals', lock=False )
-
-
-
 
         #--------------------------------bak-----------------------------
 
@@ -632,6 +627,10 @@ class PreRender(dict,PreRenderBase):
             if arnold_driver_node.hasAttr("append"):
                 self.mtoa_dict["append"] = str(arnold_driver_node.append.get())
 
+            if arnold_options_node.hasAttr("abortOnLicenseFail"):
+                self.mtoa_dict["abortOnLicenseFail"] = str(arnold_options_node.abortOnLicenseFail.get())
+
+
             if arnold_driver_node.hasAttr("tiled"):
                 self.mtoa_dict["tiled"] = str(arnold_driver_node.tiled.get())
 
@@ -701,12 +700,6 @@ class PreRender(dict,PreRenderBase):
         default_globals.modifyExtension.set(0)
         self.log_scene_set("Renumber frames","off")
 
-        # renderable_cam = []
-        # for i in pm.ls(type="camera"):
-        #     if i.renderable.get(): renderable_cam.append(i)
-        # if not len(renderable_cam):
-        #     print("PL set an camera to render scene.")
-        #     sys.exit(001)
         if render_name == "arnold":
             arnold_options_node = pm.PyNode('defaultArnoldRenderOptions')
             arnold_driver_node = pm.PyNode('defaultArnoldDriver')
@@ -731,7 +724,12 @@ class PreRender(dict,PreRenderBase):
             if arnold_driver_node.hasAttr("outputPadded"):
                 arnold_driver_node.outputPadded.set(1)
                 self.log_scene_set("outputPadded",1)
-
+                
+                
+            if "abortOnLicenseFail" in self.mtoa_dict:
+                self.log_scene("abortOnLicenseFail", self.mtoa_dict["abortOnLicenseFail"])
+                arnold_options_node.abortOnLicenseFail.set(1)
+                self.log_scene_set("abortOnLicenseFail",1)
 
             if "threads_autodetect" in self.mtoa_dict:
                 self.log_scene("threads_autodetect", self.mtoa_dict["threads_autodetect"])
@@ -1330,7 +1328,7 @@ class PreRender(dict,PreRenderBase):
         if render_name == "vray":
             rd_path = pm.PyNode("vraySettings").fnprx.get()
         rd_path = self.unicode_to_str(rd_path)
-        self.log_scene("Current Outpu setting ",self.unicode_to_str(rd_path))
+        # self.log_scene("Current Outpu setting ",self.unicode_to_str(rd_path))
         if rd_path:
             rd_path=rd_path.replace('\\','/').replace('//','/')
             p1=re.compile(r"^\w:/?")

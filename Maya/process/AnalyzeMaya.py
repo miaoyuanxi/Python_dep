@@ -2,22 +2,25 @@
 # -*- coding: utf-8 -*-
 
 
-import os,sys,subprocess,string,logging,time,shutil
+import os
+import sys
+import subprocess
+import time
+import shutil
 import glob
 import logging
 import codecs
 import configparser
 import json
 import gc
-import xml.etree.ElementTree as ET
 import re
-
+import locale
 from MayaPlugin import MayaPlugin
 from Maya import Maya
 from CommonUtil import RBCommon as CLASS_COMMON_UTIL
 from MayaUtil import RBMayaUtil as CLASS_MAYA_UTIL
-from imp import reload
-reload(sys)
+# from imp import reload
+# reload(sys)
 
 class AnalyzeMaya(Maya):
     def __init__(self,**paramDict):
@@ -34,8 +37,13 @@ class AnalyzeMaya(Maya):
         index = 0
         while my_popen.poll() is None:
             result_line = my_popen.stdout.readline().strip()
-            result_line = result_line.decode(sys.getfilesystemencoding())
-            # result_line = result_line.decode('utf-8')
+            # result_line = result_line.decode(sys.getfilesystemencoding())
+            result_line = self.bytes_to_str(result_line)
+            result_line = self.to_gbk(result_line)
+            # result_line = result_line.decode('UTF-8').encode('GBK')
+            print ("987654321")
+            print (type(result_line))
+            print (result_line)
             if result_line == '':
                 continue
             CLASS_COMMON_UTIL.log_print(my_log, result_line)
@@ -57,7 +65,41 @@ class AnalyzeMaya(Maya):
             #     sys.exit(55555)
             #     CLASS_COMMON_UTIL.log_print(my_log,'\n\n-------------------------------------------End maya program-------------------------------------------\n\n')
             #     break
-
+    def bytes_to_str(self, str1, str_decode='default'):
+        if not isinstance(str1, str):
+            try:
+                if str_decode != 'default':
+                    str1 = str1.decode(str_decode.lower())
+                else:
+                    try:
+                        str1 = str1.decode('utf-8')
+                    except:
+                        try:
+                            str1 = str1.decode('gbk')
+                        except:
+                            str1 = str1.decode(sys.getfilesystemencoding())
+            except Exception as e:
+                print('[err]bytes_to_str:decode %s to str failed' % (str1))
+                print(e)
+        return str1
+    
+    def get_encode(self, encode_str):
+        for code in ["utf-8", sys.getfilesystemencoding(), "gb18030", "ascii", "gbk", "gb2312"]:
+            try:
+                encode_str.decode(code)
+                return code
+            except:
+                pass
+        
+    def to_gbk(self, encode_str):
+        if isinstance(encode_str, str):
+            return encode_str
+        else:
+            code = self.get_encode(encode_str)
+            return encode_str.decode(code).encode('GBK')
+        
+        
+        
     def writing_error(self, error_code, info=""):
         error_code = str(error_code)
         r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
@@ -151,7 +193,6 @@ class AnalyzeMaya(Maya):
         options["tips_json"] = self.G_TIPS_JSON
         options["cg_version"] = self.CG_VERSION
         options["cg_plugins"] = self.G_CG_CONFIG_DICT["plugins"]
-        print("99999999999")
         self.G_DEBUG_LOG.info(options)
         mayabatch = ["C:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
                      (options["cg_version"]),
@@ -185,13 +226,13 @@ class AnalyzeMaya(Maya):
               "import sys;sys.path.insert(0, '%s');import Analyze;reload(Analyze);" \
               "Analyze.analyze_maya(options)\\\"" % \
               (mayabatch, str_options, str_dir)
-
-        print(analyse_cmd)
+        
         self.G_FEE_PARSER.set('render','start_time',str(int(time.time())))
         self.G_DEBUG_LOG.info("\n\n-------------------------------------------Start maya program-------------------------------------\n\n")
         # analyse_cmd = analyse_cmd.encode(sys.getfilesystemencoding())
         print("analyse cmd info:\n")
-        self.G_DEBUG_LOG.info(analyse_cmd)
+        print(analyse_cmd)
+        # self.G_DEBUG_LOG.info(analyse_cmd)
         analyze_code,analyze_result=CLASS_COMMON_UTIL.cmd(analyse_cmd,my_log=self.G_DEBUG_LOG,continue_on_error=True,my_shell=True,callback_func=self.maya_cmd_callback)
         print(analyze_code,analyze_result)
         print(self.tips_info_dict)
