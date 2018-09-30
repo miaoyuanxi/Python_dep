@@ -15,15 +15,13 @@ class Maya(RenderBase):
         RenderBase.__init__(self,**param_dict)
         self.format_log('Maya.init','start')
         
-        
         #global variable
-        
         self.G_CG_VERSION=self.G_TASK_JSON_DICT['software_config']['cg_name']+self.G_TASK_JSON_DICT['software_config']['cg_version']
         self.RENDER_LAYER_TYPE = self.G_SYSTEM_JSON_DICT['system_info']['common']['render_layer_type']
 
         self.G_NODE_MAYASCRIPT=os.path.normpath(os.path.join(self.G_NODE_PY,'CG/Maya/script'))
         self.G_NODE_MAYAFUNCTION=os.path.normpath(os.path.join(self.G_NODE_PY,'CG/Maya/function'))
-
+        self.G_NODE_MAYACONFIG = os.path.normpath(os.path.join(self.G_NODE_PY, 'CG/Maya/config'))
 
         self.G_INPUT_CG_FILE = self.G_INPUT_CG_FILE.replace("\\","/")
         self.G_INPUT_PROJECT_PATH = self.G_INPUT_PROJECT_PATH.replace("\\","/")

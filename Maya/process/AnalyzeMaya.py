@@ -32,6 +32,7 @@ class AnalyzeMaya(Maya):
         self.CG_VERSION =self.G_CG_CONFIG_DICT['cg_version']
         self.G_CUSTOM_CONFIG_NAME ='CustomConfig.py'
         self.tips_info_dict = {}
+        self.asset_info_dict = {}
 
     def maya_cmd_callback(self, my_popen, my_log):
         index = 0
@@ -40,31 +41,20 @@ class AnalyzeMaya(Maya):
             # result_line = result_line.decode(sys.getfilesystemencoding())
             result_line = self.bytes_to_str(result_line)
             result_line = self.to_gbk(result_line)
-            # result_line = result_line.decode('UTF-8').encode('GBK')
-            print ("987654321")
-            print (type(result_line))
-            print (result_line)
             if result_line == '':
                 continue
             CLASS_COMMON_UTIL.log_print(my_log, result_line)
-
             if "Reference file not found" in result_line:
                 index += 1
                 self.writing_error(25009, result_line)
 
-            # if "open maya file ok." in result_line and index != 0:
-            #     if "mayabatch.exe" in sys.executable.lower():
-            #         sys.stdout.flush()
-            #         time.sleep(0.2)
-            #         CLASS_MAYA_UTIL.killMayabatch(self.G_DEBUG_LOG)
-            #         return 0
-            #     else:
-            #         CLASS_MAYA_UTIL.kill_children()
-            #     sys.stdout.flush()
-            #     time.sleep(0.2)
-            #     sys.exit(55555)
-            #     CLASS_COMMON_UTIL.log_print(my_log,'\n\n-------------------------------------------End maya program-------------------------------------------\n\n')
-            #     break
+
+    def mylog(self,message):
+        self.G_DEBUG_LOG.info(message)
+        
+    def mylog_err(self,message):
+        self.G_DEBUG_LOG.info("[AnalyzeMaya ERROR]%s"% message)
+
     def bytes_to_str(self, str1, str_decode='default'):
         if not isinstance(str1, str):
             try:
@@ -97,9 +87,41 @@ class AnalyzeMaya(Maya):
         else:
             code = self.get_encode(encode_str)
             return encode_str.decode(code).encode('GBK')
+
+    def check_maya_file_intact(self):
+        #检查maya渲染文件是否上传完整
+        maya_file = self.G_INPUT_CG_FILE
+        last_line_temp_ma = "// End of"
+        if os.path.exists(self.G_INPUT_CG_FILE):
+            if maya_file.endswith(".ma"):
+                maya_file_last_line = self.get_file_last_line(maya_file)
+                if last_line_temp_ma not in maya_file_last_line:
+                    self.mylog_err("MA file`s last line is %s" % maya_file_last_line)
+                    self.writing_error(25021,"%s  might be incomplete and corrupt."%maya_file)
+                    return 1
+            elif maya_file.endswith(".mb"):
+                pass
+        else:
+            return 0
         
-        
-        
+    def get_file_last_line(self,inputfile):
+        filesize = os.path.getsize(inputfile)
+        blocksize = 1024
+        with open(inputfile, 'rb') as f:
+            last_line = ""
+            if filesize > blocksize:
+                maxseekpoint = (filesize // blocksize)
+                f.seek((maxseekpoint - 1) * blocksize)
+            elif filesize:
+                f.seek(0, 0)
+            lines = f.readlines()
+            if lines:
+                lineno = 1
+                while last_line == "":
+                    last_line = lines[-lineno].strip()
+                    lineno += 1
+            return last_line
+
     def writing_error(self, error_code, info=""):
         error_code = str(error_code)
         r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
@@ -119,8 +141,7 @@ class AnalyzeMaya(Maya):
                     self.tips_info_dict[error_code] = [info]
             else:
                 self.tips_info_dict[error_code] = []
-
-
+        
     def write_tips_info(self):
         info_file_path = os.path.dirname(self.G_TIPS_JSON)
         print ("write info_2 to tips.json")
@@ -135,15 +156,37 @@ class AnalyzeMaya(Maya):
                         json_src[i] = self.tips_info_dict[i]
             else:
                 json_src = self.tips_info_dict
-            print (json_src)
-            with open(info_file, 'w+') as f:
-                f.write(json.dumps(json_src,indent=2))
+            # print (json_src)
+            with codecs.open(info_file, 'w', 'utf-8') as f:
+                json.dump(json_src, f, ensure_ascii=False, indent=4)
+        except Exception as err:
+            print  (err)
+            pass
+        
+    def write_asset_info(self):
+        info_file_path = os.path.dirname(self.G_ASSET_JSON)
+        print ("write info_2 to asset.json")
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self.G_ASSET_JSON
+            self.asset_info_dict['scene_file'] = [self.G_INPUT_CG_FILE]
+            with codecs.open(info_file, 'w', 'utf-8') as f:
+                json.dump(self.asset_info_dict, f, ensure_ascii=False, indent=4)
         except Exception as err:
             print  (err)
             pass
 
 
     def RB_CONFIG(self):
+        try:
+            if self.check_maya_file_intact():
+                self.write_tips_info()
+                self.write_asset_info()
+                sys.exit(555)
+        except Exception as err:
+            self.mylog_err(err)
+            
         self.G_DEBUG_LOG.info('[Maya.RBconfig.start.....]')
         print("----------------------------------------config start ------------------------------------------")
         #kill maya       
@@ -175,7 +218,7 @@ class AnalyzeMaya(Maya):
             print("plugin path:")
             print(self.G_CG_CONFIG_DICT)
             sys.stdout.flush()
-            maya_plugin=MayaPlugin(self.G_CG_CONFIG_DICT,[custom_config],self.G_USER_ID,self.G_TASK_ID,self.G_DEBUG_LOG)
+            maya_plugin=MayaPlugin(self.G_CG_CONFIG_DICT,[custom_config],self.G_USER_ID,self.G_TASK_ID,self.G_DEBUG_LOG,self.G_PLUGIN_PATH)
             maya_plugin.config()           
             sys.stdout.flush()      
         print("----------------------------------------config end ------------------------------------------")
@@ -193,6 +236,7 @@ class AnalyzeMaya(Maya):
         options["tips_json"] = self.G_TIPS_JSON
         options["cg_version"] = self.CG_VERSION
         options["cg_plugins"] = self.G_CG_CONFIG_DICT["plugins"]
+        options["platform"] = self.G_PLATFORM
         self.G_DEBUG_LOG.info(options)
         mayabatch = ["C:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
                      (options["cg_version"]),
@@ -239,6 +283,10 @@ class AnalyzeMaya(Maya):
         if self.tips_info_dict:
             self.write_tips_info()
             self.G_DEBUG_LOG.info("write tips info_2 ok.")
+        if not os.path.exists(self.G_ASSET_JSON):
+            self.write_asset_info()
+            self.G_DEBUG_LOG.info("asset.json is not exist.")
+            self.G_DEBUG_LOG.info("write assets info_2 ok.")
         CLASS_MAYA_UTIL.kill_lic_all(my_log=self.G_DEBUG_LOG)        
         self.G_FEE_PARSER.set('render','end_time',str(int(time.time())))
         self.G_DEBUG_LOG.info('[maya.RBanalyse.end.....]')

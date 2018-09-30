@@ -211,10 +211,9 @@ class RenderMaya(Maya):
 		
 		#日志过滤调用errorbase类
 		
-		child_method = getattr(self, 'run')  # 获取子类的run()方法
-		child_method()  # 执行子类的run()方法
-		
-		
+		monitor_log = ErrorBase()
+		monitor_log.run()
+
 		self.format_log('done', 'end')
 	
 	def get_region(self, tiles, tile_index, width, height):
@@ -373,7 +372,7 @@ class RenderMaya(Maya):
 					print("current render layer \'s render is %s ,not in [mentalRay,arnold,vray]" % (self.renderer))
 					sys.exit(555)
 			else:
-				if self.renderer == "renderManRIS" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
+				if self.renderer == "renderManRIS" or self.renderer == "renderMan" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
 					cmd += " -r rman"
 				if self.renderer == "vray" and "vrayformaya" in self.CG_PLUGINS_DICT:
 					cmd += " -r vray"
@@ -394,8 +393,8 @@ class RenderMaya(Maya):
 				cmd += " -r redshift -logLevel 1"
 				gpu_n = "0,1"
 				cmd += " -gpu {%s}" % (gpu_n)
-			
-			if "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list:
+				
+			if "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list or "renderMan" in renderer_list:
 				cmd += " -r rman"
 		
 		max_threads_number = int(multiprocessing.cpu_count())

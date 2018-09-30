@@ -799,6 +799,11 @@ class PreRender(dict,PreRenderBase):
                 if animType != 1:
                     vraySettings.animType.set(1)
                     self.log_scene_set("animType",animType_dict[1])
+                    
+            if vraySettings.hasAttr("productionEngine"):
+                productionEngine_dict = {0:"CPU",1:"OpenCL",2:"CUDA"}
+                productionEngine = vraySettings.productionEngine.get()
+                self.log_scene("productionEngine",productionEngine_dict[productionEngine])
 
         yeti_load = cmds.pluginInfo("pgYetiMaya", query=True, loaded=True)
         if yeti_load:
@@ -1344,6 +1349,7 @@ class PreRender(dict,PreRenderBase):
             rd_path = re.sub(p2,"",rd_path)
             rd_path = re.sub(p3,"",rd_path)
             rd_path = re.sub(" ","_",rd_path)
+            rd_path = rd_path.strip()
             sceneName = os.path.splitext(os.path.basename(pm.system.sceneName()))[0].strip()
             if '<Scene>' in rd_path:
                 rd_path = rd_path.replace('<Scene>', sceneName)

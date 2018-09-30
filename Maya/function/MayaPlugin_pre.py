@@ -26,8 +26,11 @@ class PluginBase(object):
         self.ZIP_TYPE = '.7z'
         self.CURRENT_OS = platform.system().lower() 
         self.TOOL_DIR = self.get_json_ini('toolDir')
+        if not os.path.exists(self.TOOL_DIR):
+            self.TOOL_DIR = self.get_json_ini('toolDir',idex = 1)
         self.ZIPEXE = "%s/7z.exe"%self.TOOL_DIR
         self.TEMP_PATH = os.getenv('temp').replace('\\','/')
+        self.MAYA_SCRIPTS = r"C:\Users\enfuzion\Documents\maya\scripts"
 
     def get_json_ini(self,objkey,default = None,idex=0):
         info_path = self.JSON_PATH
@@ -134,7 +137,7 @@ class PluginBase(object):
             my_log = self.TEMP_PATH + '/' + 'plugin.txt'
         un_times = 1
         while un_times<3:
-            cmd = r'"%s" x -y -aos "%s" -o"%s"' % (self.ZIPEXE, zip_file, to)
+            cmd = r'"%s" x -y "%s" -o"%s"' % (self.ZIPEXE, zip_file, to)
             un_log = open(my_log,"wt")
             source_unzip = subprocess.Popen(cmd,stdout=un_log,shell=True)
             source_unzip.wait()
@@ -151,7 +154,7 @@ class PluginBase(object):
         cp_times = 0
         while cp_times < 3:
             cp_log = open(my_log,"wt")
-            cmds_copy = "copy %s %s" % (os.path.abspath(zip_file),
+            cmds_copy = "copy \"%s\" \"%s\"" % (os.path.abspath(zip_file),
                         os.path.abspath(to))
             source_copy = subprocess.Popen(cmds_copy,stdout=cp_log,shell=True)
             source_copy.wait()
@@ -168,7 +171,7 @@ class PluginBase(object):
                 if os.path.isdir(copy_source):                
                     cmds_copy = r'xcopy /y /f /e /v "%s" "%s"' % (os.path.abspath(copy_source),os.path.abspath(to))
                 else:
-                    cmds_copy = "copy %s %s" % (os.path.abspath(source),os.path.abspath(to))
+                    cmds_copy = "copy \"%s\" \"%s\"" % (os.path.abspath(copy_source),os.path.abspath(to))
                 source_copy = subprocess.Popen(cmds_copy,stdout=cp_log,shell=True)
                 source_copy.wait()
                 cp_times =(cp_times+1) if not source_copy.returncode == 0 else 5
@@ -410,7 +413,38 @@ class MayaPlugin(PluginBase):
         if "realflow" in plugin_list:
             self.auto_load_plu(maya_v,"realflow")   
             
-            
+    def create_user_setup(self):
+        if not os.path.exists(self.MAYA_SCRIPTS):
+            os.makedirs(self.MAYA_SCRIPTS)
+        user_setup_file = self.MAYA_SCRIPTS  + r"/userSetup.mel"
+        plugin_dict = self.G_PLUGIN_DICT["plugins"]
+        if "vrayformaya" in plugin_dict and "pgYetiMaya" in plugin_dict:
+            pass
+        
+        
+        auto_plugins_str = '''
+global proc auto_load_plugins()
+{
+
+    catch(`loadPlugin "AbcImport"`);
+    catch(`loadPlugin "tiffFloatReader"`);
+    catch(`loadPlugin "OpenEXRLoader"`);
+    catch(`loadPlugin "vrayformaya"`);
+    catch(`loadPlugin "pgYetiMaya"`);
+    catch(`loadPlugin "xgenVRay"`);
+    catch(`loadPlugin "xgenToolkit"`);
+    catch(`loadPlugin "realflow"`);
+    catch(`loadPlugin "pgYetiVRayMaya"`);
+}
+
+auto_load_plugins();
+
+        '''
+        content = auto_plugins_str.strip() + '\n'
+        with open(user_setup_file, "w") as f:
+            f.write(content)
+        self.MyLog("Create userSetup.mel at scripts....")
+
     def do_load_plugins_cfg(self, *args):        
         pluginsConfigPathList = args[0] 
         validInfoDict = args[1]
@@ -448,6 +482,7 @@ class MayaPlugin(PluginBase):
         # print type(validInfoDict)
         for cfgFile in pluginsConfigPathList:
             if os.path.exists(cfgFile):
+                self.MyLog('--------------Handle the RayvisionCustomConfig.py-----------------')
                 self.MyLog('plugins \'s config path : %s' % cfgFile)
                 cfgFileDir = os.path.dirname(cfgFile)
                 cfgFileName = os.path.splitext(os.path.split(cfgFile)[-1])[0]
@@ -466,7 +501,7 @@ class MayaPlugin(PluginBase):
                 except:
                     pass
             else:
-                self.MyLog('cfgFile file %s is not exists!' % cfgFile)
+                self.MyLog('--------the RayvisionCustomConfig.py is not exists!-----------')
 
     def auto_load_plu(self,maya_v,plug_name):
         
@@ -517,7 +552,13 @@ class MayaPlugin(PluginBase):
             self.MyLog(pluginDict)
             if pluginDict:
                 for pluginName in pluginDict:  
-                    pluginVersion=pluginDict[pluginName]                 
+                    pluginVersion=pluginDict[pluginName]
+                    if pluginName == "RenderMan_for_Maya":
+                        pluginName = "renderman"
+                    if pluginName == "alshader":
+                        pluginName = "alShader"
+                    if pluginName == "redshift_GPU":
+                        pluginName = "redshift"
                     pluginZipName = self.G_CG_NAME + self.G_CG_VERSION + '_' + pluginName + pluginVersion + self.ZIP_TYPE
                     if pluginName in  ['redshift','alShader','Cryptomatte','Domemaster3D','miarmy']:
                         if pluginName == 'miarmy':
@@ -533,7 +574,9 @@ class MayaPlugin(PluginBase):
                             max_ver = str(max(ver_list))
                             pluginVersion = ".".join([max_ver[0],max_ver[1],max_ver[-2:]])
                             self.MyLog("lastest miarmy ver : " + pluginVersion)
-                        pluginZipName = pluginName + pluginVersion + self.ZIP_TYPE            
+                        pluginZipName = pluginName + pluginVersion + self.ZIP_TYPE
+                        if pluginName in ['redshift']:
+                            pluginZipName = pluginName + "formaya_" + pluginVersion + self.ZIP_TYPE
                     pluginZipName_pro = self.G_CG_NAME + self.G_CG_VERSION + '_' + pluginName + pluginVersion + '_' + 'pro' + self.ZIP_TYPE
                     pluginZipName_clientM = self.G_CG_NAME + self.G_CG_VERSION + '_' + pluginName + pluginVersion + '_' + 'clientM' + self.ZIP_TYPE
                     pluginPyPath01=os.path.join(self.MAYA_Plugin_Dir,pluginName,'script',self.G_PLUGIN_PY_NAME).replace('\\','/')
@@ -584,22 +627,16 @@ class MayaPlugin(PluginBase):
     def config_plugin(self, *args):
         # self.MyLog(self.G_PLUGIN_DICT) 
         validInfo = {} 
-        validInfoPost = {}  
-        if "gpuid" in os.environ:
-            self.MyLog("this gpu dont clear")
-        else:
-            # self.MyLog("+++++++++++++clear maya per start ++++++++++++++++++++++++")
-            self.do_clear_render_pre(self.G_CG_NAME,self.G_CG_VERSION)
-            # self.MyLog("+++++++++++++clear maya per end++++++++++++++++++++++++")
-        if self.G_PLUGIN_DICT and 'plugins' in self.G_PLUGIN_DICT: 
-
+        validInfoPost = {}
+        self.do_clear_render_pre(self.G_CG_NAME,self.G_CG_VERSION)
+        if self.G_PLUGIN_DICT and 'plugins' in self.G_PLUGIN_DICT:
             # self.MyLog("+++++++++++++add auto_load_plu start ++++++++++++++++++++++++")
             pluginDict=self.G_PLUGIN_DICT['plugins']
             plugin_list = pluginDict.keys()
             # print plugin_list
-            self.do_auto_load_plu(self.G_CG_VERSION,plugin_list)
+            # self.do_auto_load_plu(self.G_CG_VERSION,plugin_list)
             # self.MyLog("+++++++++++++add auto_load_plu end ++++++++++++++++++++++++")
-
+        self.create_user_setup()
         pluginValidList = self.get_plugin_ini()
         # print pluginValidList
         if len(pluginValidList) > 0:
@@ -633,7 +670,7 @@ class MayaPlugin(PluginBase):
                     
                     un_log = os.path.join(self.Node_D,plugindict['pluginName'],'logs','un_log.txt').replace('\\','/')
                     cp_log = os.path.join(self.Node_D,plugindict['pluginName'],'logs','cp_log.txt').replace('\\','/')
-                    if plugindict['pluginName'] == 'vrayformaya':
+                    if plugindict['pluginName'] in ['vrayformaya',"redshift"]:
                         pass
                     else:
                         if self.find_7z(pluginZipSource,NodeSourcePath):
@@ -649,7 +686,8 @@ class MayaPlugin(PluginBase):
         validInfoPost['taskId'] =  self.TASKID       
         if self.custom_config:
             self.do_load_plugins_cfg_cus(self.custom_config,validInfoPost)
-
+        else:
+            self.MyLog('--------the RayvisionCustomConfig.py is not exists!-----------')
     def return_info(self):
 
         cg_name = self.G_CG_NAME

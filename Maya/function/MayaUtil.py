@@ -72,7 +72,6 @@ class RBMayaUtil(object):
 
 
 
-
     @classmethod  
     def killMayabatch(self,progressLog):
         progressLog.info('MayaLogDEBUG_TASKKILL_mayabatch')            

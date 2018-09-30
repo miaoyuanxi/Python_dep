@@ -14,30 +14,43 @@ import json
 import types
 import datetime
 from imp import reload
-reload(sys)
+# reload(sys)
 # sys.setdefaultencoding('utf-8')
-
 
 class PluginBase(object):
     def __init__(self):
-        self.JSON_PATH = r'B:/plugins/maya_new/envInfo.json'
         self.G_PLUGIN_PY_NAME = 'config.py'
         self.G_PLUGIN_FUNCTION_NAME = 'main'
-        self.ZIP_TYPE = '.7z'
-        self.CURRENT_OS = platform.system().lower() 
-        self.TOOL_DIR = self.get_json_ini('toolDir')
-        self.ZIPEXE = "%s/7z.exe"%self.TOOL_DIR
-        self.TEMP_PATH = os.getenv('temp').replace('\\','/')
-
-    def get_json_ini(self,objkey,default = None,idex=0):
-        info_path = self.JSON_PATH
-        with open(info_path,'r') as fn:
+        self.CURRENT_OS = platform.system().lower()
+    
+        if self.CURRENT_OS == "linux":
+            self.ZIP_TYPE = ".zip"
+            self.TEMP_PATH = "/temp/temp_files"
+        else:
+            self.ZIP_TYPE = '.7z'
+            self.TEMP_PATH = os.getenv('temp').replace('\\', '/')
+            
+            
+    def my_log(self, message, extr="PluginBase"):
+        if str(message).strip() != "":
+            print("[%s] %s" % (extr, str(message)))
+            
+    # @classmethod
+    def get_json_ini(self, objkey,json_path=None,default=None,idex=0):
+        info_path = json_path
+        if os.path.exists(info_path):
+            pass
+        else:
+            self.my_log("%s is not exists" % info_path)
+            sys.exit(555)
+        with open(info_path, 'r') as fn:
             fn_dict = json.load(fn)
             tmp_dict = fn_dict[self.CURRENT_OS]
-            def get_dict(tmp_dict,objkey,default = None,idex=0):
-                for k,v in list(tmp_dict.items()):
+        
+            def get_dict(tmp_dict, objkey, default=None, idex=0):
+                for k, v in list(tmp_dict.items()):
                     if k == objkey:
-                        if isinstance(v,list):
+                        if isinstance(v, list):
                             v = v[idex]
                         elif v == None:
                             v = default
@@ -46,10 +59,10 @@ class PluginBase(object):
                         return v
                     else:
                         # if type(v) is types.DictType:
-                        if isinstance(v,dict):
-                            re = get_dict(v,objkey,default,idex)
+                        if isinstance(v, dict):
+                            re = get_dict(v, objkey, default, idex)
                             if re is not default:
-                                if isinstance(re,list):
+                                if isinstance(re, list):
                                     re = re[idex]
                                 elif re == None:
                                     re = default
@@ -58,44 +71,40 @@ class PluginBase(object):
                                 # print re
                                 return re
                 return default
-            key_v = get_dict(tmp_dict,objkey,default,idex)
+        
+            key_v = get_dict(tmp_dict, objkey, default, idex)
         return key_v
-                
 
-    def clean_dir(self,Dir):
+    def clean_dir(self, Dir):
         for root, dirs, files in os.walk(Dir, topdown=False):
             for name in files:
                 os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
 
-    def do_del_path(self,file_path):
+    def do_del_path(self, file_path):
         if os.path.isfile(file_path) and os.path.exists(file_path):
             try:
                 os.remove(file_path)
                 self.MyLog("del file  %s" % file_path)
-            except Exception as error:  
-                print( Exception,":",error )
+            except Exception as error:
+                print(Exception, ":", error)
                 self.MyLog("dont del file %s" % file_path)
-        if os.path.isdir(file_path) and os.path.exists(file_path):            
-            try:                
+        if os.path.isdir(file_path) and os.path.exists(file_path):
+            try:
                 shutil.rmtree(file_path)
                 self.MyLog("del path %s" % file_path)
-            except Exception as error:              
-                print( Exception,":",error )
-                self.MyLog("dont del path %s" % file_path)                 
-                
-                
-                
+            except Exception as error:
+                print(Exception, ":", error)
+                self.MyLog("dont del path %s" % file_path)
 
-    def make_dirs(self,dir_list=[]):
-        if len(dir_list)>0:
+    def make_dirs(self, dir_list=[]):
+        if len(dir_list) > 0:
             for dir in dir_list:
                 if not os.path.exists(dir):
                     os.makedirs(dir)
-        
 
-    def find_7z(self,_7z, folder):
+    def find_7z(self, _7z, folder):
         _7z_name = os.path.basename(_7z)
         if os.path.exists(_7z):
             info_file = os.path.splitext(_7z)[0] + ".info"
@@ -124,118 +133,98 @@ class PluginBase(object):
                         else:
                             return 0
         else:
-            self.Mylog( "the %s is not exists" % _7z)
+            self.Mylog("the %s is not exists" % _7z)
             return 0
-            
-            
 
-    def un_7z(self,zip_file,to,my_log=None):
-        if my_log == None:
-            my_log = self.TEMP_PATH + '/' + 'plugin.txt'
-        un_times = 1
-        while un_times<3:
-            cmd = r'"%s" x -y -aos "%s" -o"%s"' % (self.ZIPEXE, zip_file, to)
-            un_log = open(my_log,"wt")
-            source_unzip = subprocess.Popen(cmd,stdout=un_log,shell=True)
-            source_unzip.wait()
-            if not source_unzip.returncode == 0:
-                un_times +=1
-            else:
-                un_times = 3
-            un_log.close()
-
-
-    def copy_7z(self,zip_file,to,my_log=None):
+    def copy_7z(self, zip_file, to, my_log=None):
         if my_log == None:
             my_log = self.TEMP_PATH + '/' + 'plugin.txt'
         cp_times = 0
         while cp_times < 3:
-            cp_log = open(my_log,"wt")
-            cmds_copy = "copy %s %s" % (os.path.abspath(zip_file),
-                        os.path.abspath(to))
-            source_copy = subprocess.Popen(cmds_copy,stdout=cp_log,shell=True)
+            cp_log = open(my_log, "wt")
+            cmds_copy = "copy \"%s\" \"%s\"" % (os.path.abspath(zip_file), os.path.abspath(to))
+            if self.CURRENT_OS == "linux":
+                cmds_copy = "cp \"%s\" \"%s\"" % (os.path.abspath(zip_file), os.path.abspath(to))
+            source_copy = subprocess.Popen(cmds_copy, stdout=cp_log, shell=True)
             source_copy.wait()
-            cp_times =(cp_times+1) if not source_copy.returncode == 0 else 5
+            cp_times = (cp_times + 1) if not source_copy.returncode == 0 else 5
             cp_log.close()
-            
-    def cmd_copy(self,copy_source,to,my_log=None):
+
+    def cmd_copy(self, copy_source, to, my_log=None):
         if os.path.exists(copy_source):
             if my_log == None:
                 my_log = self.TEMP_PATH + '/' + 'plugin.txt'
             cp_times = 0
             while cp_times < 3:
-                cp_log = open(my_log,"wt")
-                if os.path.isdir(copy_source):                
-                    cmds_copy = r'xcopy /y /f /e /v "%s" "%s"' % (os.path.abspath(copy_source),os.path.abspath(to))
+                cp_log = open(my_log, "wt")
+                if os.path.isdir(copy_source):
+                    cmds_copy = r'xcopy /y /f /e /v "%s" "%s"' % (os.path.abspath(copy_source), os.path.abspath(to))
                 else:
-                    cmds_copy = "copy %s %s" % (os.path.abspath(source),os.path.abspath(to))
-                source_copy = subprocess.Popen(cmds_copy,stdout=cp_log,shell=True)
+                    cmds_copy = "copy \"%s\" \"%s\"" % (os.path.abspath(copy_source), os.path.abspath(to))
+                source_copy = subprocess.Popen(cmds_copy, stdout=cp_log, shell=True)
                 source_copy.wait()
-                cp_times =(cp_times+1) if not source_copy.returncode == 0 else 5
+                cp_times = (cp_times + 1) if not source_copy.returncode == 0 else 5
                 cp_log.close()
         else:
             self.MyLog('canot exist  %s' % copy_source)
 
-    #python copy
-    def CopyFiles(self,copy_source,copy_target):
-        copy_source=os.path.normpath(copy_source)
-        copy_target=os.path.normpath(copy_target)
+    # python copy
+    def CopyFiles(self, copy_source, copy_target):
+        copy_source = os.path.normpath(copy_source)
+        copy_target = os.path.normpath(copy_target)
         copy_source = self.str_to_unicode(copy_source)
         copy_target = self.str_to_unicode(copy_target)
         try:
             if not os.path.exists(copy_target):
                 os.makedirs(copy_target)
-            if  os.path.isdir(copy_source):
-                self.copy_folder(copy_source,copy_target)
+            if os.path.isdir(copy_source):
+                self.copy_folder(copy_source, copy_target)
             else:
-                shutil.copy(copy_source,copy_target)
+                shutil.copy(copy_source, copy_target)
             return True
         except Exception as e:
             print (e)
             return False
 
-
-    def copy_folder(self,pyFolder,to):
+    def copy_folder(self, pyFolder, to):
         if not os.path.exists(to):
             os.makedirs(to)
         if os.path.exists(pyFolder):
             for root, dirs, files in os.walk(pyFolder):
-                for dirname in  dirs:
-                    tdir=os.path.join(root,dirname)
+                for dirname in dirs:
+                    tdir = os.path.join(root, dirname)
                     if not os.path.exists(tdir):
                         os.makedirs(tdir)
-                for i in xrange (0, files.__len__()):
+                for i in xrange(0, files.__len__()):
                     sf = os.path.join(root, files[i])
-                    folder=to+root[len(pyFolder):len(root)]+"/"
+                    folder = to + root[len(pyFolder):len(root)] + "/"
                     if not os.path.exists(folder):
                         os.makedirs(folder)
-                    shutil.copy(sf,folder)
+                    shutil.copy(sf, folder)
 
-
-    def str_to_unicode(self,str,str_decode = 'default'):
-        if not isinstance(str,unicode):
+    def str_to_unicode(self, str, str_decode='default'):
+        if not isinstance(str, unicode):
             try:
                 if str_decode != 'default':
                     str = str.decode(str_decode.lower())
                 else:
                     try:
-                        str = str.decode('utf-8')                        
+                        str = str.decode('utf-8')
                     except:
                         try:
                             str = str.decode('gbk')
-                        except:                            
+                        except:
                             str = str.decode(sys.getfilesystemencoding())
             except Exception as e:
                 print ('[err]str_to_unicode:decode %s to unicode failed' % (str))
                 print (e)
         return str
 
-
-    def unicode_to_str(self,str,str_encode = 'system'):
-        if isinstance(str,unicode):
+    def unicode_to_str(self, str, str_encode='system'):
+        if isinstance(str, unicode):
             try:
                 if str_encode.lower() == 'system':
-                    str=str.encode(sys.getfilesystemencoding())
+                    str = str.encode(sys.getfilesystemencoding())
                 elif str_encode.lower() == 'utf-8':
                     str = str.encode('utf-8')
                 elif str_encode.lower() == 'gbk':
@@ -243,50 +232,68 @@ class PluginBase(object):
                 else:
                     str = str.encode(str_encode)
             except Exception as e:
-                print ('[err]unicode_to_str:encode %s to %s failed' % (str,str_encode))
+                print ('[err]unicode_to_str:encode %s to %s failed' % (str, str_encode))
                 print (e)
         else:
             print ('%s is not unicode ' % (str))
         return str
 
-
-  
-    def CalcMD5(self,filepath):
-        with open(filepath,'rb') as f:
+    def CalcMD5(self, filepath):
+        with open(filepath, 'rb') as f:
             md5obj = hashlib.md5()
             md5obj.update(f.read())
             hash = md5obj.hexdigest()
             print(hash)
-            return hash  
+            return hash
 
-    def check_file(self,file1,file2):   #校验文件函数  
+    def check_file(self, file1, file2):  # 校验文件函数
         hashfile1 = self.CalcMD5(file1)
         hashfile2 = self.CalcMD5(file2)
         if hashfile1 == hashfile2:
             return 1
         else:
             return 0
-            
 
 
 
 class MayaPlugin(PluginBase):
-    def __init__(self,pluginCfg = None,custom_config = None,userId = '000',taskId = '000',myLog=None):
+    def __init__(self,pluginCfg = None,custom_config = None,userId = '000',taskId = '000',myLog=None,plugin_path = None):
         PluginBase.__init__(self)
         self.USERID = userId
         self.TASKID = taskId        
         self.MY_LOGER= myLog
-        self.Nodefolders = ["source","software","logs"]        
-        self.MAYA_Plugin_Dir = self.get_json_ini('MAYA_Plugin_Dir')
-        self.Node_D = self.get_json_ini('Node_D')
-        self.TEMP_PATH = os.getenv('temp').replace('\\','/')      
         self.custom_config = custom_config
+        self.plugin_path = plugin_path
+       
+        self.Nodefolders = ["source","software","logs"]
+        if self.CURRENT_OS == "windows":
+            curUserPath = os.environ.get('userprofile')
+            self.MAYA_SCRIPTS = r"%s/Documents/maya/scripts" % (curUserPath)
+        elif self.CURRENT_OS == "linux":
+            self.MAYA_SCRIPTS = "/root/maya/scripts"
+        else:
+            self.MyLog("Current OS is %s" % self.CURRENT_OS)
+            sys.exit(555)
+        self.MAYA_SCRIPTS = self.MAYA_SCRIPTS.replace('\\', "/")
+        
+        self.PLUGINS_PATH = self.get_plugin_dir() + "/plugins"
+        self.CONFIG_PATH = self.get_plugin_dir() + "/config"
+        self.MESS_UP_PATH = self.get_plugin_dir() + "/mess_up"
+        self.MyLog("plugins path is :: %s" % self.PLUGINS_PATH)
+        self.JSON_PATH = self.PLUGINS_PATH + '/envInfo.json'
+        if os.path.exists(self.JSON_PATH):
+            self.MyLog("Json path :: %s" % self.JSON_PATH)
+        else:
+            self.MyLog("%s  is not exists..........." % self.JSON_PATH)
+            sys.exit(555)
+
+        self.MAYA_Plugin_Dir = self.get_json_ini("MAYA_Plugin_Dir",self.JSON_PATH)
+        self.Node_D = self.get_json_ini('Node_D',self.JSON_PATH)
         
         if isinstance(pluginCfg,dict):
             self.G_PLUGIN_DICT=pluginCfg
         else:
             self.G_PLUGIN_DICT=self.get_plugin_dict(pluginCfg)
-
         if 'renderSoftware' in self.G_PLUGIN_DICT or 'softwareVer' in self.G_PLUGIN_DICT:
             # self.G_CG_VERSION=self.G_PLUGIN_DICT['renderSoftware']+' '+self.G_PLUGIN_DICT['softwareVer']
             self.G_CG_NAME =self.G_PLUGIN_DICT['renderSoftware']
@@ -303,11 +310,10 @@ class MayaPlugin(PluginBase):
             if str(message).strip() != "":
                 print("[%s] %s"%(extr,str(message)))
 
-
-
     def get_plugin_dict(self,pluginCfg):
-        plginInfoDict=None
-        if  os.path.exists(pluginCfg):
+        plginInfoDict = None
+        if os.path.exists(pluginCfg):
+            self.MyLog(pluginCfg)
             fp = open(pluginCfg)
             if fp:
                 listOfplgCfg = fp.readlines()
@@ -318,21 +324,79 @@ class MayaPlugin(PluginBase):
                 # for i in plginInfoDict.keys():
                     # self.MyLog(i)
                     # self.MyLog(plginInfoDict[i])
-
+        else:
+            self.MyLog("%s is not exists" % pluginCfg)
+            sys.exit(555)
         return plginInfoDict
+
+    def get_plugin_dir(self):
+        if self.CURRENT_OS == "windows":
+            plugin_path_ip = self.plugin_path
+            plugin_path = "c:/renderbuswork/cg/maya/windows"
+            if os.path.exists(plugin_path):
+                return plugin_path
+            elif os.path.exists(plugin_path_ip):
+                # self.MyLog(plugin_path_ip)
+                plugin_path_ip = plugin_path_ip.split("/")[2]
+                plugin_path = "//" + plugin_path_ip + "/cg/maya/windows"
+                return plugin_path
+            else:
+                self.MyLog("Plugins path is not exists.............")
+                sys.exit(555)
+    
+        elif self.CURRENT_OS == "linux":
+            plugin_path = "/tmp/nzs-data/renderbuswork/cg/maya/linux"
+            if os.path.exists(plugin_path):
+                return plugin_path
+            else:
+                self.MyLog("%s is not exists" % plugin_path)
+                sys.exit(555)
+        else:
+            self.MyLog("Current OS is %s" % self.CURRENT_OS)
+            sys.exit(555)
+
+
+    def un_7z(self, zip_file, to, my_log=None):
+        if my_log == None:
+            my_log = self.TEMP_PATH + '/' + 'plugin.txt'
+        un_times = 1
+        while un_times < 3:
+            if self.CURRENT_OS == "linux":
+                cmd = 'unzip -o -d "%s" "%s"' % (to, zip_file)
+            elif self.CURRENT_OS == "windows":
+                self.TOOL_DIR = self.get_json_ini('toolDir',self.JSON_PATH)
+                if not os.path.exists(self.TOOL_DIR):
+                    self.TOOL_DIR = self.get_json_ini('toolDir',self.JSON_PATH,idex=1)
+                self.ZIPEXE = "%s/7z.exe" % self.TOOL_DIR
+                cmd = r'"%s" x -y "%s" -o"%s"' % (self.ZIPEXE, zip_file, to)
+            else:
+                self.my_log("Current OS is %s" % self.CURRENT_OS)
+                sys.exit(555)
+            un_log = open(my_log, "wt")
+            source_unzip = subprocess.Popen(cmd, stdout=un_log, shell=True)
+            source_unzip.wait()
+            if not source_unzip.returncode == 0:
+                un_times += 1
+            else:
+                un_times = 3
+            un_log.close()
+
 
     def do_clear_render_pre(self, *args):
         input_SW = args[0]
         _V_APP = args[1]
-        
-        if input_SW=="maya": 
-
+        if input_SW=="maya":
             os.environ['MAYA_RENDER_DESC_PATH'] = ""
             os.environ['MAYA_MODULE_PATH'] =""
             #os.environ['MAYA_SCRIPT_PATH'] = ""
             os.environ['MAYA_PLUG_IN_PATH'] = ""            
             _MAYA_ROOT = r"C:/Program Files/Autodesk/Maya" + _V_APP
-            
+            if self.CURRENT_OS == "linux":
+                if float(_V_APP) < 2016:
+                    version_name = "%s-x64" % (_V_APP)
+                else:
+                    version_name = _V_APP
+                _MAYA_ROOT = "/usr/autodesk/maya%s" % (version_name)
             curUserPath = os.environ.get('userprofile')
             _MAYA_HOME = r"%s/Documents/maya/%s" % (curUserPath, _V_APP)
             if int(_V_APP[:4])<=2015:
@@ -343,53 +407,48 @@ class MayaPlugin(PluginBase):
             "Maya2012ExocortexAlembic.mod",'3delight_for_maya2012.mod','3delight_for_maya2013.5.mod','3delight_for_maya2014.mod',\
             "FumeFX.mod",'MiarmyForMaya.txt','Pixelux Digital Molecular Matter 64-bit.txt','ArnoldDomemaster3D.mod','Domemaster3D.mod',\
             'glmCrowd.mod','KrakatoaForMaya.module','maya2016.mod',"ArnoldDomemaster3D.mod",'Domemaster3D.mod','Maya2015ExocortexAlembic.mod','houdiniEngine-maya2015']
-            mode_path =  r"%s\modules" % (_MAYA_ROOT)
+            mode_path =  r"%s/modules" % (_MAYA_ROOT)
             if os.path.exists(mode_path):
                 mode_list = os.listdir(mode_path)
             else:
+                self.MyLog("%s is not exists" % mode_path)
                 mode_list=[]
             del_mod_list=[val for val in del_list_mod if val in mode_list]
             #del_list = list(set(del_list).intersection(set(listdir_path)))    
             for del_path in del_mod_list:
-                del_file_path="%s\%s" % (mode_path,del_path)
+                del_file_path="%s/%s" % (mode_path,del_path)
                 self.do_del_path(del_file_path)
             
             del_list_plug=['maxwell.mll','poseDeformer.mll','poseReader.mll','realflow.mll',"faceMachine.mll",'faceMachine','anzovin',\
             'wbDeltaMushDeformer.bundle','wbDeltaMushDeformer.mll','wbDeltaMushDeformer.so','anzovinRigNodes.mll','hotOceanDeformer.mll',\
             'nPowerTrans.mll','nPowerSoftware','resetSkinJoint.mll','AWutils.dll','VoxelFlow.dll']
-            plug_path =  r"%s\bin\plug-ins" % (_MAYA_ROOT)
+            plug_path =  r"%s/bin/plug-ins" % (_MAYA_ROOT)
             if os.path.exists(plug_path):
                 plug_list = os.listdir(plug_path)
             else:
                 plug_list=[]
-            
             del_plug_list=[val for val in del_list_plug if val in plug_list]
             #del_list = list(set(del_list).intersection(set(listdir_path)))    
             for del_path in del_plug_list:
-                del_file_path="%s\%s" % (plug_path,del_path)
+                del_file_path="%s/%s" % (plug_path,del_path)
                 self.do_del_path(del_file_path)
             #print "claer arnold "
-            del_mode_path_one= r"%s\modules\mtoa.mod" % (_MAYA_HOME)            
-            del_DESC_path_one= r"%s\bin\rendererDesc\arnoldRenderer.xml" % (_MAYA_ROOT)
+            del_mode_path_one= r"%s/modules/mtoa.mod" % (_MAYA_HOME)
+            del_DESC_path_one= r"%s/bin/rendererDesc/arnoldRenderer.xml" % (_MAYA_ROOT)
             self.do_del_path(del_mode_path_one)
             self.do_del_path(del_DESC_path_one)            
             #print "clear vray "
-            del_vray_one=r"%s\vray" % (_MAYA_ROOT)
+            del_vray_one=r"%s/vray" % (_MAYA_ROOT)
             self.do_del_path(del_vray_one) 
             vray_lic=r"C:\Program Files\Common Files\ChaosGroup\vrlclient.xml"
             self.do_del_path(vray_lic)
-            maya_scripts=r"C:\Users\enfuzion\Documents\maya\scripts"
+            maya_scripts=self.MAYA_SCRIPTS
             self.do_del_path(maya_scripts)
-            #print del fumefx for mr
-            
             fumefx_dll=r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\ffxDyna.dll" % (_V_APP) 
-
-            self.do_del_path(fumefx_dll) 
+            self.do_del_path(fumefx_dll)
             fume_mi=r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\include\ffxDyna.mi" % (_V_APP)
-
             self.do_del_path(fume_mi)
             mr_2017=r"C:\Program Files\Common Files\Autodesk Shared\Modules\Maya\2017\mentalray.mod"
-
             self.do_del_path(mr_2017)    
 
     def do_auto_load_plu(self,maya_v,plugin_list,*args):
@@ -408,9 +467,36 @@ class MayaPlugin(PluginBase):
         if "mtoa" in plugin_list:
             self.auto_load_plu(maya_v,"mtoa")
         if "realflow" in plugin_list:
-            self.auto_load_plu(maya_v,"realflow")   
-            
-            
+            self.auto_load_plu(maya_v,"realflow")
+
+    def create_user_setup(self):
+        if not os.path.exists(self.MAYA_SCRIPTS):
+            os.makedirs(self.MAYA_SCRIPTS)
+        user_setup_file = self.MAYA_SCRIPTS + r"/userSetup.mel"
+        auto_plugins_str = '''
+global proc auto_load_plugins()
+{
+
+    catch(`loadPlugin "AbcImport"`);
+    catch(`loadPlugin "tiffFloatReader"`);
+    catch(`loadPlugin "OpenEXRLoader"`);
+    catch(`loadPlugin "vrayformaya"`);
+    catch(`loadPlugin "pgYetiMaya"`);
+    catch(`loadPlugin "xgenVRay"`);
+    catch(`loadPlugin "xgenToolkit"`);
+    catch(`loadPlugin "realflow"`);
+    catch(`loadPlugin "pgYetiVRayMaya"`);
+
+}
+
+auto_load_plugins();
+
+        '''
+        content = auto_plugins_str.strip() + '\n'
+        with open(user_setup_file, "w") as f:
+            f.write(content)
+        self.MyLog("Create userSetup.mel at scripts....")
+   
     def do_load_plugins_cfg(self, *args):        
         pluginsConfigPathList = args[0] 
         validInfoDict = args[1]
@@ -437,7 +523,8 @@ class MayaPlugin(PluginBase):
                 except:
                     pass                
             else:
-                self.MyLog('cfgFile file %s is not exists!' % cfgFile)                                            
+                self.MyLog('cfgFile file %s is not exists!' % cfgFile)
+                
     def auto_load_plu(self,maya_v,plug_name):
         
         if int(maya_v[:4]) <= 2015:
@@ -471,9 +558,6 @@ class MayaPlugin(PluginBase):
                 # print ("write %s for auto load" % (plug_name))
                 f.write(plug_load)
                 
-                
-              
-
 
     def get_plugin_ini(self):
         # print('--------------------------------Start config ini--------------------------------\n\n')       
@@ -563,19 +647,15 @@ class MayaPlugin(PluginBase):
         validInfoPost = {}  
         if "gpuid" in os.environ:
             self.MyLog("this gpu dont clear")
+            self.do_clear_render_pre(self.G_CG_NAME, self.G_CG_VERSION)
         else:
-            # self.MyLog("+++++++++++++clear maya per start ++++++++++++++++++++++++")
             self.do_clear_render_pre(self.G_CG_NAME,self.G_CG_VERSION)
-            # self.MyLog("+++++++++++++clear maya per end++++++++++++++++++++++++")
-        if self.G_PLUGIN_DICT and 'plugins' in self.G_PLUGIN_DICT: 
-
-            # self.MyLog("+++++++++++++add auto_load_plu start ++++++++++++++++++++++++")
+        if self.G_PLUGIN_DICT and 'plugins' in self.G_PLUGIN_DICT:
             pluginDict=self.G_PLUGIN_DICT['plugins']
             plugin_list = pluginDict.keys()
             # print plugin_list
-            self.do_auto_load_plu(self.G_CG_VERSION,plugin_list)
-            # self.MyLog("+++++++++++++add auto_load_plu end ++++++++++++++++++++++++")
-
+            # self.do_auto_load_plu(self.G_CG_VERSION,plugin_list)
+        self.create_user_setup()
         pluginValidList = self.get_plugin_ini()
         # print pluginValidList
         if len(pluginValidList) > 0:
@@ -588,7 +668,10 @@ class MayaPlugin(PluginBase):
                     validInfo['pluginVersion'] =  plugindict['pluginVersion']    
                     validInfo['plugins'] =  self.G_PLUGIN_DICT['plugins']
                     validInfo['userId'] =  self.USERID
-                    validInfo['taskId'] =  self.TASKID                    
+                    validInfo['taskId'] =  self.TASKID
+                    validInfo['pluginsPath'] = self.PLUGINS_PATH
+                    validInfo['configPath'] = self.CONFIG_PATH
+                    validInfo['messUpPath'] = self.MESS_UP_PATH
                     pluginZipSource = plugindict['pluginZipSource'] 
                     pluginZipNode = plugindict['pluginZipNode']                        
                     for elm in self.Nodefolders:
@@ -597,6 +680,14 @@ class MayaPlugin(PluginBase):
                     NodeSoftware = os.path.join(self.Node_D,plugindict['pluginName'],'software').replace('\\','/')
                     NodeSourcePath = os.path.join(self.Node_D,plugindict['pluginName'],'source').replace('\\','/')
                     PluginDir = os.path.join(self.Node_D,plugindict['pluginName'],'software',self.G_CG_NAME +self.G_CG_VERSION + '_' + plugindict['pluginName'] + plugindict['pluginVersion'] ).replace('\\','/')
+                    if os.path.exists(PluginDir):
+                        try:
+                            subprocess.call("rd /s /q %s" % os.path.abspath(PluginDir), shell=True)
+                            self.MyLog("del path %s" % PluginDir)
+                        except Exception as error:
+                            self.MyLog("%s:%s" % (Exception, error))
+                            self.MyLog("Canot del path %s" % PluginDir)
+
                     self.make_dirs([PluginDir])
                     # try:                        
                         # PluginDir_del = os.path.join(PluginDir + 'del').replace('\\','/')
@@ -609,7 +700,7 @@ class MayaPlugin(PluginBase):
                     
                     un_log = os.path.join(self.Node_D,plugindict['pluginName'],'logs','un_log.txt').replace('\\','/')
                     cp_log = os.path.join(self.Node_D,plugindict['pluginName'],'logs','cp_log.txt').replace('\\','/')
-                    if plugindict['pluginName'] == 'vrayformaya':
+                    if plugindict['pluginName'] in ['vrayformaya','redshift']:
                         pass
                     else:
                         if self.find_7z(pluginZipSource,NodeSourcePath):
@@ -622,10 +713,15 @@ class MayaPlugin(PluginBase):
         validInfoPost['cgVersion'] =  self.G_CG_VERSION    
         validInfoPost['plugins'] =  self.G_PLUGIN_DICT['plugins']
         validInfoPost['userId'] =  self.USERID
-        validInfoPost['taskId'] =  self.TASKID       
+        validInfoPost['taskId'] =  self.TASKID
+        validInfoPost['pluginsPath'] = self.PLUGINS_PATH
+        validInfoPost['configPath'] = self.CONFIG_PATH
+        validInfoPost['messUpPath'] = self.MESS_UP_PATH
+        
         if self.custom_config:
             self.do_load_plugins_cfg(self.custom_config,validInfoPost)
-
+        else:
+            self.MyLog('--------the CustomConfig.py is not exists!-----------')
   
 
     def config(self):
@@ -638,11 +734,16 @@ class MayaPlugin(PluginBase):
         print ('\n\n-------------------------------------------------------[MayaPlugin]end----------------------------------------------------------\n\n')
         
         
+
+        
+        
 if __name__ == '__main__':
 
-    pluginCfg=sys.argv[0]
-    pluginPost=sys.argv[1]
-    userId=sys.argv[2]
-    taskId=sys.argv[3]
-    mayaPlugin=MayaPlugin(pluginCfg,pluginPost,userId,taskId)
+    # pluginCfg=sys.argv[0]
+    # pluginPost=sys.argv[1]
+    # userId=sys.argv[2]
+    # taskId=sys.argv[3]
+    pluginCfg = {"plugins": {u'mtoa':u'2.0.1'},"renderSoftware": "maya","softwareVer": "2018","3rdPartyShaders": { }}
+    plugin_path = "E:/NewPlatform/Maya/plugins"
+    mayaPlugin=MayaPlugin(pluginCfg,plugin_path=plugin_path)
     mayaPlugin.config()

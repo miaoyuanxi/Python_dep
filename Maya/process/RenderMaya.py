@@ -16,7 +16,7 @@ import re
 import math
 import multiprocessing
 from imp import reload
-
+import platform
 reload(sys)
 # sys.setdefaultencoding('utf-8')
 from Maya import Maya
@@ -28,7 +28,6 @@ from MayaUtil import NukeMerge
 from FrameChecker import RBFrameChecker as CLASS_FRAME_CHECKER
 import threading
 
-
 class RenderMaya(Maya):
     def __init__(self, **paramDict):
         Maya.__init__(self, **paramDict)
@@ -36,13 +35,14 @@ class RenderMaya(Maya):
         for key, value in self.__dict__.items():
             self.G_DEBUG_LOG.info(key + '=' + str(value))
         self.format_log('done', 'end')
-        
+        self.CURRENT_OS = platform.system().lower()
         self.G_CUSTOME_CONFIG_NAME = 'CustomConfig.py'
         self.G_PRE_NAME = 'Pre.py'
         self.G_POST_NAME = 'Post.py'
         self.G_PRERENDER_NAME = 'PreRender.py'
         self.G_POSTRENDER_NAME = 'PostRender.py'
         self.G_CUSTOME_PRERENDER_NAME = 'C_PreRender.py'
+        self.G_CUSTOME_INFO_CMD_NAME = 'info.json'
         self.CG_PLUGINS_DICT = self.G_CG_CONFIG_DICT['plugins']
         self.CG_NAME = self.G_CG_CONFIG_DICT['cg_name']
         self.CG_VERSION = self.G_CG_CONFIG_DICT['cg_version']
@@ -53,20 +53,30 @@ class RenderMaya(Maya):
         self.G_RN_MAYA_POSTRENDER = os.path.join(self.G_NODE_MAYASCRIPT, self.G_POSTRENDER_NAME).replace('\\', '/')
         self.G_RN_MAYA_CUSTOME_PRERENDER = os.path.join(self.G_NODE_MAYASCRIPT, self.G_CUSTOME_PRERENDER_NAME).replace(
             '\\', '/')
+        self.G_RN_MAYA_CUSTOME_CONFIG_CMD = os.path.join(self.G_NODE_MAYACONFIG, self.G_CUSTOME_INFO_CMD_NAME).replace('\\', '/')
         
         if self.G_CG_TILE_COUNT == self.G_CG_TILE:
             self.IMAGE_MERGE_FRAME = "1"
         else:
             self.IMAGE_MERGE_FRAME = "0"
-            
-            # self.MAYA_BASE_RENDER_CMD = ''
-            # self.MAYA_FINAL_RENDER_CMD = ''
+        self.PLUGINS_PATH = self.get_plugin_dir() + "/plugins"
+        self.CONFIG_PATH = self.get_plugin_dir() + "/config"
+        self.MESS_UP_PATH = self.get_plugin_dir() + "/mess_up"
+        
+        self.ERROR_LIST = []
+        
+
+    def my_print(self,message):
+        self.G_DEBUG_LOG.info('[MonitorLog] %s' % message)
+
     
     def maya_cmd_callback(self, my_popen, my_log):
         while my_popen.poll() is None:
             result_line = my_popen.stdout.readline().strip()
             result_line = result_line.decode(sys.getfilesystemencoding())
             # result_line = result_line.decode('utf-8')
+            result_line = self.bytes_to_str(result_line)
+            result_line = self.to_gbk(result_line)
             if result_line == '':
                 continue
             CLASS_COMMON_UTIL.log_print(my_log, result_line)
@@ -80,22 +90,75 @@ class RenderMaya(Maya):
                     self.render_record[frame]['end_time'] = end_time
                     self.render_record[str(int(frame) + int(self.G_CG_BY_FRAME))] = {'start_time': end_time,
                                                                                      'end_time': -1}
+                    
+    def bytes_to_str(self, str1, str_decode='default'):
+        if not isinstance(str1, str):
+            try:
+                if str_decode != 'default':
+                    str1 = str1.decode(str_decode.lower())
+                else:
+                    try:
+                        str1 = str1.decode('utf-8')
+                    except:
+                        try:
+                            str1 = str1.decode('gbk')
+                        except:
+                            str1 = str1.decode(sys.getfilesystemencoding())
+            except Exception as e:
+                print('[err]bytes_to_str:decode %s to str failed' % (str1))
+                print(e)
+        return str1
+
+    def get_encode(self, encode_str):
+        for code in ["utf-8", sys.getfilesystemencoding(), "gb18030", "ascii", "gbk", "gb2312"]:
+            try:
+                encode_str.decode(code)
+                return code
+            except:
+                pass
+
+    def to_gbk(self, encode_str):
+        if isinstance(encode_str, str):
+            return encode_str
+        else:
+            code = self.get_encode(encode_str)
+            return encode_str.decode(code).encode('GBK')
+
+    def get_plugin_dir(self):
+        if self.CURRENT_OS == "windows":
+            plugin_path = "c:/renderbuswork/cg/maya/windows"
+            if os.path.exists(plugin_path):
+                return plugin_path
+            elif self.G_PLUGIN_PATH:
+                self.my_print(self.G_PLUGIN_PATH)
+                self.G_PLUGIN_PATH = self.G_PLUGIN_PATH.split("/")[2]
+                plugin_path = "//" + self.G_PLUGIN_PATH + "/cg/maya/windows"
+                return plugin_path
+            else:
+                self.my_print("Plugins path is not exists.............")
+                sys.exit(555)
     
+        elif self.CURRENT_OS == "linux":
+            plugin_path = "/tmp/nzs-data/renderbuswork/cg/maya/linux"
+            if os.path.exists(plugin_path):
+                return plugin_path
+            else:
+                self.my_print("Plugins path is not exists.............")
+                sys.exit(555)
+        
     def RB_CONFIG(self):
         self.G_DEBUG_LOG.info('[Maya.RBconfig.start.....]')
         try:
-            if self.CG_VERSION == '2017':
-                # os.system("robocopy /e /ns /nc /nfl /ndl /np  \"B:/plugins/maya_new/2017updata3\"  \"C:/Program Files/Autodesk/Maya2017/scripts/others\"")
-                # print ("copy mayaBatchRenderProcedure.mel for maya2017 updata3 ")
-                copy_cmd = '{fcopy_path} /speed=full /force_close /no_confirm_stop /force_start "{source}" /to="{destination}"'.format(
-                    fcopy_path='c:\\fcopy\\FastCopy.exe',
-                    source=os.path.join(
-                        r'B:\plugins\maya_new\2017updata3').replace(
-                        '/', '\\'),
-                    destination=os.path.join(r"C:/Program Files/Autodesk/Maya2017/scripts/others").replace("/", "\\"),
-                )
-
-                CLASS_COMMON_UTIL.cmd(copy_cmd, my_log=self.G_DEBUG_LOG, try_count=3, continue_on_error=False)
+            if self.CURRENT_OS == "windows":
+                if self.CG_VERSION == '2017':
+                    copy_cmd = '{fcopy_path} /speed=full /force_close /no_confirm_stop /force_start "{source}" /to="{destination}"'.format(
+                        fcopy_path='c:\\fcopy\\FastCopy.exe',
+                        source=os.path.join(self.PLUGINS_PATH,"maya_Documents","2017updata3").replace(
+                            '/', '\\'),
+                        destination=os.path.join(r"C:/Program Files/Autodesk/Maya2017/scripts/others").replace("/", "\\"),
+                    )
+    
+                    CLASS_COMMON_UTIL.cmd(copy_cmd, my_log=self.G_DEBUG_LOG, try_count=3, continue_on_error=False)
 
         except Exception as err:
             self.G_DEBUG_LOG.infor(err)
@@ -133,7 +196,7 @@ class RenderMaya(Maya):
                 print(self.G_CG_CONFIG_DICT)
                 sys.stdout.flush()
                 maya_plugin = MayaPlugin(self.G_CG_CONFIG_DICT, [custom_config], self.G_USER_ID, self.G_TASK_ID,
-                                         self.G_DEBUG_LOG)
+                                         self.G_DEBUG_LOG,self.G_PLUGIN_PATH)
                 maya_plugin.config()
                 sys.stdout.flush()
             print(
@@ -144,7 +207,6 @@ class RenderMaya(Maya):
             self.G_DEBUG_LOG.info("[RenderNuke  Comp...........................]")
         self.G_DEBUG_LOG.info('[RenderMaya.RB_CONFIG.end.....]')
         self.format_log('done', 'end')
-    
 
     '''
         渲染
@@ -211,7 +273,21 @@ class RenderMaya(Maya):
             self.G_FEE_PARSER.set('render', 'end_time', str(int(time.time())))
             self.G_DEBUG_LOG.info('[RenderNuke.RB_RENDER.end.....]')
 
-    
+        # 日志过滤调用errorbase类
+        monitor_ini_dict = {}
+        monitor_ini_dict["CG_NAME"] = self.CG_NAME
+        monitor_ini_dict["CG_VERSION"] = self.CG_VERSION
+        monitor_ini_dict["CG_PLUGINS_DICT"] = self.CG_PLUGINS_DICT
+        monitor_ini_dict["G_INPUT_USER_PATH"] = self.G_INPUT_USER_PATH
+        monitor_ini_dict["G_OUTPUT_USER_PATH"] = self.G_OUTPUT_USER_PATH
+        monitor_ini_dict["G_NODE_NAME"] = self.G_NODE_NAME
+        monitor_ini_dict["G_NODE_ID"] = self.G_NODE_ID
+        monitor_ini_dict["G_WORK_RENDER_TASK_OUTPUT"] = self.G_WORK_RENDER_TASK_OUTPUT
+        monitor_ini_dict["G_DEBUG_LOG"] = self.G_DEBUG_LOG
+
+        monitor_log = ErrorBase(monitor_ini_dict)
+        monitor_log.run()
+
         self.format_log('done', 'end')
     
     def get_region(self, tiles, tile_index, width, height):
@@ -239,7 +315,16 @@ class RenderMaya(Maya):
         self.renderSettings = {}
         self.mappings = {}
         render_cmd = ''
-        
+
+
+        if os.path.exists(self.G_RN_MAYA_CUSTOME_CONFIG_CMD):
+            print ("handle custome cmd.json")
+            with open(self.G_RN_MAYA_CUSTOME_CONFIG_CMD, 'r') as fn:
+                cmd_dict = json.load(fn)
+            print (cmd_dict)
+            # for i in cmd_dict:
+            #     self.renderSettings[i] = cmd_dict[i]
+    
         if self.G_RENDER_OS == '0':
             if float(self.CG_VERSION) < 2016:
                 version_name = "%s-x64" % (self.CG_VERSION)
@@ -357,27 +442,27 @@ class RenderMaya(Maya):
                         print("please confirm the renderer is correct!")
                         print("current render layer \'s render is %s ,not in [mentalRay,arnold,vray]" % (self.renderer))
                         sys.exit(555)
-                if self.renderer in ["mayaSoftware"]:
+                elif self.renderer in ["mayaSoftware"]:
                     cmd += " -r sw -reg %(tile_region)s" % self.renderSettings
                 
-                if self.renderer in ["redshift"]:
+                elif self.renderer in ["redshift"]:
                     cmd += " -r redshift -logLevel 1 -gpu {0,1} -reg %(tile_region)s" % self.renderSettings
                     
                 else:
                     print("please confirm the renderer is correct!")
-                    print("current render layer \'s render is %s ,not in [mentalRay,arnold,vray]" % (self.renderer))
+                    print("current render layer \'s render is %s " % (self.renderer))
                     sys.exit(555)
             
             else:
-                if self.renderer == "renderManRIS" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
+                if self.renderer == "renderManRIS" or self.renderer == "renderMan" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
                     cmd += " -r rman"
-                if self.renderer == "vray" and "vrayformaya" in self.CG_PLUGINS_DICT:
+                elif self.renderer == "vray" and "vrayformaya" in self.CG_PLUGINS_DICT:
                     cmd += " -r vray"
-                if self.renderer == "redshift" and "redshift" in self.CG_PLUGINS_DICT:
+                elif self.renderer == "redshift" and "redshift" in self.CG_PLUGINS_DICT:
                     cmd += " -r redshift -logLevel 1"
                     gpu_n = "0,1"
                     cmd += " -gpu {%s}" % (gpu_n)
-                if self.renderer == "mayaSoftware":
+                elif self.renderer == "mayaSoftware":
                     cmd += " -r sw"
                 else:
                     pass
@@ -393,9 +478,10 @@ class RenderMaya(Maya):
                 gpu_n = "0,1"
                 cmd += " -gpu {%s}" % (gpu_n)
             
-            if "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list:
+            elif "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list or "renderMan" in renderer_list:
                 cmd += " -r rman"
-
+            else:
+                pass
 
         if "-r rman" in cmd:
             cmd += " -setAttr Format:resolution \"%(width)s %(height)s\"" % self.renderSettings
@@ -426,3 +512,41 @@ class RenderMaya(Maya):
         return cmd
 
 
+class ErrorBase():
+    def __init__(self, **paramDict):
+        for key in list(paramDict.keys()):
+            assign = 'self.{0} = param_dict["{0}"]'.format(key)
+            exec (assign)
+    
+    def run(self):
+        self.print_trilateral(mode=1)
+        self.G_DEBUG_LOG.info('------------------------- start MonitorLog-------------------------')
+        self.get_ini()
+        self.G_DEBUG_LOG.info('-------------------------  end  MonitorLog-------------------------')
+        self.print_trilateral(mode=2)
+    
+    def my_log(self, message):
+        self.G_DEBUG_LOG.info('[MonitorLog] %s' % message)
+    
+    def print_trilateral(self,rows=4,mode=1):
+        '''
+        :param rows: rows counts
+        :param mode: up  or  down
+        :return: a trilateral
+        '''
+        for i in range(0, rows):
+            for k in range(0, i + 1 if mode == 1 else rows - i):
+                print " * ",
+                k += 1
+            i += 1
+            print "\n"
+    
+    def get_ini(self):
+        self.G_DEBUG_LOG.info('[MonitorLog].start...')
+        self.my_log('软件::%s' % (self.CG_NAME + self.CG_VERSION))
+        self.my_log('插件::%s' % (self.CG_PLUGINS_DICT))
+        self.my_log('内存使用::%s' % ('None'))
+        self.my_log('INPUT  目录::%s' % (self.G_INPUT_USER_PATH.replace('/', '\\')))
+        self.my_log('OUTPUT 目录::%s' % (self.G_OUTPUT_USER_PATH.replace('/', '\\')))
+        self.my_log('节点机器IP::%s--%s' % (self.G_NODE_NAME, self.G_NODE_ID))
+        self.my_log('节点机器OUTPUT目录::%s' % (self.G_WORK_RENDER_TASK_OUTPUT.replace('/', '\\')))
