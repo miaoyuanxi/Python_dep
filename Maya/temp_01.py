@@ -926,3 +926,40 @@ if self.user_id in [1909924]:
     print "cycleCheck OFF "
     mel.eval("putenv(\"MAYA_DISABLE_BATCH_RUNUP\",\"1\"); global proc dynRunupForBatchRender() {}; ")
     print "MAYA_DISABLE_BATCH_RUNUP =>1"
+
+
+    def CopyExtfile(self):
+        D_ROOT = self.Base.get_json_ini('Node_D')
+        EXT_ROOT = self.Base.get_json_ini('MAYA_Plugin_Dir')
+        if self.plugins:
+            if "mtoa" in self.plugins:
+                self.MyLog("<<<<<<Set arnold for shaveNode Extension file>>>>>>>")
+                ARNOLD_VERSION = self.plugins['mtoa']
+                ARNOLD_PATH = D_ROOT + r"/mtoa/software/maya%s_mtoa%s" % (self.cgVersion, ARNOLD_VERSION)
+            
+                if not os.path.exists(ARNOLD_PATH + r"/maya_mtoa/shaders/shave_shaders.dll") and not os.path.exists(
+                                ARNOLD_PATH + r"/maya_mtoa/extensions/shave.dll") and not os.path.exists(
+                                ARNOLD_PATH + r"/maya_mtoa/extensions/shave.py"):
+                    extlist = ["1.4.2.2", "2.0.1"]
+                    if ARNOLD_VERSION in extlist:
+                        EXT_SHADERS = EXT_ROOT + r"/shaveNode/extensions_for_Mtoa/maya%s_mtoa%s/shaders" % (
+                        self.cgVersion, ARNOLD_VERSION)
+                        EXT_FILE = EXT_ROOT + r"/shaveNode/extensions_for_Mtoa/maya%s_mtoa%s/extensions" % (
+                        self.cgVersion, ARNOLD_VERSION)
+                    
+                        Shaders_srcDir = EXT_SHADERS
+                        Shaders_dstDir = ARNOLD_PATH + r"/maya_mtoa/shaders"
+                        os.system("robocopy /s  %s %s" % (Shaders_srcDir, Shaders_dstDir))
+                    
+                        Ext_srcDir = EXT_FILE
+                        Ext_dstDir = ARNOLD_PATH + r"/maya_mtoa/extensions"
+                        os.system("robocopy /s  %s %s" % (Ext_srcDir, Ext_dstDir))
+                    else:
+                        self.MyLog(
+                            "Current this arnold or maya version don't have shave extsiontion file in B disk,please offer your own file....")
+            
+            
+                else:
+                    self.MyLog("This arnold vesion already has the shave extension file ")
+            
+                self.MyLog("<<<<<<<Set arnold for shaveNode Extension file env finsh!!!>>>>>>>")

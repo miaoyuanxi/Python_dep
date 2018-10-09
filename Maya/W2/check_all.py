@@ -28,6 +28,7 @@ if "maya" in sys.executable.lower():
 class Maya(object):
     def __init__(self):
         self.error_list = []
+        self.scene_open_success = 0
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
         currentPath = currentPath.lower()
         if "user" in currentPath:
@@ -71,7 +72,20 @@ class Maya(object):
  
         if str(message).strip() != "":
             print("[%s] %s"%(extr,str(message)))
-
+            
+            
+    def print_trilateral(self,rows=4,mode=1):
+        '''
+        :param rows: rows counts
+        :param mode: up  or  down
+        :return: a trilateral
+        '''
+        for i in range(0, rows):
+            for k in range(0, i + 1 if mode == 1 else rows - i):
+                print " * ",  # 注意这里的","，一定不能省略，可以起到不换行的作用
+                k += 1
+            i += 1
+            print "\n"
 
     def print_info(self, info):
         print (info)
@@ -126,18 +140,27 @@ class Maya(object):
                 self.print_info_err("Please Check that the file is uploaded intact")
             if " This file contains legacy render layers and Maya is currently in Render Setup mode" in resultLine:
                 self.print_info_err(u".......渲染层方式不对，问问客户渲染层方式，然后联系TD定制一下...........")
-            if resultLine =="write cg_info_file":
-                self.print_info_err("..........Analysis  OK , analysis results have been written............")
+            # if resultLine =="write cg_info_file":
+            #     self.print_info_err("..........Analysis  OK , analysis results have been written............")
                 # cmdp.kill()
+            if resultLine == "open maya file ok.":
+                self.scene_open_success = 1
                 
         resultStr = cmdp.stdout.read()
         resultCode = cmdp.returncode
 
         if exitcode == -1:
             sys.exit(-1)
-    
         if not continueOnErr:
             if resultCode != 0:
+                if self.scene_open_success == 0 and resultCode != 555:
+                    self.print_trilateral(mode=1)
+                    print (
+                    '\n\n---------------------------------------------[ERROR BASE]start--------------------------------------------------\n\n')
+                    self.print_info_err(u"......场景打不开，问问客户本地测试正常不，问题可能比较复杂，联系TD吧........")
+                    print (
+                    '\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                    self.print_trilateral(mode=2)
                 sys.exit(resultCode)
         return resultStr
 
@@ -257,7 +280,7 @@ class MayaAnalyze(dict,Maya):
             try:
                 pm.PyNode(render_layer).setCurrent()
                 renderer = str(self.GetCurrentRenderer())
-                self.print_info("current renderer is : %s " % renderer)
+                self.print_info("%s\'s  renderer is : %s " % (render_layer,renderer))
                 plugins_rederer.setdefault(renderer)
                 if plugins_rederer[renderer]:
                     if plugins_rederer[renderer] not in self.cg_plugis_dict:
@@ -299,20 +322,6 @@ class MayaAnalyze(dict,Maya):
                     last_line = lines[-lineno].strip()
                     lineno += 1
             return last_line
-
-    def print_trilateral(self,rows=4,mode=1):
-        '''
-        :param rows: rows counts
-        :param mode: up  or  down
-        :return: a trilateral
-        '''
-        for i in range(0, rows):
-            for k in range(0, i + 1 if mode == 1 else rows - i):
-                print " * ",  # 注意这里的","，一定不能省略，可以起到不换行的作用
-                k += 1
-            i += 1
-            print "\n"
-
 
     def load_plugins(self):
         plugin_path = os.path.join(self["model"], "function")
@@ -381,7 +390,7 @@ class MayaAnalyze(dict,Maya):
         print ('\n\n---------------------------------------------[ERROR BASE]start--------------------------------------------------\n\n')
         print ('\n')
         if len(self.error_list) != 0:
-            if "..........Analysis  OK , analysis results have been written............" not in self.error_list:
+            if "..........Analysis  OK ,no error, analysis results have been written............" not in self.error_list:
                 if len(self.error_list) != 0:
                     for i in self.error_list:
                         print ("[Analyze Error]%s" % (self.unicode_to_str(i)))
@@ -755,6 +764,7 @@ class MayaAnalyze(dict,Maya):
             # print "write cg_info_file"
         if len(self.error_list) == 0:
             print("write cg_info_file")
+            self.print_info_err("..........Analysis  OK ,no error, analysis results have been written............")
         #     cmds.quit(force=True)
         # cmds.quit(force=True)
 

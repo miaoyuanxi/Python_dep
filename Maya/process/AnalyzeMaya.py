@@ -215,7 +215,6 @@ class AnalyzeMaya(Maya):
                     sys.stdout.flush()
                 else:
                     print("Can not find the CustomConfig file: %s." % custom_config)
-            print("plugin path:")
             print(self.G_CG_CONFIG_DICT)
             sys.stdout.flush()
             maya_plugin=MayaPlugin(self.G_CG_CONFIG_DICT,[custom_config],self.G_USER_ID,self.G_TASK_ID,self.G_DEBUG_LOG,self.G_PLUGIN_PATH)

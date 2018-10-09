@@ -336,7 +336,8 @@ class MayaPlugin(PluginBase):
             if os.path.exists(plugin_path):
                 return plugin_path
             elif os.path.exists(plugin_path_ip):
-                # self.MyLog(plugin_path_ip)
+                plugin_path_ip = plugin_path_ip.replace("\\","/")
+                # self.MyLog("plugins server path is :: %s" % plugin_path_ip)
                 plugin_path_ip = plugin_path_ip.split("/")[2]
                 plugin_path = "//" + plugin_path_ip + "/cg/maya/windows"
                 return plugin_path
@@ -481,6 +482,7 @@ global proc auto_load_plugins()
     catch(`loadPlugin "tiffFloatReader"`);
     catch(`loadPlugin "OpenEXRLoader"`);
     catch(`loadPlugin "vrayformaya"`);
+    catch(`loadPlugin "shaveNode"`);
     catch(`loadPlugin "pgYetiMaya"`);
     catch(`loadPlugin "xgenVRay"`);
     catch(`loadPlugin "xgenToolkit"`);

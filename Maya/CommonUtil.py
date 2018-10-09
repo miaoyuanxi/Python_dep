@@ -15,11 +15,21 @@ import platform
 import uuid
 
 
-from kafka import KafkaProducer
-from kafka.errors import KafkaError
+# from kafka import KafkaProducer
+# from kafka.errors import KafkaError
 
 # class FileHandle
 
+
+def decorator_use_in_class(f):
+    def wrapper(self, *args, **kwargs):
+        log_info_start = r'[{}.{}.start.....]'.format(self.__class__.__name__, f.__name__)
+        log_info_end = r'[{}.{}.end.....]'.format(self.__class__.__name__, f.__name__)
+        self.G_DEBUG_LOG.info(log_info_start)
+        out = f(self, *args, **kwargs)
+        self.G_DEBUG_LOG.info(log_info_end)
+        return out
+    return wrapper
 class RBCommon(object):
 
     @classmethod
@@ -104,7 +114,7 @@ class RBCommon(object):
     @classmethod
     def cmd(self, cmd_str, my_log=None, try_count=1, continue_on_error=False, my_shell=False,
             callback_func=None):  # continue_on_error=true-->not exit ; continue_on_error=false--> exit
-        print(str(continue_on_error) + '--->>>' + str(my_shell))
+        print("continue_on_error={}, my_shell={}".format(continue_on_error, my_shell))
         cmd_str = self.bytes_to_str(cmd_str)
         if my_log != None:
             my_log.info('cmd...' + cmd_str)
@@ -262,20 +272,22 @@ class RBCommon(object):
     @classmethod
     def write_file(self, file_content, my_file, my_code='UTF-8', my_mode='w'):
 
-        if isinstance(file_content, str):
+        if isinstance(file_content, (str, bytes)):
             file_content_u = self.bytes_to_str(file_content)
-            fl = codecs.open(my_file, my_mode, my_code)
-            fl.write(file_content_u)
-            fl.close()
-            return True
+            with codecs.open(my_file, my_mode, my_code) as fl:
+                fl.write(file_content_u)
+
+
         elif isinstance(file_content, (list, tuple)):
-            fl = codecs.open(my_file, my_mode, my_code)
-            for line in file_content:
-                fl.write(line + '\r\n')
-            fl.close()
-            return True
+            with codecs.open(my_file, my_mode, my_code) as fl:
+                for line in file_content:
+
+
+
+                    fl.write(line)
         else:
             return False
+        return True
 
     @classmethod
     def exit_tips(self, tips_str, tips_file, config_path, my_log):
@@ -360,8 +372,9 @@ class RBCommon(object):
     def make_dirs(self, dir_list=[]):
         if len(dir_list) > 0:
             for dir in dir_list:
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
+                if os.path.exists(dir):
+                    shutil.rmtree(dir, ignore_errors=True)
+                os.makedirs(dir)
 
     # use when shutil.rmtree can't delete file
     @classmethod
@@ -472,11 +485,11 @@ class RBCommon(object):
             if "STOPPED" in elm.strip():
                 to_install = False
                 print elm.strip()
-                
+
             if "RUNNING" in elm.strip():
                 predone +=1
                 print elm.strip()
-                
+
         '''
 
     @staticmethod
@@ -505,7 +518,7 @@ class RBCommon(object):
         by_frame = None
         pattern = '(-?\d+)(?:-?(-?\d+)(?:\[(-?\d+)\])?)?'
         m = re.match(pattern, string)
-        
+
         if m is not None:
             start_frame = m.group(1)
             end_frame = m.group(2)
@@ -516,7 +529,7 @@ class RBCommon(object):
                 by_frame = '1'
         else:
             print('[find_frame]frames is not match')
-        return (start_frame, end_frame, by_frame)            
+        return (start_frame, end_frame, by_frame)
 
     @classmethod
     def need_render_from_frame(cls, string):
@@ -540,6 +553,17 @@ class RBCommon(object):
         with open(path, mode, encoding=encoding) as fp:
             print(content, file=fp)
 
+    
+    @classmethod
+    def make_dir(self, path):
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except Exception as e:
+                print(e)
+                if not os.path.exists(path):
+                    os.makedirs(path)
+            
 
 class RBKafka():
     '''

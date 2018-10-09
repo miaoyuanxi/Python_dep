@@ -7,6 +7,7 @@ import sys
 import subprocess
 import string
 import time
+import datetime
 import shutil
 import codecs
 import configparser
@@ -90,7 +91,19 @@ class RenderMaya(Maya):
                     self.render_record[frame]['end_time'] = end_time
                     self.render_record[str(int(frame) + int(self.G_CG_BY_FRAME))] = {'start_time': end_time,
                                                                                      'end_time': -1}
-                    
+
+
+            #任务渲染完，强制退出maya
+
+            completed_key = "Scene %s completed" % (self.renderSettings["maya_file"])
+            if completed_key in result_line:
+                print("log_key: {%s}" % completed_key)
+                print("maya batch end !!!")
+                # my_popen.kill() #杀不掉子进程的子进程，所以有问题
+                CLASS_MAYA_UTIL.killMayabatch(my_log)  # kill mayabatch.exe
+                break
+
+
     def bytes_to_str(self, str1, str_decode='default'):
         if not isinstance(str1, str):
             try:
@@ -126,13 +139,16 @@ class RenderMaya(Maya):
 
     def get_plugin_dir(self):
         if self.CURRENT_OS == "windows":
+            plugin_path_ip = self.G_PLUGIN_PATH
             plugin_path = "c:/renderbuswork/cg/maya/windows"
             if os.path.exists(plugin_path):
                 return plugin_path
             elif self.G_PLUGIN_PATH:
                 self.my_print(self.G_PLUGIN_PATH)
-                self.G_PLUGIN_PATH = self.G_PLUGIN_PATH.split("/")[2]
-                plugin_path = "//" + self.G_PLUGIN_PATH + "/cg/maya/windows"
+                plugin_path_ip = plugin_path_ip.replace("\\","/")
+                # self.MyLog("plugins server path is :: %s" % plugin_path_ip)
+                plugin_path_ip = plugin_path_ip.split("/")[2]
+                plugin_path = "//" + plugin_path_ip + "/cg/maya/windows"
                 return plugin_path
             else:
                 self.my_print("Plugins path is not exists.............")
@@ -275,6 +291,7 @@ class RenderMaya(Maya):
 
         # 日志过滤调用errorbase类
         monitor_ini_dict = {}
+        monitor_ini_dict["G_INPUT_CG_FILE"] = self.G_INPUT_CG_FILE
         monitor_ini_dict["CG_NAME"] = self.CG_NAME
         monitor_ini_dict["CG_VERSION"] = self.CG_VERSION
         monitor_ini_dict["CG_PLUGINS_DICT"] = self.CG_PLUGINS_DICT
@@ -315,7 +332,6 @@ class RenderMaya(Maya):
         self.renderSettings = {}
         self.mappings = {}
         render_cmd = ''
-
 
         if os.path.exists(self.G_RN_MAYA_CUSTOME_CONFIG_CMD):
             print ("handle custome cmd.json")
@@ -377,7 +393,6 @@ class RenderMaya(Maya):
         self.renderSettings["start"] = self.G_CG_START_FRAME
         self.renderSettings["end"] = self.G_CG_END_FRAME
         self.renderSettings["by"] = self.G_CG_BY_FRAME
-        
         self.renderSettings["renderableCamera"] = self.G_CG_OPTION
         self.renderSettings["renderableLayer"] = self.G_CG_LAYER_NAME
         self.renderSettings["projectPath"] = os.path.normpath(self.G_INPUT_PROJECT_PATH).replace("\\","/")
@@ -513,9 +528,10 @@ class RenderMaya(Maya):
 
 
 class ErrorBase():
-    def __init__(self, **paramDict):
-        for key in list(paramDict.keys()):
-            assign = 'self.{0} = param_dict["{0}"]'.format(key)
+    def __init__(self,ini_dict):
+        print(ini_dict)
+        for key in list(ini_dict.keys()):
+            assign = 'self.{0} = ini_dict["{0}"]'.format(key)
             exec (assign)
     
     def run(self):
@@ -536,10 +552,10 @@ class ErrorBase():
         '''
         for i in range(0, rows):
             for k in range(0, i + 1 if mode == 1 else rows - i):
-                print " * ",
+                self.my_log(" * ",)
                 k += 1
             i += 1
-            print "\n"
+            self.my_log("\n")
     
     def get_ini(self):
         self.G_DEBUG_LOG.info('[MonitorLog].start...')
@@ -548,5 +564,39 @@ class ErrorBase():
         self.my_log('内存使用::%s' % ('None'))
         self.my_log('INPUT  目录::%s' % (self.G_INPUT_USER_PATH.replace('/', '\\')))
         self.my_log('OUTPUT 目录::%s' % (self.G_OUTPUT_USER_PATH.replace('/', '\\')))
-        self.my_log('节点机器IP::%s--%s' % (self.G_NODE_NAME, self.G_NODE_ID))
+        self.my_log('节点机器IP::%s--%s' % (self.G_NODE_NAME, CLASS_COMMON_UTIL.get_computer_ip()))
         self.my_log('节点机器OUTPUT目录::%s' % (self.G_WORK_RENDER_TASK_OUTPUT.replace('/', '\\')))
+        self.my_log('MAYA文件::%s' % (self.G_INPUT_CG_FILE.replace('/', '\\')))
+        self.my_log('MAYA文件的大小::%s MB' % (self.get_FileSize(self.G_INPUT_CG_FILE)))
+        self.my_log('MAYA文件的时间::%s' % (self.get_FileModifyTime(self.G_INPUT_CG_FILE)))
+        
+
+    def TimeStampToTime(self,timestamp):
+        '''把时间戳转化为时间: 1479264792 to 2016-11-16 10:53:12'''
+        timeStruct = time.localtime(timestamp)
+        return time.strftime('%Y-%m-%d %H:%M:%S', timeStruct)
+        
+    def get_FileSize(self,filePath):
+        '''获取文件的大小,结果保留两位小数，单位为MB'''
+        filePath = unicode(filePath,'utf8')
+        fsize = os.path.getsize(filePath)
+        fsize = fsize/float(1024*1024)
+        return str(round(fsize,2))
+    
+    def get_FileModifyTime(self,filePath):
+        '''获取文件的修改时间'''
+        filePath = unicode(filePath,'utf8')
+        t = os.path.getmtime(filePath)
+        return self.TimeStampToTime(t)
+    
+    def get_FileCreateTime(self,filePath):
+        '''获取文件的创建时间'''
+        filePath = unicode(filePath,'utf8')
+        t = os.path.getctime(filePath)
+        return self.TimeStampToTime(t)
+
+    def get_FileAccessTime(self,filePath):
+        '''获取文件的访问时间'''
+        filePath = unicode(filePath,'utf8')
+        t = os.path.getatime(filePath)
+        return self.TimeStampToTime(t)

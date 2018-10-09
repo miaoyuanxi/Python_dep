@@ -304,6 +304,8 @@ class Analyze(dict, Maya):
         scene_info_option_dict["merge_aovs"] = str(arnold_driver_node.mergeAOVs.get())
         scene_info_option_dict["abort_on_error"] = str(arnold_options_node.abortOnError.get())
         scene_info_option_dict["log_verbosity"] = str(arnold_options_node.log_verbosity.get())
+        if arnold_options_node.hasAttr("skipLicenseCheck"):
+            scene_info_option_dict["skipLicenseCheck"] = str(arnold_options_node.skipLicenseCheck.get())
         #sampling---------------
         AASamples = str(arnold_options_node.AASamples.get())
         GIDiffuseSamples = str(arnold_options_node.GIDiffuseSamples.get())
@@ -345,6 +347,19 @@ class Analyze(dict, Maya):
             scene_info_option_dict["absolute_texture_paths"] = str(arnold_options_node.absoluteTexturePaths.get())
         if arnold_options_node.hasAttr("absoluteProceduralPaths"):
             scene_info_option_dict["absolute_procedural_paths"] = str(arnold_options_node.absoluteProceduralPaths.get())
+            
+        aovs_list = self.getArnoldElements()
+        denoise_list = []
+        if len(aovs_list) != 0:
+            for aovName in aovs_list:
+                aov_node = pm.PyNode(aovName)
+                if aov_node.hasAttr("denoise"):
+                    enabled = int(pm.getAttr(str(aovName) + ".denoise"))
+                    if enabled == 1:
+                        denoise_list.append(aovName)
+        if len(denoise_list) != 0:
+            self.writing_error(25023,"%s come into use Denoise with Optix,(Arnold) don\'t support  GPU denoise..."% (','.join(denoise_list)))
+            
         scene_info_option_dict['pre_render_mel'] = self.unicode_to_str(self.defaultRG.preMel.get())
         scene_info_option_dict['post_render_mel'] = self.unicode_to_str(self.defaultRG.postMel.get())
         scene_info_option_dict['pre_render_layer_mel'] = self.unicode_to_str(self.defaultRG.preRenderLayerMel.get())

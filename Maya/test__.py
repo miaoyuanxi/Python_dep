@@ -3,8 +3,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-
-
+import time
+import socket
 class A(object):
 	def __init__(self):
 		self.aa = 1111111222
@@ -46,17 +46,53 @@ class B(A):
 #
 # 	with codecs.open(path, 'w', 'utf-8') as f:
 # 		json.dump(dic, f, ensure_ascii=False, indent=4)
-def print_trilateral(rows=4, mode=1):
-	'''
-	:param rows: rows counts
-	:param mode: up  or  down
-	:return: a trilateral
-	'''
-	for i in range(0, rows):
-		for k in range(0, i+1 if mode == 1 else rows - i):
-			print " * ",  # 注意这里的","，一定不能省略，可以起到不换行的作用
-			k += 1
-		i += 1
-		print "\n"
-		
-print_trilateral(4,1)
+# def print_trilateral(rows=4, mode=1):
+# 	'''
+# 	:param rows: rows counts
+# 	:param mode: up  or  down
+# 	:return: a trilateral
+# 	'''
+# 	for i in range(0, rows):
+# 		for k in range(0, i+1 if mode == 1 else rows - i):
+# 			print " * ",  # 注意这里的","，一定不能省略，可以起到不换行的作用
+# 			k += 1
+# 		i += 1
+# 		print "\n"
+#
+# print_trilateral(4,1)
+
+def TimeStampToTime(timestamp):
+	'''把时间戳转化为时间: 1479264792 to 2016-11-16 10:53:12'''
+	timeStruct = time.localtime(timestamp)
+	return time.strftime('%Y-%m-%d %H:%M:%S', timeStruct)
+
+def get_FileSize(filePath):
+	'''获取文件的大小,结果保留两位小数，单位为MB'''
+	filePath = unicode(filePath, 'utf8')
+	fsize = os.path.getsize(filePath)
+	fsize = fsize / float(1024 * 1024)
+	return round(fsize, 2)
+
+
+def get_FileModifyTime(filePath):
+	'''获取文件的修改时间'''
+	filePath = unicode(filePath, 'utf8')
+	t = os.path.getmtime(filePath)
+	return TimeStampToTime(t)
+
+
+aa = "D:/ccccc.mb"
+
+#
+# print type(get_FileSize(aa))
+# print type(get_FileModifyTime(aa))
+def get_computer_hostname():
+	return socket.gethostname()
+
+def get_computer_ip():
+	host_name = get_computer_hostname()
+	ip_str = socket.gethostbyname(host_name)
+	return ip_str
+
+
+print get_computer_ip()
