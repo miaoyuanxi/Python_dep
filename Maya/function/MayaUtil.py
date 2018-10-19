@@ -30,7 +30,7 @@ class RBMayaUtil(object):
     @classmethod
     def cmd(self, cmd_str, my_log=None, try_count=1, continue_on_error=False, my_shell=False,
             callback_func=None):  # continue_on_error=true-->not exit ; continue_on_error=false--> exit
-        print(str(continue_on_error) + '--->>>' + str(my_shell))
+        print("continue_on_error={}, my_shell={}".format(continue_on_error, my_shell))
         cmd_str = self.bytes_to_str(cmd_str)
         if my_log != None:
             my_log.info('cmd...' + cmd_str)
@@ -70,15 +70,84 @@ class RBMayaUtil(object):
                 sys.exit(resultCode)
         return resultCode, resultStr
 
+    @classmethod
+    def maya_cmd(self, cmd_str, my_log=None, try_count=1, continue_on_error=False, my_shell=False,
+            callback_func=None):  # continue_on_error=true-->not exit ; continue_on_error=false--> exit
+        print("continue_on_error={}, my_shell={}".format(continue_on_error, my_shell))
+        cmd_str = self.bytes_to_str(cmd_str)
+        # if my_log != None:
+        #     my_log.info('cmd...' + cmd_str)
+        # self.G_PROCESS_LOG.info('try3...')
+        l = 0
+        resultStr = ''
+        resultCode = 0
+        maya_result_code = 0
+        while l < try_count:
+            l = l + 1
+            my_popen = subprocess.Popen(cmd_str, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT, shell=my_shell)
+            my_popen.stdin.write(b'3/n')
+            my_popen.stdin.write(b'4/n')
 
+            if callback_func == None:
+                while my_popen.poll() == None:
+                    result_line = my_popen.stdout.readline().strip()
+                    result_line = result_line.decode(sys.getfilesystemencoding())
+                    if result_line != '' and my_log != None:
+                        my_log.info(result_line)
+            else:
+                maya_result_code = callback_func(my_popen, my_log)
+
+            resultStr = my_popen.stdout.read()
+            resultStr = resultStr.decode(sys.getfilesystemencoding())
+            resultCode = my_popen.returncode
+            if maya_result_code == 1:
+                resultCode = 0
+            if resultCode == 0:
+                break
+            else:
+                time.sleep(1)
+        if my_log != None:
+            my_log.info('resultStr...' + resultStr)
+            my_log.info('resultCode...' + str(resultCode))
+
+        if not continue_on_error:
+            if resultCode != 0:
+                self.killMayabatch(my_log)
+                self.kill_lic_all(my_log=my_log)
+                sys.exit(resultCode)
+        return resultCode, resultStr
+
+
+
+
+
+    @classmethod
+    def bytes_to_str(self, str1, str_decode='default'):
+        if not isinstance(str1, str):
+            try:
+                if str_decode != 'default':
+                    str1 = str1.decode(str_decode.lower())
+                else:
+                    try:
+                        str1 = str1.decode('utf-8')
+                    except:
+                        try:
+                            str1 = str1.decode('gbk')
+                        except:
+                            str1 = str1.decode(sys.getfilesystemencoding())
+            except Exception as e:
+                print('[err]bytes_to_str:decode %s to str failed' % (str1))
+                print(e)
+        return str1
 
     @classmethod  
     def killMayabatch(self,progressLog):
-        progressLog.info('MayaLogDEBUG_TASKKILL_mayabatch')            
+        progressLog.info('TASK_KILL_mayabatch.exe')
         try:
             os.system('taskkill /F /IM mayabatch.exe /T')
         except  Exception as e:
-            progressLog.info('MayaLog2taskkill mayabatch.exe exeception')  
+            progressLog.info('MayaLog taskkill mayabatch.exe exeception')
             progressLog.info(e)
 
     @classmethod      

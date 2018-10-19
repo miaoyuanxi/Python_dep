@@ -5,6 +5,9 @@
 import os
 import time
 import socket
+import re
+import math
+
 class A(object):
 	def __init__(self):
 		self.aa = 1111111222
@@ -81,18 +84,120 @@ def get_FileModifyTime(filePath):
 	return TimeStampToTime(t)
 
 
-aa = "D:/ccccc.mb"
+# aa = "D:/ccccc.mb"
+#
+# #
+# # print type(get_FileSize(aa))
+# # print type(get_FileModifyTime(aa))
+# def get_computer_hostname():
+# 	return socket.gethostname()
+#
+# def get_computer_ip():
+# 	host_name = get_computer_hostname()
+# 	ip_str = socket.gethostbyname(host_name)
+# 	return ip_str
+#
+#
+# print get_computer_ip()
+
+# log_line = '2018-10-11 11:31:34 INFO - 00:00:26 2176MB ERROR | [texturesys] unspecified OIIO error (filename = "Y:/XCM_2019D"Y()/Asse"t/seq+-0打上了飞机拉萨00/character/xiongda/sourceimages/xiongda/xiongda_body_col08.jpg")'
+#
+#
+# def get_log_ini(log_line):
+# 	error_file_list = []
+# 	if log_line.strip() and "ERROR | [texturesys] unspecified OIIO error" in log_line:
+# 		p1 = re.compile(r"(?<=\().+(?=[\',\)])", re.I)
+# 		p1 = re.compile(r"\"(.*)\"", re.I)
+# 		error_file_path = p1.findall(log_line)
+# 		if error_file_path:
+# 			error_file_list.append(error_file_path[0])
+# 	return error_file_list
+#
+#
+# print get_log_ini(log_line)
+
 
 #
-# print type(get_FileSize(aa))
-# print type(get_FileModifyTime(aa))
-def get_computer_hostname():
-	return socket.gethostname()
+# def print_trilateral(rows=4, mode=1):
+# 	'''
+# 	:param rows: rows counts
+# 	:param mode: up  or  down
+# 	:return: a trilateral
+# 	'''
+# 	for i in range(0, rows):
+# 		print(" * " * (i + 1 if mode == 1 else rows - i))
+# 		i += 1
+# 		print("\n")
+#
+# print_trilateral(5,mode = 2)
 
-def get_computer_ip():
-	host_name = get_computer_hostname()
-	ip_str = socket.gethostbyname(host_name)
-	return ip_str
+#
+# def get_region(tiles, tile_index, width, height):
+# 	n = int(math.sqrt(tiles))
+# 	for i in sorted(range(2, n + 1), reverse=1):
+# 		if tiles % i != 0:
+# 			continue
+# 		else:
+# 			n = i
+# 			break
+# 	n3 = tiles / n
+# 	n1 = tile_index / n3
+# 	n2 = tile_index % n3
+# 	top = height / n * (n1 + 1)
+# 	left = width / n3 * n2
+# 	bottom = height / n * n1
+# 	right = width / n3 * (n2 + 1)
+# 	if right == width:
+# 		right -= 1
+# 	if top == height:
+# 		top -= 1
+# 	return int(left), int(right), int(bottom), int(top)
 
 
-print get_computer_ip()
+
+def get_region(tiles, tile_index, width, height):
+	print(tiles, tile_index, width, height)
+	print("999999999999999999999999999")
+	n = int(math.sqrt(tiles))
+	for i in sorted(range(2, n + 1), reverse=1):
+		if tiles % i != 0:
+			continue
+		else:
+			n = i
+			break
+	n3 = tiles / n
+	n1 = tile_index / n3
+	n2 = tile_index % n3
+	top = height / n * (n1 + 1)
+	left = width / n3 * n2
+	bottom = height / n * n1
+	right = width / n3 * (n2 + 1)
+	if right == width:
+		right -= 1
+	if top == height:
+		top -= 1
+	print(int(left), int(right), int(bottom), int(top))
+tiles = 8
+width = 1024
+height = 1024
+
+# print get_region(8,7, width, height)
+#
+#
+# dict_t = {"a":"aa","b":"bb","c":"cc"}
+# str_ =""
+# for i in dict_t:
+# 	str_ += "%s = '%s'; " % (i ,dict_t[i])
+# # print str_
+# # exec(str_)
+# # print a
+#
+# print "%"
+d={'age': '3', 'boyfriend': 'czt', 'name': {"aa":"aaaa"}, 'sex': 'women'}
+s1=d.items()
+lst=[]
+for key,value in s1:
+	s3="%s=%s"%(key,value)
+	lst.append(s3)
+print lst
+print ",".join(lst)

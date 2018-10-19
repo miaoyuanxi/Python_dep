@@ -7,7 +7,6 @@ import re
 import sys
 import json
 import subprocess
-import _subprocess
 import time
 import logging
 import uuid
@@ -28,7 +27,7 @@ import collections
 #     reload(sys)
 #     sys.setdefaultencoding(defaultencoding)
 
-if os.path.basename(sys.executable.lower()) in ["mayabatch.exe", "maya.exe"]:
+if "maya" in sys.executable.lower():
     import pymel.core as pm
     import maya.cmds as cmds
     import maya.mel as mel
@@ -2832,23 +2831,24 @@ def analyze_maya(options):
 
     analyze.print_info("analyze maya info ok.")
 
-
-
 if __name__ == '__main__':
-    pass
-    # options = {}
-    # analyze = Config(options)
-    # analyze.gather_task_dict()
-    # analyze.print_info("get layer setting info ok.")
-	#
-    # analyze.gather_asset_dict()
-    # analyze.print_info("gather assets  info ok.")
-	#
-    # analyze.print_info("gather tips  info ok.")
-	#
-    # analyze.write_asset_info()
-    # analyze.print_info("write asset info ok.")
-    # pass
-
-
-
+    #linux
+    options = {}
+    options["cg_file"] = cg_file
+    options["cg_project"] = cg_project
+    options["task_json"] = task_json
+    if os.path.exists(options["task_json"]):
+        options["asset_json"] = os.path.join(os.path.dirname(options["task_json"]),"asset.json").replace("\\","/")
+        options["tips_json"] = os.path.join(os.path.dirname(options["task_json"]),"tips.json").replace("\\","/")
+        options["system_json"] = os.path.join(os.path.dirname(options["task_json"]),"system.json").replace("\\","/")
+        with codecs.open(options["task_json"],'r', 'utf-8') as f_task_json:
+            task_json_dict = json.load(f_task_json)
+        options["cg_version"] = task_json_dict['software_config']['cg_version']
+        options["cg_plugins"] = task_json_dict['software_config']['plugins']
+        with codecs.open(options["system_json"], 'r', 'utf-8') as f_system_json:
+            system_json_dict = json.load(f_system_json)
+        options["platform"] = system_json_dict['system_info']['common']['platform']
+        analyze_maya(options)
+    else:
+        print("task.json is not exists")
+        sys.exit(555)

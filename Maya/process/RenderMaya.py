@@ -43,7 +43,8 @@ class RenderMaya(Maya):
         self.G_PRERENDER_NAME = 'PreRender.py'
         self.G_POSTRENDER_NAME = 'PostRender.py'
         self.G_CUSTOME_PRERENDER_NAME = 'C_PreRender.py'
-        self.G_CUSTOME_INFO_CMD_NAME = 'info.json'
+        self.G_CUSTOME_INFO_CMD_NAME = 'render_info.json'
+        self.G_CUSTOME_INFO_ERROR_NAME = 'error_info.json'
         self.CG_PLUGINS_DICT = self.G_CG_CONFIG_DICT['plugins']
         self.CG_NAME = self.G_CG_CONFIG_DICT['cg_name']
         self.CG_VERSION = self.G_CG_CONFIG_DICT['cg_version']
@@ -55,6 +56,8 @@ class RenderMaya(Maya):
         self.G_RN_MAYA_CUSTOME_PRERENDER = os.path.join(self.G_NODE_MAYASCRIPT, self.G_CUSTOME_PRERENDER_NAME).replace(
             '\\', '/')
         self.G_RN_MAYA_CUSTOME_CONFIG_CMD = os.path.join(self.G_NODE_MAYACONFIG, self.G_CUSTOME_INFO_CMD_NAME).replace('\\', '/')
+        self.G_RN_MAYA_ERROR_INFO = os.path.join(self.G_NODE_MAYACONFIG, self.G_CUSTOME_INFO_ERROR_NAME).replace(
+            '\\', '/')
         
         if self.G_CG_TILE_COUNT == self.G_CG_TILE:
             self.IMAGE_MERGE_FRAME = "1"
@@ -65,6 +68,8 @@ class RenderMaya(Maya):
         self.MESS_UP_PATH = self.get_plugin_dir() + "/mess_up"
         
         self.ERROR_LIST = []
+        self.exitcode = 0
+        self.successcode = 0
         
 
     def my_print(self,message):
@@ -72,6 +77,7 @@ class RenderMaya(Maya):
 
     
     def maya_cmd_callback(self, my_popen, my_log):
+        exit_maya_on = 0
         while my_popen.poll() is None:
             result_line = my_popen.stdout.readline().strip()
             result_line = result_line.decode(sys.getfilesystemencoding())
@@ -92,16 +98,18 @@ class RenderMaya(Maya):
                     self.render_record[str(int(frame) + int(self.G_CG_BY_FRAME))] = {'start_time': end_time,
                                                                                      'end_time': -1}
 
-
+            if "License error" in result_line or "[mtoa] Failed batch render" in result_line or "error checking out license for arnold" in result_line or "No license for product (-1)" in result_line:
+                self.exitcode = -1
+                CLASS_MAYA_UTIL.killMayabatch(my_log)
+                return self.exitcode
+            
             #任务渲染完，强制退出maya
-
             completed_key = "Scene %s completed" % (self.renderSettings["maya_file"])
             if completed_key in result_line:
-                print("log_key: {%s}" % completed_key)
-                print("maya batch end !!!")
-                # my_popen.kill() #杀不掉子进程的子进程，所以有问题
+                exit_maya_on = 1
+                print("success maya batch end !!!")
                 CLASS_MAYA_UTIL.killMayabatch(my_log)  # kill mayabatch.exe
-                break
+                return exit_maya_on
 
 
     def bytes_to_str(self, str1, str_decode='default'):
@@ -166,7 +174,7 @@ class RenderMaya(Maya):
         self.G_DEBUG_LOG.info('[Maya.RBconfig.start.....]')
         try:
             if self.CURRENT_OS == "windows":
-                if self.CG_VERSION == '2017':
+                if self.CG_VERSION == '2017' and os.path.join(self.PLUGINS_PATH,"maya_Documents","2017updata3"):
                     copy_cmd = '{fcopy_path} /speed=full /force_close /no_confirm_stop /force_start "{source}" /to="{destination}"'.format(
                         fcopy_path='c:\\fcopy\\FastCopy.exe',
                         source=os.path.join(self.PLUGINS_PATH,"maya_Documents","2017updata3").replace(
@@ -174,7 +182,7 @@ class RenderMaya(Maya):
                         destination=os.path.join(r"C:/Program Files/Autodesk/Maya2017/scripts/others").replace("/", "\\"),
                     )
     
-                    CLASS_COMMON_UTIL.cmd(copy_cmd, my_log=self.G_DEBUG_LOG, try_count=3, continue_on_error=False)
+                    CLASS_COMMON_UTIL.cmd(copy_cmd, my_log=self.G_DEBUG_LOG, try_count=3, continue_on_error=True)
 
         except Exception as err:
             self.G_DEBUG_LOG.infor(err)
@@ -241,7 +249,7 @@ class RenderMaya(Maya):
 
             render_cmd = self.MAYA_FINAL_RENDER_CMD
             sys.stdout.flush()
-            print ("render cmd info:")
+            self.G_DEBUG_LOG.info('render cmd info:')
             self.G_DEBUG_LOG.info(render_cmd)
             
             start_time = int(time.time())
@@ -253,7 +261,7 @@ class RenderMaya(Maya):
             
             self.G_DEBUG_LOG.info(
                 "\n\n-------------------------------------------Start maya program-------------------------------------\n\n")
-            result_code, _ = CLASS_COMMON_UTIL.cmd(render_cmd, my_log=self.G_RENDER_LOG, continue_on_error=False,
+            result_code, _ = CLASS_MAYA_UTIL.maya_cmd(render_cmd, my_log=self.G_RENDER_LOG, continue_on_error=False,
                                                    my_shell=True,
                                                    callback_func=self.maya_cmd_callback)
             
@@ -315,13 +323,13 @@ class RenderMaya(Maya):
             else:
                 n = i
                 break
-        n3 = tiles / n
-        n1 = tile_index / n3
-        n2 = tile_index % n3
-        top = height / n * (n1 + 1)
-        left = width / n3 * n2
-        bottom = height / n * n1
-        right = width / n3 * (n2 + 1)
+        n3 = int(tiles / n)
+        n1 = int(tile_index / n3)
+        n2 = int(tile_index % n3)
+        top = int(height / n * (n1 + 1))
+        left = int(width / n3 * n2)
+        bottom = int(height / n * n1)
+        right = int(width / n3 * (n2 + 1))
         if right == width:
             right -= 1
         if top == height:
@@ -346,12 +354,14 @@ class RenderMaya(Maya):
                 version_name = "%s-x64" % (self.CG_VERSION)
             else:
                 version_name = self.CG_VERSION
-            self.renderSettings["render.exe"] = "/usr/autodesk/" \
-                                                "maya%s/bin/Render" % (version_name)
-            self.renderSettings["mayabatch.exe"] = "/usr/autodesk/" \
-                                                   "maya%s/bin/maya -batch" % (version_name)
-        self.renderSettings["render.exe"] = "C:/Program Files/Autodesk/" \
-                                            "maya%s/bin/render.exe" % (self.CG_VERSION)
+            self.renderSettings["render.exe"] = "/usr/autodesk/maya%s/bin/Render" % (version_name)
+            self.renderSettings["mayabatch.exe"] = "/usr/autodesk/maya%s/bin/maya -batch" % (version_name)
+        elif self.G_RENDER_OS == '1':
+            self.renderSettings["render.exe"] = "C:/Program Files/Autodesk/maya%s/bin/render.exe" % (self.CG_VERSION)
+        else:
+            print("Current OS is %s" % self.G_RENDER_OS)
+            sys.exit(555)
+        
         self.renderSettings["output"] = os.path.normpath(self.G_WORK_RENDER_TASK_OUTPUT).replace("\\", "/")
         
         # 一机多帧
@@ -551,11 +561,9 @@ class ErrorBase():
         :return: a trilateral
         '''
         for i in range(0, rows):
-            for k in range(0, i + 1 if mode == 1 else rows - i):
-                self.my_log(" * ",)
-                k += 1
+            self.my_log(" * "*(i + 1 if mode == 1 else rows - i))
             i += 1
-            self.my_log("\n")
+            # self.my_log("\n")
     
     def get_ini(self):
         self.G_DEBUG_LOG.info('[MonitorLog].start...')
@@ -578,25 +586,47 @@ class ErrorBase():
         
     def get_FileSize(self,filePath):
         '''获取文件的大小,结果保留两位小数，单位为MB'''
-        filePath = unicode(filePath,'utf8')
+        # filePath = unicode(filePath,'utf8')
         fsize = os.path.getsize(filePath)
         fsize = fsize/float(1024*1024)
         return str(round(fsize,2))
     
     def get_FileModifyTime(self,filePath):
         '''获取文件的修改时间'''
-        filePath = unicode(filePath,'utf8')
+        # filePath = unicode(filePath,'utf8')
         t = os.path.getmtime(filePath)
         return self.TimeStampToTime(t)
     
     def get_FileCreateTime(self,filePath):
         '''获取文件的创建时间'''
-        filePath = unicode(filePath,'utf8')
+        # filePath = unicode(filePath,'utf8')
         t = os.path.getctime(filePath)
         return self.TimeStampToTime(t)
 
     def get_FileAccessTime(self,filePath):
         '''获取文件的访问时间'''
-        filePath = unicode(filePath,'utf8')
+        # filePath = unicode(filePath,'utf8')
         t = os.path.getatime(filePath)
         return self.TimeStampToTime(t)
+
+
+    def get_error_texture(self,log_line):
+        error_file_list = []
+        if log_line.strip() and "ERROR | [texturesys] unspecified OIIO error" in log_line:
+            p1 = re.compile(r"\"(.*)\"", re.I)
+            error_file_path = p1.findall(log_line)
+            if error_file_path:
+                error_file_list.append(error_file_path[0])
+        return error_file_list
+    
+    
+    def get_error_json(self):
+        if os.path.exists(self.G_RN_MAYA_ERROR_INFO):
+            with codecs.open(self.G_RN_MAYA_ERROR_INFO, 'r', 'utf-8') as fn:
+                error_info_dict = json.load(fn)
+                
+            # for i in cmd_dict:
+            #     self.renderSettings[i] = cmd_dict[i]
+        else:
+            self.my_log("error json is not exist")
+            

@@ -481,7 +481,20 @@ class MayaAnalyze(dict,Maya):
                             print ("Current Platform is CPU ,Vray  productionEngine is %s" % productionEngine_dict[productionEngine])
                             self.print_info_err(u"......客户用的vary 渲染器，但选的是gpu 引擎，让客户确认，是要gpu渲染还是cpu渲染........")
                             # sys.exit(555)
-                        
+                elif render_name == "arnold":
+                    aovs_list = self.getArnoldElements()
+                    denoise_list = []
+                    if len(aovs_list) != 0:
+                        for aovName in aovs_list:
+                            aov_node = pm.PyNode(aovName)
+                            if aov_node.hasAttr("denoise"):
+                                enabled = int(pm.getAttr(str(aovName) + ".denoise"))
+                                if enabled == 1:
+                                    denoise_list.append(aovName)
+                    if len(denoise_list) != 0:
+                        print(','.join(denoise_list))
+                        self.print_info_err(u"......不支持  Arnold  的GPU 降噪，让客户修改一下........")
+
                 self['imageFilePrefix'] =  rd_path
                 #self["layer_name_num%s" % layer_num]={}
                 layer_name_num = "layer_name_num%s" % layer_num 
@@ -525,6 +538,23 @@ class MayaAnalyze(dict,Maya):
             my_str = str(None)
         print my_str
         return my_str
+
+    def getArnoldElements(self):
+        elementNames = [""]
+        aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
+        mergeAOV = int(pm.getAttr("defaultArnoldDriver.mergeAOVs"))
+        imfType = str(pm.mel.getImfImageType())
+        if aovMode:
+            if not mergeAOV:
+                elementNames = []
+                AOVnames = pm.ls(type='aiAOV')
+                for aovName in AOVnames:
+                    enabled = int(pm.getAttr(str(aovName) + ".enabled"))
+                    if enabled == 1:
+                        elementNames.insert(0, aovName)
+
+        return elementNames
+
 
     def get_texture_path(self):
         all_image_path = {}

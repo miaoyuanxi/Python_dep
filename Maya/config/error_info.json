@@ -1,8 +1,6 @@
 {
 
-"enable_prerender":"1",
-"logLevel":"2",
-"gpu_n":"0"
+"ERROR | [gpu] Nvidia cuda required":"不支持arnold的GPU降噪功能，请修改设置"
 
 
 }
