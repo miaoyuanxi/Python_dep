@@ -100,7 +100,7 @@ class AnalyzeMaya(Maya):
                     self.writing_error(25021,"%s  might be incomplete and corrupt."%maya_file)
                     return 1
             elif maya_file.endswith(".mb"):
-                pass
+                return 0
         else:
             return 0
         
@@ -183,7 +183,7 @@ class AnalyzeMaya(Maya):
             if self.check_maya_file_intact():
                 self.write_tips_info()
                 self.write_asset_info()
-                sys.exit(555)
+                sys.exit(0)
         except Exception as err:
             self.mylog_err(err)
             
