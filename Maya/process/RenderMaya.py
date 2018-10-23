@@ -63,10 +63,7 @@ class RenderMaya(Maya):
             self.IMAGE_MERGE_FRAME = "1"
         else:
             self.IMAGE_MERGE_FRAME = "0"
-        self.PLUGINS_PATH = self.get_plugin_dir() + "/plugins"
-        self.CONFIG_PATH = self.get_plugin_dir() + "/config"
-        self.MESS_UP_PATH = self.get_plugin_dir() + "/mess_up"
-        
+
         self.ERROR_LIST = []
         self.exitcode = 0
         self.successcode = 0
@@ -172,6 +169,10 @@ class RenderMaya(Maya):
         
     def RB_CONFIG(self):
         self.G_DEBUG_LOG.info('[Maya.RBconfig.start.....]')
+        self.PLUGINS_PATH = self.get_plugin_dir() + "/plugins"
+        self.CONFIG_PATH = self.get_plugin_dir() + "/config"
+        self.MESS_UP_PATH = self.get_plugin_dir() + "/mess_up"
+
         try:
             if self.CURRENT_OS == "windows":
                 if self.CG_VERSION == '2017' and os.path.join(self.PLUGINS_PATH,"maya_Documents","2017updata3"):

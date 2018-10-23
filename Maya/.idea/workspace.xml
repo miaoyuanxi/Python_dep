@@ -39,8 +39,8 @@
       <file leaf-file-name="Analyze.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/script/Analyze.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="336">
-              <caret line="31" column="28" lean-forward="true" selection-start-line="31" selection-start-column="28" selection-end-line="31" selection-end-column="28" />
+            <state relative-caret-position="-2669">
+              <caret line="2611" column="8" lean-forward="false" selection-start-line="2611" selection-start-column="8" selection-end-line="2611" selection-end-column="8" />
               <folding>
                 <element signature="e#85#94#0" expanded="true" />
                 <element signature="e#51663#62712#0" expanded="false" />
@@ -49,21 +49,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="RenderBase.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/RenderBase.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="206">
-              <caret line="264" column="17" lean-forward="false" selection-start-line="264" selection-start-column="17" selection-end-line="264" selection-end-column="17" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="AnalyzeMaya.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="AnalyzeMaya.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/process/AnalyzeMaya.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4242">
-              <caret line="290" column="58" lean-forward="true" selection-start-line="290" selection-start-column="58" selection-end-line="290" selection-end-column="58" />
+            <state relative-caret-position="-525">
+              <caret line="45" column="60" lean-forward="true" selection-start-line="45" selection-start-column="60" selection-end-line="45" selection-end-column="60" />
               <folding />
             </state>
           </provider>
@@ -72,8 +62,8 @@
       <file leaf-file-name="MayaPlugin.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/function/MayaPlugin.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="567">
-              <caret line="333" column="24" lean-forward="true" selection-start-line="333" selection-start-column="24" selection-end-line="333" selection-end-column="24" />
+            <state relative-caret-position="9597">
+              <caret line="457" column="41" lean-forward="true" selection-start-line="457" selection-start-column="41" selection-end-line="457" selection-end-column="41" />
               <folding>
                 <element signature="e#47#61#0" expanded="true" />
               </folding>
@@ -84,8 +74,8 @@
       <file leaf-file-name="RenderMaya.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/process/RenderMaya.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3569">
-              <caret line="363" column="8" lean-forward="true" selection-start-line="363" selection-start-column="8" selection-end-line="363" selection-end-column="8" />
+            <state relative-caret-position="262">
+              <caret line="162" column="27" lean-forward="false" selection-start-line="162" selection-start-column="27" selection-end-line="162" selection-end-column="57" />
               <folding>
                 <element signature="e#63#77#0" expanded="true" />
               </folding>
@@ -93,11 +83,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MayaUtil.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/function/MayaUtil.py">
+      <file leaf-file-name="NukeMerge.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/function/NukeMerge.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="40">
-              <caret line="30" column="70" lean-forward="false" selection-start-line="30" selection-start-column="53" selection-end-line="30" selection-end-column="70" />
+            <state relative-caret-position="427">
+              <caret line="47" column="0" lean-forward="false" selection-start-line="47" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Auto-Sync_plugins.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tool/Auto-Sync_plugins.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="714">
+              <caret line="68" column="43" lean-forward="true" selection-start-line="68" selection-start-column="43" selection-end-line="68" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -106,22 +106,10 @@
       <file leaf-file-name="test__.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="442">
+            <state relative-caret-position="608">
               <caret line="199" column="26" lean-forward="true" selection-start-line="199" selection-start-column="26" selection-end-line="199" selection-end-column="26" />
               <folding>
                 <element signature="e#64#73#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_24.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test_24.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="898">
-              <caret line="80" column="18" lean-forward="true" selection-start-line="80" selection-start-column="18" selection-end-line="80" selection-end-column="18" />
-              <folding>
-                <element signature="e#126#142#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -204,7 +192,6 @@
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/script/PreRender_1868564.py" />
         <option value="$PROJECT_DIR$/cgrender.py" />
-        <option value="$PROJECT_DIR$/function/NukeMerge.py" />
         <option value="$PROJECT_DIR$/cgrender_with_multi_storages.py" />
         <option value="$PROJECT_DIR$/W9/prerender.py" />
         <option value="$PROJECT_DIR$/W9/PreRender.py" />
@@ -222,8 +209,6 @@
         <option value="$PROJECT_DIR$/process/RenderMaya_update.py" />
         <option value="$PROJECT_DIR$/function/MayaPlugin_pre.py" />
         <option value="$PROJECT_DIR$/tool/Auto-Sync_plugins.py" />
-        <option value="$PROJECT_DIR$/script/PreRender.py" />
-        <option value="$PROJECT_DIR$/script/PreRender_newplatform.py" />
         <option value="$PROJECT_DIR$/temp_01.py" />
         <option value="$PROJECT_DIR$/CommonUtil.py" />
         <option value="$PROJECT_DIR$/W2/check_all.py" />
@@ -231,11 +216,14 @@
         <option value="$PROJECT_DIR$/test_24_new.py" />
         <option value="$PROJECT_DIR$/function/MayaUtil.py" />
         <option value="$PROJECT_DIR$/test__.py" />
-        <option value="$PROJECT_DIR$/process/AnalyzeMaya.py" />
         <option value="$PROJECT_DIR$/function/MayaPlugin_bak.py" />
         <option value="$PROJECT_DIR$/function/MayaPlugin.py" />
         <option value="$PROJECT_DIR$/script/Analyze.py" />
+        <option value="$PROJECT_DIR$/script/PreRender.py" />
+        <option value="$PROJECT_DIR$/script/PreRender_newplatform.py" />
         <option value="$PROJECT_DIR$/process/RenderMaya.py" />
+        <option value="$PROJECT_DIR$/process/AnalyzeMaya.py" />
+        <option value="$PROJECT_DIR$/function/NukeMerge.py" />
       </list>
     </option>
   </component>
@@ -519,15 +507,15 @@
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3287037" sideWeight="0.49558985" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.07685185" sideWeight="0.41014332" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.085185185" sideWeight="0.41014332" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.07685185" sideWeight="0.5898567" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.085185185" sideWeight="0.5898567" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.28237793" sideWeight="0.4448775" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="JSON Viewer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296582" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13726571" sideWeight="0.49637306" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.08544653" sideWeight="0.49637306" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296582" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.05071665" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.112458654" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.08985667" sideWeight="0.50362694" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.49558985" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296582" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -553,8 +541,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/cgrender.py" />
-    <entry file="file://$PROJECT_DIR$/cgrender_with_multi_storages.py" />
     <entry file="file://$PROJECT_DIR$/W9/prerender_old.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="421">
@@ -729,31 +715,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/script/PreRender_newplatform.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="1351" column="12" lean-forward="true" selection-start-line="1351" selection-start-column="12" selection-end-line="1351" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/W2/cgrender_with_multi_storages.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-6753">
           <caret line="968" column="6" lean-forward="false" selection-start-line="968" selection-start-column="6" selection-end-line="968" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/script/PreRender.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="28434">
-          <caret line="1363" column="12" lean-forward="true" selection-start-line="1363" selection-start-column="12" selection-end-line="1363" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/script/PostRender.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2036">
-          <caret line="32" column="86" lean-forward="false" selection-start-line="32" selection-start-column="81" selection-end-line="32" selection-end-column="86" />
         </state>
       </provider>
     </entry>
@@ -772,24 +737,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tool/Auto-Sync_plugins.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="399">
-          <caret line="32" column="40" lean-forward="true" selection-start-line="32" selection-start-column="40" selection-end-line="32" selection-end-column="40" />
-          <folding>
-            <element signature="e#47#61#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CommonUtil.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="553">
-          <caret line="142" column="33" lean-forward="false" selection-start-line="142" selection-start-column="25" selection-end-line="142" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/test_24_new.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="693">
@@ -803,7 +750,7 @@
         <state relative-caret-position="898">
           <caret line="80" column="18" lean-forward="true" selection-start-line="80" selection-start-column="18" selection-end-line="80" selection-end-column="18" />
           <folding>
-            <element signature="e#126#142#0" expanded="true" />
+            <element signature="e#126#142#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -823,16 +770,6 @@
         <state relative-caret-position="40">
           <caret line="30" column="70" lean-forward="false" selection-start-line="30" selection-start-column="53" selection-end-line="30" selection-end-column="70" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="199" column="26" lean-forward="true" selection-start-line="199" selection-start-column="26" selection-end-line="199" selection-end-column="26" />
-          <folding>
-            <element signature="e#64#73#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -868,17 +805,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/script/Analyze.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="31" column="28" lean-forward="true" selection-start-line="31" selection-start-column="28" selection-end-line="31" selection-end-column="28" />
-          <folding>
-            <element signature="e#85#94#0" expanded="true" />
-            <element signature="e#51663#62712#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/RenderBase.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="206">
@@ -887,30 +813,107 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/process/RenderMaya.py">
+    <entry file="file://$PROJECT_DIR$/script/PreRender.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3569">
-          <caret line="363" column="8" lean-forward="true" selection-start-line="363" selection-start-column="8" selection-end-line="363" selection-end-column="8" />
-          <folding>
-            <element signature="e#63#77#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="296">
+          <caret line="619" column="0" lean-forward="false" selection-start-line="619" selection-start-column="0" selection-end-line="623" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/script/PreRender_newplatform.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="422">
+          <caret line="633" column="0" lean-forward="true" selection-start-line="633" selection-start-column="0" selection-end-line="633" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/script/PostRender.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="22" column="23" lean-forward="true" selection-start-line="22" selection-start-column="23" selection-end-line="22" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/function/MayaPlugin_new.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="483">
+          <caret line="351" column="68" lean-forward="false" selection-start-line="351" selection-start-column="27" selection-end-line="351" selection-end-column="68" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/function/MayaPlugin.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="567">
-          <caret line="333" column="24" lean-forward="true" selection-start-line="333" selection-start-column="24" selection-end-line="333" selection-end-column="24" />
+        <state relative-caret-position="9597">
+          <caret line="457" column="41" lean-forward="true" selection-start-line="457" selection-start-column="41" selection-end-line="457" selection-end-column="41" />
           <folding>
             <element signature="e#47#61#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/test__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="608">
+          <caret line="199" column="26" lean-forward="true" selection-start-line="199" selection-start-column="26" selection-end-line="199" selection-end-column="26" />
+          <folding>
+            <element signature="e#64#73#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CommonUtil.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="564">
+          <caret line="114" column="8" lean-forward="false" selection-start-line="114" selection-start-column="8" selection-end-line="114" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/process/AnalyzeMaya.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4242">
-          <caret line="290" column="58" lean-forward="true" selection-start-line="290" selection-start-column="58" selection-end-line="290" selection-end-column="58" />
+        <state relative-caret-position="-525">
+          <caret line="45" column="60" lean-forward="true" selection-start-line="45" selection-start-column="60" selection-end-line="45" selection-end-column="60" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/process/RenderMaya.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="262">
+          <caret line="162" column="27" lean-forward="false" selection-start-line="162" selection-start-column="27" selection-end-line="162" selection-end-column="57" />
+          <folding>
+            <element signature="e#63#77#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/function/NukeMerge.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="427">
+          <caret line="47" column="0" lean-forward="false" selection-start-line="47" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/script/Analyze.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2669">
+          <caret line="2611" column="8" lean-forward="false" selection-start-line="2611" selection-start-column="8" selection-end-line="2611" selection-end-column="8" />
+          <folding>
+            <element signature="e#85#94#0" expanded="true" />
+            <element signature="e#51663#62712#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tool/Auto-Sync_plugins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="714">
+          <caret line="68" column="43" lean-forward="true" selection-start-line="68" selection-start-column="43" selection-end-line="68" selection-end-column="43" />
           <folding />
         </state>
       </provider>

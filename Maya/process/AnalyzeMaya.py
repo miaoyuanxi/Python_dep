@@ -40,7 +40,7 @@ class AnalyzeMaya(Maya):
             result_line = my_popen.stdout.readline().strip()
             # result_line = result_line.decode(sys.getfilesystemencoding())
             result_line = self.bytes_to_str(result_line)
-            result_line = self.to_gbk(result_line)
+            # result_line = self.to_gbk(result_line)
             if result_line == '':
                 continue
             CLASS_COMMON_UTIL.log_print(my_log, result_line)

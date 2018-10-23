@@ -45,6 +45,12 @@ def merge_image(images,tile_output):
     
     write = nuke.nodes.Write(inputs=[merge], file=tile_output)
     write["channels"].setValue("all")
+    if tile_output.endswith(".exr"):
+        write["file_type"].setValue("exr")
+        write["datatype"].setValue("32 bit float")
+        write["metadata"].setValue("all metadata")
+        # write["compression"].setValue("none")
+
     nuke.execute(write.name(), 1, 1, 1)
     nuke.scriptClear()
 

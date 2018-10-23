@@ -617,6 +617,11 @@ class PreRender(dict,PreRenderBase):
             if arnold_driver_node.hasAttr("append"):
                 self.mtoa_dict["append"] = str(arnold_driver_node.append.get())
 
+            if arnold_options_node.hasAttr("abortOnLicenseFail"):
+                self.mtoa_dict["abortOnLicenseFail"] = str(arnold_options_node.abortOnLicenseFail.get())
+            if arnold_options_node.hasAttr("skipLicenseCheck"):
+                self.mtoa_dict["skipLicenseCheck"] = str(arnold_options_node.skipLicenseCheck.get())
+
             if arnold_driver_node.hasAttr("tiled"):
                 self.mtoa_dict["tiled"] = str(arnold_driver_node.tiled.get())
 
@@ -716,6 +721,16 @@ class PreRender(dict,PreRenderBase):
             if arnold_driver_node.hasAttr("outputPadded"):
                 arnold_driver_node.outputPadded.set(1)
                 self.log_scene_set("outputPadded",1)
+
+            if "abortOnLicenseFail" in self.mtoa_dict:
+                self.log_scene("abortOnLicenseFail", self.mtoa_dict["abortOnLicenseFail"])
+                arnold_options_node.abortOnLicenseFail.set(1)
+                self.log_scene_set("abortOnLicenseFail",1)
+            if "skipLicenseCheck" in self.mtoa_dict:
+                self.log_scene("skipLicenseCheck", self.mtoa_dict["skipLicenseCheck"])
+                arnold_options_node.skipLicenseCheck.set(0)
+                self.log_scene_set("skipLicenseCheck",0)
+
 
 
             if "tiled" in self.mtoa_dict:
