@@ -358,6 +358,21 @@ class NukeMerge(dict):
             self[i] = options[i]
         self.get_input_output()
 
+        self.is_win = 0
+        self.is_linux = 0
+        self.is_mac = 0
+        if sys.platform.startswith("win"):
+            os_type = "win"
+            self.is_win = 1
+            #add search path for wmic.exe
+            os.environ["path"] += ";C:/WINDOWS/system32/wbem"
+        elif sys.platform.startswith("linux"):
+            os_type = "linux"
+            self.is_linux = 1
+        else:
+            os_type = "mac"
+            self.is_mac = 1
+
     def get_input_output(self):
         tile_path = "%s/%s" % (self["g_tiles_path"],
                                self["g_cg_start_frame"])
@@ -373,29 +388,38 @@ class NukeMerge(dict):
                     all_files.append(os.path.join(root, i_file))
 
         self.tile_files = [[re.sub(r'(.+/temp_title/\d+/\d+)(/0/)(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/"))
-                            for index in range(self["tiles"])]
-                           for i in all_files]
+                            for index in range(self["tiles"])] for i in all_files]
 
-        self.tile_files = [[self.get_right_file_name(j) for j in i]
-                           for i in self.tile_files]
+        self.tile_files = [[self.get_right_file_name(j) for j in i] for i in self.tile_files]
 
 
     def render(self,mylog = None):
         self.mylog = mylog
-        print (self.tile_files)
+        self.mylog.info(self.tile_files)
+        if len(self.tile_files) == 0:
+            self.mylog.info("there is no titles,please check title out ")
+            sys.exit(555)
         for i in self.tile_files:
             tile_output = self["output"] + '/'+ re.sub(r'(.+/temp_title/\d+/\d+)(/0/)(.+)', r"\3", i[0])
             tile_output = tile_output.replace("\\","/")
             tile_folder = os.path.dirname(tile_output)
             if not os.path.exists(tile_folder):
                 os.makedirs(tile_folder)
-
             self.merge_files(self["tiles"], i, tile_output)
 
     def merge_files(self, tiles, input_files, tile_output):
         # nuke_exe = r"B:\nuke\Nuke5.1v5\Nuke5.1.exe"
         os.environ['foundry_LICENSE'] = r'4101@10.60.5.248'
-        nuke_exe = r"B:\nuke\Nuke10.5v5\Nuke10.5.exe"
+        if self.is_win:
+            nuke_exe = r"B:\nuke\Nuke10.5v5\Nuke10.5.exe"
+        elif self.is_linux:
+            nuke_exe = r"/tmp/nzs-data/renderbuswork/cg/maya/linux/mess_up/Nuke10.5v4/Nuke10.5"
+        else:
+            print("current os ,there is no nuke")
+            sys.exit(555)
+        if not os.path.exists(nuke_exe):
+            print("%s  is not exists..........."% nuke_exe)
+            sys.exit(555)
         merge_images = os.path.join(self["func_path"], "NukeMerge.py")
         cmd = "\"%s\" -t \"%s\" -tiles %s -width %s -height %s" \
               " -tile_files \"%s\" -tile_output \"%s\" " % (nuke_exe, merge_images,
@@ -404,7 +428,7 @@ class NukeMerge(dict):
                                                             self["height"],
                                                             input_files, tile_output)
 
-        print (cmd)
+        # print (cmd)
         CLASS_COMMON_UTIL.cmd(cmd, my_log = self.mylog, continue_on_error=True, my_shell=True)
 
     def get_right_file_name(self, file_name):

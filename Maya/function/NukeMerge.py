@@ -8,6 +8,9 @@ if sys.version_info[:2] == (2, 5):
     if sys.platform.startswith("win"):
         sys.path.append(os.path.join(os.path.dirname(__file__), "tim", "py25"))
 
+if sys.platform.startswith("linux"):
+    sys.path.insert(0,"/tmp/nzs-data/renderbuswork/cg/maya/linux/plugins/linux_py27")
+
 import argparse
 
 def set_format(width,height ):
@@ -20,11 +23,9 @@ def create_read(file_path):
     return node
 
 def merge_image(images,tile_output):
- 
     read_nodes = []
     for i in images:
         read_nodes.append(create_read(i))
-    
     merge = nuke.createNode('Merge2')
     x = 0
     for i in read_nodes:
@@ -50,7 +51,6 @@ def merge_image(images,tile_output):
         write["datatype"].setValue("32 bit float")
         write["metadata"].setValue("all metadata")
         # write["compression"].setValue("none")
-
     nuke.execute(write.name(), 1, 1, 1)
     nuke.scriptClear()
 
@@ -62,21 +62,15 @@ def merge(kwargs):
         print "iff"
         tile_output_folder = tile_output_folder.replace(".iff",".exr")
     print tile_output_folder
-    
     if len(kwargs["tile_files"]) <= tile_nums:
-        print "xiao yu 8 tile"
         print tile_output_folder
         merge_image(kwargs["tile_files"],tile_output_folder)  
     else:
-        print "da yu 8 tile"
         tile_output_list=[]
         temp_dir =  os.environ.get('TEMP').replace("\\",'/')   
         name_ext = tile_output_folder.replace("\\",'/').rsplit('/',1)[1].rsplit('.',1)
         name = name_ext[0]
         ext = name_ext[1]
-        print "++++++++++++++++++++++++++++++"
-        print ext
-        print "++++++++++++++++++++++++++++++"
         if ext=="iff":
             ext ="exr"
         a = 0
@@ -86,8 +80,6 @@ def merge(kwargs):
             merge_image(images,temp_output_dir)
             tile_output_list.append(temp_output_dir)
         merge_image(tile_output_list,tile_output_folder)
-
-    
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='--------------')
@@ -96,7 +88,6 @@ if __name__ == '__main__':
     parser.add_argument("-tile_output", dest="tile_output", type=str)
     parser.add_argument("-width", dest="width", type=int)
     parser.add_argument("-height", dest="height", type=int)
-
     kwargs = parser.parse_args().__dict__
 
     kwargs["tile_files"] = eval(kwargs["tile_files"])

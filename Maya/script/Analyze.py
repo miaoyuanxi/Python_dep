@@ -1027,7 +1027,10 @@ class Analyze(dict, Maya):
                            "redshift": "redshift",
                            "renderManRIS": "RenderMan_for_Maya",
                            "renderMan": "RenderMan_for_Maya",
-                           "MayaKrakatoa": "krakatoa"
+                           "renderman": "RenderMan_for_Maya",
+                           "MayaKrakatoa": "krakatoa",
+                           "mentalRay": "mentalray"
+                           
                            }
         plugins_rederer.setdefault(renderer)
         if plugins_rederer[renderer]:
@@ -1035,7 +1038,7 @@ class Analyze(dict, Maya):
                 self.writing_error(25008, "render layer: %s \'s renderer is %s ,please confirm configure plugins" % (
                 layer, renderer))
                 return False
-        elif renderer == "mentalRay" and int(self["cg_version"]) > 2016.5 and renderer not in self["cg_plugins"]:
+        elif renderer == "mentalRay" and int(self["cg_version"]) > 2016.5 and plugins_rederer[renderer] not in self["cg_plugins"]:
             self.writing_error(25008,
                                "render layer: %s \'s renderer is %s ,above version of maya2017(contain),  please confirm configure mentalRay" % (
                                layer, renderer))
@@ -1043,6 +1046,12 @@ class Analyze(dict, Maya):
         elif renderer in ["mayaHardware", "mayaHardware2", "mayaVector"]:
             self.writing_error(25014, "render layer: %s \'s renderer is %s   please change" % (layer, renderer))
             return False
+        
+        elif "RenderMan_for_Maya" in self["cg_plugins"] and "mtoa" in self["cg_plugins"] or "vrayformaya" in self["cg_plugins"] or "redshift" in self["cg_plugins"] or "mentalray" in self["cg_plugins"]:
+            self.writing_error(25024, "plugins list : %s   please change" % (self["cg_plugins"]))
+            return False
+        else:
+            pass
         return True
 
 

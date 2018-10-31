@@ -368,7 +368,22 @@ class MayaPlugin(PluginBase):
             for del_path in del_mod_list:
                 del_file_path = "%s/%s" % (mode_path, del_path)
                 self.do_del_path(del_file_path)
-            
+                
+            if self.CURRENT_OS == "linux":
+                temp_ver = _V_APP
+                if "." in _V_APP:
+                    temp_ver = "".join(_V_APP.split(".")[:])
+                _maya_modules_linux = "/usr/autodesk/modules/maya/%s" % (temp_ver)
+                if os.path.exists(_maya_modules_linux):
+                    mode_list_linux = os.listdir(_maya_modules_linux)
+                else:
+                    self.MyLog("%s is not exists" % _maya_modules_linux)
+                    mode_list_linux = []
+                del_mod_list_linux = [val_linux for val_linux in del_list_mod if val_linux in mode_list_linux]
+                for del_path_linux in del_mod_list_linux:
+                    del_file_path = "%s/%s" % (_maya_modules_linux, del_path_linux)
+                    self.do_del_path(del_file_path)
+
             del_list_plug = ['maxwell.mll', 'poseDeformer.mll', 'poseReader.mll', 'realflow.mll', "faceMachine.mll",
                              'faceMachine', 'anzovin', \
                              'wbDeltaMushDeformer.bundle', 'wbDeltaMushDeformer.mll', 'wbDeltaMushDeformer.so',
@@ -402,7 +417,26 @@ class MayaPlugin(PluginBase):
             self.do_del_path(fume_mi)
             mr_2017 = r"C:\Program Files\Common Files\Autodesk Shared\Modules\Maya\2017\mentalray.mod"
             self.do_del_path(mr_2017)
+            
+            C_MOD = [("C:/Program Files/Autodesk/Maya%s/modules/VRayForMaya.module" % (_V_APP))]
 
+            maya_bin = r'"C:/Program Files/Autodesk/Maya%s/bin"' % _V_APP
+            del_list_vary = ["libvraymdl.dll", "libvrayfreeimage.dll", "vray.dll", "vrayopenimageio.dll",
+                             "vrayoslcomp.dll",
+                             "vrayoslexec.dll", "vrayoslquery.dll"]
+            del_path_vray = []
+            for file in del_list_vary:
+                file_abs_path = maya_bin + "/" + file
+                del_path_vray.append(file_abs_path)
+            del_path_vray = del_path_vray + C_MOD
+            for vr in del_path_vray:
+                if os.path.isfile(vr) and os.path.exists(vr):
+                    try:
+                        os.remove(vr)
+                        self.MyLog("del file:" + vr)
+                    except Exception as error:
+                        self.MyLog(Exception)
+                        self.MyLog(error)
 
     def create_user_setup(self):
         if not os.path.exists(self.MAYA_SCRIPTS):

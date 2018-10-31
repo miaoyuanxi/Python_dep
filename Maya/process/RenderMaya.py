@@ -285,13 +285,12 @@ class RenderMaya(Maya):
             options["tiles"] = int(self.G_CG_TILE_COUNT)
             options["tile_index"] = int(self.G_CG_TILE)
             options["width"] = int(self.G_TASK_JSON_DICT['scene_info_render'][self.G_CG_LAYER_NAME]['common']['width'])
-            options["height"] = int(
-                self.G_TASK_JSON_DICT['scene_info_render'][self.G_CG_LAYER_NAME]['common']['height'])
+            options["height"] = int(self.G_TASK_JSON_DICT['scene_info_render'][self.G_CG_LAYER_NAME]['common']['height'])
             options["output"] = self.G_WORK_RENDER_TASK_OUTPUT
             options["g_tiles_path"] = self.G_TILES_PATH
             options["g_task_id"] = self.G_TASK_ID
             options["g_cg_start_frame"] = self.G_CG_START_FRAME
-            print (options)
+            self.G_DEBUG_LOG.info(options)
             nuke_merge = NukeMerge(options)
             nuke_merge.render(self.G_DEBUG_LOG)
             CLASS_MAYA_UTIL.kill_lic_all(my_log=self.G_DEBUG_LOG)
@@ -480,8 +479,11 @@ class RenderMaya(Maya):
                     sys.exit(555)
             
             else:
-                if self.renderer == "renderManRIS" or self.renderer == "renderMan" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
-                    cmd += " -r rman"
+                if self.renderer == "renderManRIS" or self.renderer == "renderMan" or self.renderer == "renderman" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
+                    if float(self.CG_PLUGINS_DICT["RenderMan_for_Maya"]) >= 22:
+                        cmd += " -r renderman"
+                    else:
+                        cmd += " -r rman"
                 elif self.renderer == "vray" and "vrayformaya" in self.CG_PLUGINS_DICT:
                     cmd += " -r vray"
                 elif self.renderer == "redshift" and "redshift" in self.CG_PLUGINS_DICT:
@@ -504,13 +506,18 @@ class RenderMaya(Maya):
                 gpu_n = "0,1"
                 cmd += " -gpu {%s}" % (gpu_n)
             
-            elif "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list or "renderMan" in renderer_list:
-                cmd += " -r rman"
+            elif "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list or "renderMan" in renderer_list or "renderman" in renderer_list:
+                if float(self.CG_PLUGINS_DICT["RenderMan_for_Maya"]) >= 22:
+                    cmd += " -r renderman"
+                else:
+                    cmd += " -r rman"
             else:
                 pass
 
         if "-r rman" in cmd:
             cmd += " -setAttr Format:resolution \"%(width)s %(height)s\"" % self.renderSettings
+        elif "-r renderman" in cmd:
+            cmd += " -res %(width)s %(height)s" % self.renderSettings
         else:
             cmd += " -x %(width)s -y %(height)s" % self.renderSettings
 

@@ -33,6 +33,7 @@ class AnalyzeMaya(Maya):
         self.G_CUSTOM_CONFIG_NAME ='CustomConfig.py'
         self.tips_info_dict = {}
         self.asset_info_dict = {}
+        self.cg_file_error = 0
 
     def maya_cmd_callback(self, my_popen, my_log):
         index = 0
@@ -107,7 +108,7 @@ class AnalyzeMaya(Maya):
     def get_file_last_line(self,inputfile):
         filesize = os.path.getsize(inputfile)
         blocksize = 1024
-        with open(inputfile, 'rb') as f:
+        with open(inputfile, 'r') as f:
             last_line = ""
             if filesize > blocksize:
                 maxseekpoint = (filesize // blocksize)
@@ -179,11 +180,12 @@ class AnalyzeMaya(Maya):
 
 
     def RB_CONFIG(self):
+        self.G_DEBUG_LOG.info('Analyse maya file is intact or not .... ')
         try:
             if self.check_maya_file_intact():
-                self.write_tips_info()
-                self.write_asset_info()
-                sys.exit(0)
+                self.G_DEBUG_LOG.info('%s  might be incomplete and corrupt. .... '%(self.G_INPUT_CG_FILE))
+                self.cg_file_error = 1
+                return 0
         except Exception as err:
             self.mylog_err(err)
             
@@ -225,67 +227,69 @@ class AnalyzeMaya(Maya):
         
     def RB_RENDER(self):
         self.G_DEBUG_LOG.info('[maya.RBanalyse.start.....]')
-        analyse_cmd = ''
-        options = {}
-        options["user_id"] = self.G_USER_ID
-        options["task_id"] = self.G_TASK_ID
-        options["cg_project"] = self.G_INPUT_PROJECT_PATH
-        options["cg_file"] = self.G_INPUT_CG_FILE
-        options["task_json"] = self.G_TASK_JSON
-        options["asset_json"] = self.G_ASSET_JSON
-        options["tips_json"] = self.G_TIPS_JSON
-        options["cg_version"] = self.CG_VERSION
-        options["cg_plugins"] = self.G_CG_CONFIG_DICT["plugins"]
-        options["platform"] = self.G_PLATFORM
-        self.G_DEBUG_LOG.info(options)
-        if self.G_RENDER_OS == '1':
-            mayabatch = ["C:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
-                         (options["cg_version"]),
-                         "D:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
-                         (options["cg_version"]),
-                         "E:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
-                         (options["cg_version"]),
-                         "F:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
-                         (options["cg_version"]),
-                         "D:/Alias/Maya%sx64/bin/mayabatch.exe" % (options["cg_version"])]
-    
-            mayabatch = [i for i in mayabatch if os.path.isfile(i)]
-            if mayabatch:
-                mayabatch = mayabatch[0]
-            else:
-                print("there no Maya%s" % options["cg_version"])
-                sys.exit(555)
-
-        elif self.G_RENDER_OS== '0':
-            mayabatch = '/usr/autodesk/maya' + self.CG_VERSION + '-x64/bin/maya'
-            if not os.path.exists(mayabatch):
-                mayabatch = '/usr/autodesk/maya' + self.CG_VERSION + '/bin/maya'
-        else:
-            print("Current OS is %s" % self.G_RENDER_OS)
-            sys.exit(555)
-
-        mayabatch= mayabatch.replace('\\','/')
-        self.G_AN_MAYA_FILE=os.path.join(self.G_NODE_MAYASCRIPT,'Analyze.py').replace('\\','/')
+        if self.cg_file_error == 0:
+            analyse_cmd = ''
+            options = {}
+            options["user_id"] = self.G_USER_ID
+            options["task_id"] = self.G_TASK_ID
+            options["cg_project"] = self.G_INPUT_PROJECT_PATH
+            options["cg_file"] = self.G_INPUT_CG_FILE
+            options["task_json"] = self.G_TASK_JSON
+            options["asset_json"] = self.G_ASSET_JSON
+            options["tips_json"] = self.G_TIPS_JSON
+            options["cg_version"] = self.CG_VERSION
+            options["cg_plugins"] = self.G_CG_CONFIG_DICT["plugins"]
+            options["platform"] = self.G_PLATFORM
+            self.G_DEBUG_LOG.info(options)
+            self.G_DEBUG_LOG.info("current os is %s" % self.G_RENDER_OS)
+            if self.G_RENDER_OS == '1':
+                mayabatch = ["C:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
+                             (options["cg_version"]),
+                             "D:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
+                             (options["cg_version"]),
+                             "E:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
+                             (options["cg_version"]),
+                             "F:/Program Files/Autodesk/Maya%s/bin/mayabatch.exe" % \
+                             (options["cg_version"]),
+                             "D:/Alias/Maya%sx64/bin/mayabatch.exe" % (options["cg_version"])]
         
-        # analyse_cmd = "%s %s --ui %s --ti %s --proj %s --cgfile %s --taskjson %s --assetjson %s --tipsjson %s" %(mayaExePath,self.G_AN_MAYA_FILE,self.G_USER_ID,self.G_TASK_ID,self.G_INPUT_PROJECT_PATH,self.G_INPUT_CG_FILE,self.G_TASK_JSON,self.G_ASSET_JSON,self.G_TIPS_JSON)
-        # print analyse_cmd
-        str_options = re.sub(r"\\\\", r"/", repr(options))
-        str_dir = self.G_NODE_MAYASCRIPT.replace("\\", "/")
-        if self.G_RENDER_OS != '0':
-            analyse_cmd = "\"%s\" -command \"python \\\"options=%s;import sys;sys.path.insert(0, '%s');import Analyze;reload(Analyze);Analyze.analyze_maya(options)\\\"\"" % (mayabatch, str_options, str_dir)
-        else:
-            cg_project = os.path.normpath(self.G_INPUT_PROJECT_PATH).replace("\\", "/")
-            cg_file = os.path.normpath(self.G_INPUT_CG_FILE).replace("\\", "/")
-            task_json = os.path.normpath(self.G_TASK_JSON).replace("\\", "/")
-            analyse_cmd = "\"%s\" -batch -command \"python \\\"cg_file,cg_project,task_json=\\\\\\\"%s\\\\\\\",\\\\\\\"%s\\\\\\\",\\\\\\\"%s\\\\\\\";execfile(\\\\\\\"%s\\\\\\\")\\\"\"" %(mayabatch,cg_file,cg_project,task_json,self.G_AN_MAYA_FILE)
+                mayabatch = [i for i in mayabatch if os.path.isfile(i)]
+                if mayabatch:
+                    mayabatch = mayabatch[0]
+                else:
+                    self.G_DEBUG_LOG.info("there no Maya%s" % options["cg_version"])
+                    sys.exit(555)
+    
+            elif self.G_RENDER_OS== '0':
+                mayabatch = '/usr/autodesk/maya' + self.CG_VERSION + '-x64/bin/maya'
+                if not os.path.exists(mayabatch):
+                    mayabatch = '/usr/autodesk/maya' + self.CG_VERSION + '/bin/maya'
+            else:
+                self.G_DEBUG_LOG.info("Current OS is %s" % self.G_RENDER_OS)
+                sys.exit(555)
+    
+            mayabatch= mayabatch.replace('\\','/')
+            self.G_AN_MAYA_FILE=os.path.join(self.G_NODE_MAYASCRIPT,'Analyze.py').replace('\\','/')
+            
+            # analyse_cmd = "%s %s --ui %s --ti %s --proj %s --cgfile %s --taskjson %s --assetjson %s --tipsjson %s" %(mayaExePath,self.G_AN_MAYA_FILE,self.G_USER_ID,self.G_TASK_ID,self.G_INPUT_PROJECT_PATH,self.G_INPUT_CG_FILE,self.G_TASK_JSON,self.G_ASSET_JSON,self.G_TIPS_JSON)
+            # print analyse_cmd
+            str_options = re.sub(r"\\\\", r"/", repr(options))
+            str_dir = self.G_NODE_MAYASCRIPT.replace("\\", "/")
+            if self.G_RENDER_OS != '0':
+                analyse_cmd = "\"%s\" -command \"python \\\"options=%s;import sys;sys.path.insert(0, '%s');import Analyze;reload(Analyze);Analyze.analyze_maya(options)\\\"\"" % (mayabatch, str_options, str_dir)
+            else:
+                cg_project = os.path.normpath(self.G_INPUT_PROJECT_PATH).replace("\\", "/")
+                cg_file = os.path.normpath(self.G_INPUT_CG_FILE).replace("\\", "/")
+                task_json = os.path.normpath(self.G_TASK_JSON).replace("\\", "/")
+                analyse_cmd = "\"%s\" -batch -command \"python \\\"cg_file,cg_project,task_json=\\\\\\\"%s\\\\\\\",\\\\\\\"%s\\\\\\\",\\\\\\\"%s\\\\\\\";execfile(\\\\\\\"%s\\\\\\\")\\\"\"" %(mayabatch,cg_file,cg_project,task_json,self.G_AN_MAYA_FILE)
+    
+            self.G_FEE_PARSER.set('render','start_time',str(int(time.time())))
+            self.G_DEBUG_LOG.info("\n\n-------------------------------------------Start maya program-------------------------------------\n\n")
+            self.G_DEBUG_LOG.info("analyse cmd info:\n")
+            analyze_code,analyze_result=CLASS_COMMON_UTIL.cmd(analyse_cmd,my_log=self.G_DEBUG_LOG,continue_on_error=True,my_shell=True,callback_func=self.maya_cmd_callback)
+            self.G_DEBUG_LOG.info(analyze_code,analyze_result)
 
-        self.G_FEE_PARSER.set('render','start_time',str(int(time.time())))
-        self.G_DEBUG_LOG.info("\n\n-------------------------------------------Start maya program-------------------------------------\n\n")
-        print("analyse cmd info:\n")
-        print(analyse_cmd)
-        analyze_code,analyze_result=CLASS_COMMON_UTIL.cmd(analyse_cmd,my_log=self.G_DEBUG_LOG,continue_on_error=True,my_shell=True,callback_func=self.maya_cmd_callback)
-        print(analyze_code,analyze_result)
-        print(self.tips_info_dict)
+        self.G_DEBUG_LOG.info(self.tips_info_dict)
         if self.tips_info_dict:
             self.write_tips_info()
             self.G_DEBUG_LOG.info("write tips info_2 ok.")

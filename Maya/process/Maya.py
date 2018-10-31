@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import re
 from RenderBase import *
 from CommonUtil import RBCommon as CLASS_COMMON_UTIL
 from imp import reload
@@ -25,20 +26,24 @@ class Maya(RenderBase):
 
         self.G_INPUT_CG_FILE = self.G_INPUT_CG_FILE.replace("\\","/")
         self.G_INPUT_PROJECT_PATH = self.G_INPUT_PROJECT_PATH.replace("\\","/")
-
-        if 'mnt_map' in self.G_TASK_JSON_DICT:
-            index = 0
-            map_dict = self.G_TASK_JSON_DICT['mnt_map']
-            for key, value in list(map_dict.items()):
-                if value in self.G_INPUT_PROJECT_PATH:
-                    index +=1
-                    self.G_INPUT_PROJECT_PATH = re.sub(value, key, self.G_INPUT_PROJECT_PATH)
-                if value in self.G_INPUT_CG_FILE:
-                    index +=1
-                    self.G_INPUT_CG_FILE = re.sub(value, key, self.G_INPUT_CG_FILE)
-                if index == 2:
-                    break
-
+        if self.G_RENDER_OS != '0':
+            if 'mnt_map' in self.G_TASK_JSON_DICT:
+                index = 0
+                map_dict = self.G_TASK_JSON_DICT['mnt_map']
+                for key, value in list(map_dict.items()):
+                    project_str = self.G_INPUT_PROJECT_PATH
+                    temp_str_p = project_str.split(self.G_USER_ID, 1)[0] + self.G_USER_ID + "/" + project_str.split(self.G_USER_ID, 1)[1].split("/")[1]
+                    if value == temp_str_p:
+                        index +=1
+                        self.G_INPUT_PROJECT_PATH = re.sub(value, key, self.G_INPUT_PROJECT_PATH)
+                    cg_file_str = self.G_INPUT_CG_FILE
+                    temp_str_c = cg_file_str.split(self.G_USER_ID, 1)[0] + self.G_USER_ID + "/" + project_str.split(self.G_USER_ID, 1)[1].split("/")[1]
+                    if value == temp_str_c:
+                        index +=1
+                        self.G_INPUT_CG_FILE = re.sub(value, key, self.G_INPUT_CG_FILE)
+                    if index == 2:
+                        break
+    
         self.G_INPUT_PROJECT_PATH = os.path.normpath(self.G_INPUT_PROJECT_PATH)
         self.G_INPUT_CG_FILE = os.path.normpath(self.G_INPUT_CG_FILE)
         self.format_log('done','end')
