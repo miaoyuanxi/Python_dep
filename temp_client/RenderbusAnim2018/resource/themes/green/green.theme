@@ -1,0 +1,8 @@
+[Theme]
+name = green
+version = 1.0
+description = A green theme
+author = hqr
+style = :/themes/green/green.css
+font = ./themes/green/msyh.ttf
+rcc = ./themes/green/green.rcc

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WSConfig>
+    <Version>8</Version>
+    <HostUrl>https://cdl.renderbus.com/client/</HostUrl>
+    <Client>
+        <product>RenderbusAnim2018</product>
+        <partner>Rayvision</partner>
+        <loglevel>2</loglevel>
+        <cmdport>31011</cmdport>
+        <cmdportmax>100</cmdportmax>
+        <detail_interval>10000</detail_interval>
+        <request_timeout>30000</request_timeout>
+    </Client>
+    <CGSoftware>
+        <software suffix="max" name="3ds Max" script="submit_batch_max"/>
+        <software suffix="ma" name="Maya" script="submit_batch_maya"/>
+        <software suffix="mb" name="Maya" script="submit_batch_maya"/>
+        <software suffix="hip" name="Houdini" script="submit_batch_houdini"/>
+        <software suffix="c4d" name="Cinema 4D" script="submit_batch_c4d"/>
+    </CGSoftware>
+</WSConfig>

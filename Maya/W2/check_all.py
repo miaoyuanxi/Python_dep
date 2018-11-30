@@ -28,6 +28,7 @@ if "maya" in sys.executable.lower():
 class Maya(object):
     def __init__(self):
         self.error_list = []
+        self.reference_list = []
         self.scene_open_success = 0
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
         currentPath = currentPath.lower()
@@ -96,6 +97,10 @@ class Maya(object):
 
     def print_info_err(self, info):
         info = self.convertUnicode2Str(info)
+        r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
+        if r:
+            if r[0] not in self.reference_list:
+                self.reference_list.append(r[0])
         if info not in self.error_list:
             self.error_list.append(info)
         print ("[Analyze Error]%s" % (self.unicode_to_str(info)))
@@ -143,6 +148,9 @@ class Maya(object):
             # if resultLine =="write cg_info_file":
             #     self.print_info_err("..........Analysis  OK , analysis results have been written............")
                 # cmdp.kill()
+            if "Reference file not found" in resultLine:
+                self.print_info_err(resultLine)
+                
             if resultLine == "open maya file ok.":
                 self.scene_open_success = 1
                 
@@ -287,7 +295,7 @@ class MayaAnalyze(dict,Maya):
                         self.print_info_err(u".............这二货没有配 %s 插件，让客户检查配置................" % (
                             renderer))
                         index += 1
-                elif renderer == "mentalRay" and int(self.cgVersion) > 2016.5 and renderer not in self.cg_plugis_dict:
+                elif renderer == "mentalRay" and float(self.cgVersion) > 2016.5 and "mentalray" not in self.cg_plugis_dict:
                     self.print_info_err(u"..........这傻冒没配 mentalRay 插件............")
                     index += 1
                 elif renderer in ["mayaHardware", "mayaHardware2", "mayaVector"]:
@@ -389,7 +397,16 @@ class MayaAnalyze(dict,Maya):
         self.print_trilateral(mode=1)
         print ('\n\n---------------------------------------------[ERROR BASE]start--------------------------------------------------\n\n')
         print ('\n')
+
         if len(self.error_list) != 0:
+            print("99999999")
+            print(self.reference_list)
+            print("888888888")
+            if len(self.reference_list) != 0:
+                print ("[Analyze Error]%s" % (u".......以下reference未找到（未上传或上传位置不对），让客户上传到对应位置，重新分析,如果不需要，就清理掉.........."))
+                for i in self.reference_list:
+                    print ("[Analyze Error]%s" % (self.unicode_to_str(i)))
+
             if "..........Analysis  OK ,no error, analysis results have been written............" not in self.error_list:
                 if len(self.error_list) != 0:
                     for i in self.error_list:
@@ -401,17 +418,25 @@ class MayaAnalyze(dict,Maya):
                 cmds.quit(exitCode=555,force=True)
                 # os._exit(-1)
             else:
-                self.print_info_err(u"..............没毛病.................")
-                self.running_time("running")
-                print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-                self.print_trilateral(mode=2)
-                cmds.quit(exitCode=0, force=True)
+                if len(self.reference_list) != 0:
+                    self.running_time("running")
+                    print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                    self.print_trilateral(mode=2)
+                    cmds.quit(exitCode=555, force=True)
+                else:
+                    self.print_info_err(u"..............没毛病.................")
+                    self.running_time("running")
+                    print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                    self.print_trilateral(mode=2)
+                    cmds.quit(exitCode=0, force=True)
         else:
             self.print_info_err(u"..............问题可能比较复杂，联系TD吧.................")
             self.running_time("running")
             print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
             self.print_trilateral(mode=2)
         print ('\n')
+        
+        
     def start_open_maya(self):
         self.print_info("start open maya file: " + self["cg_file"])
         self["cg_project"] = os.path.normpath(self["cg_project"]).replace('\\', '/')

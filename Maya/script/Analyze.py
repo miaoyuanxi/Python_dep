@@ -7,6 +7,7 @@ import re
 import sys
 import json
 import subprocess
+import _subprocess
 import time
 import logging
 import uuid
@@ -46,10 +47,44 @@ def print_def_name(func):
 
 class Maya(object):
     def __init__(self):
-
+        self.is_win = 0
+        self.is_linux = 0
+        self.is_mac = 0
+        if sys.platform.startswith("win"):
+            self.is_win = 1
+            # add search path for wmic.exe
+            os.environ["path"] += ";C:/WINDOWS/system32/wbem"
+        elif sys.platform.startswith("linux"):
+            self.is_linux = 1
+        else:
+            self.is_mac = 1
+        self.server_config = {"variables": {},
+                         "spare_drives": "AEFGHIJKLMNOPQRSTUVWXYZ",
+                         "forbidden_drives": ["B:", "C:", "D:"],
+                         "mappings": {},
+                         "mounts": {},
+                         "maya_file": None,
+                         "maya_version": None,
+                         "client_version": None,
+                         "project": None,
+                         "project_custom": None,
+                         "project_in_maya": None,
+                         "project_in_ass": None,
+                         "project_in_network": 0,
+                         "project_get": None,
+                         "user_id": None,
+                         "father_id": None,
+                         "seperate_account": 0,
+                         "task_id": None,
+                         "renderlayer": None,
+                         "mac": "%012X" % uuid.getnode()}
+    
+    
+    
         self.scene_info_dict = collections.OrderedDict()
         self.asset_info_dict = collections.OrderedDict()
         self.tips_info_dict = collections.OrderedDict()
+        self.upload_info_dict = collections.OrderedDict()
         self.asset_dict = collections.OrderedDict()
 
     def print_info(self, info, exit_code='', sleep=0.2):
@@ -101,6 +136,141 @@ class Maya(object):
                 print('[err]bytes_to_str:decode %s to str failed' % (str1))
                 print(e)
         return str1
+
+    def get_FileSize(self,filePath):
+        '''获取文件的大小,结果保留两位小数，单位为MB'''
+        # filePath = unicode(filePath,'utf8')
+        fsize = os.path.getsize(filePath)
+        fsize = fsize/float(1024*1024)
+        return round(fsize,2)
+
+    def inter_path(self,path):
+        first_two = path[0:2]
+        if first_two in ('//', '\\\\'):
+            norm_path = path.replace('\\', '/')
+            index = norm_path.find('/', 2)
+            if index <= 2:
+                return False
+            return True
+
+    def parse_inter_path(self,path):
+        first_two = path[0:2]
+        if first_two in ('//', '\\\\'):
+            norm_path = path.replace('\\', '/')
+            index = norm_path.find('/', 2)
+            if index <= 2:
+                return ''
+            return path[:index], path[index:]
+
+    def convert_path(self,user_input, path):
+        """
+        :param user_input: e.g. "/1021000/1021394"
+        :param path: e.g. "D:/work/render/19183793/max/d/Work/c05/111409-021212132P-embedayry.jpg"
+        :return: \1021000\1021394\D\work\render\19183793\max\d\Work\c05\111409-021212132P-embedayry.jpg
+        """
+        result_file = path
+        lower_file = os.path.normpath(path.lower()).replace('\\', '/')
+        file_dir = os.path.dirname(lower_file)
+        if file_dir is None or file_dir.strip() == '':
+            pass
+        else:
+            if self.inter_path(lower_file) is True:
+                start, rest = self.parse_inter_path(lower_file)
+                # result_file = user_input + '/net/' + start.replace('//', '') + rest.replace('\\', '/')
+                result_file = user_input + start + rest.replace('\\', '/')
+            else:
+                result_file = user_input + '\\' + path.replace('\\', '/').replace(':', '')
+    
+        result = os.path.normpath(result_file)
+        result = result.replace("\\", "/")
+        return result
+
+    def get_computer_mac(self):
+        mac = uuid.UUID(int=uuid.getnode()).hex[-12:]
+        # return ":".join([mac[e:e + 2] for e in range(0, 11, 2)])
+        return mac
+
+    def run_command(self, cmd, ignore_error=None, shell=0):
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = _subprocess.SW_HIDE
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, startupinfo=startupinfo,
+                             shell=shell)
+    
+        while 1:
+            # returns None while subprocess is running
+            return_code = p.poll()
+            # if return_code == 0:
+            #     break
+            if return_code == 1:
+                if ignore_error == 1:
+                    break
+                else:
+                    raise Exception(cmd + " was terminated for some reason.")
+            elif return_code != None and return_code != 0:
+                if ignore_error == 1:
+                    break
+                else:
+                    print "exit return code is: " + str(return_code)
+                    raise Exception(cmd + " was crashed for some reason.")
+            line = p.stdout.readline()
+            if not line:
+                break
+            yield line
+
+    def get_windows_mapping(self):
+        if self.is_win:
+            networks = {}
+            locals = []
+            all = []
+            net_use = dict([re.findall(r'.+ ([a-z]:) +(.+)', i.strip(), re.I)[0]
+                            for i in self.run_command('net use')
+                            if i.strip() if re.findall(r'.+ ([a-z]:) +(.+)',
+                                                       i.strip(), re.I)])
+            for i in net_use:
+                net_use[i] = net_use[i].replace("Microsoft Windows Network","").strip()
+
+            for i in self.run_command('wmic logicaldisk get deviceid,drivetype,providername'):
+                if i.strip():
+                    # a = re.findall(r'([a-z]:) +(\d) +(.+)?', i.strip(), re.I)
+                    # print a
+                    info = i.split()
+                    if info[1] == "4":
+                        if len(info) == 3:
+                            if re.findall(r'^[\w _\-.:()\\/$]+$', info[2], re.I):
+                                networks[info[0]] = info[2].replace("\\", "/")
+                            else:
+                                networks[info[0]] = None
+                            all.append(info[0])
+                        else:
+                            if info[0] in net_use:
+                                if os.path.exists(net_use[info[0]]):
+                                    if re.findall(r'^[\w _\-.:()\\/$]+$', net_use[info[0]], re.I):
+                                        networks[info[0]] = net_use[info[0]].replace("\\", "/")
+                                    else:
+                                        networks[info[0]] = None
+                                    all.append(info[0])
+                                else:
+                                    # Don't know why the drive is not exists when using python to check.
+                                    # Is this a network issue?
+                                    # Can not reproduce this issue manually.
+                                    print "%s is not exists" % (info[0])
+                                    networks[info[0]] = None
+                                    all.append(info[0])
+                            else:
+                                networks[info[0]] = None
+                                all.append(info[0])
+
+                    elif info[1] in ["3", "2"]:
+                        if info[0] in self.server_config["forbidden_drives"]:
+                            locals.append(info[0])
+                        else:
+                            networks[info[0]] = None
+                        all.append(info[0])
+                        
+        return (locals, networks, all)
+
 
     def to_unicode(self, string):
         locale_encoding = locale.getpreferredencoding()
@@ -207,6 +377,17 @@ class Maya(object):
         file_mtime = time.ctime(os.stat(file).st_mtime)
         file_size = os.path.getsize(file)
         return file_mtime,file_size
+
+    def get_json_to_dict(self, json_file):
+        if json_file is None or not os.path.exists(json_file):
+            print("%s is not exists" % json_file)
+            return None
+        json_dict = {}
+        with codecs.open(json_file, 'r', 'utf-8') as task_json_file:
+            json_dict.update(json.load(task_json_file))
+        return json_dict
+
+
 
 class Analyze(dict, Maya):
     def __init__(self, options):
@@ -391,7 +572,7 @@ class Analyze(dict, Maya):
             productionEngine_dict = {0:"CPU",1:"OpenCL",2:"CUDA"}
             productionEngine = vraySettings_node.productionEngine.get()
             scene_info_option_dict["productionEngine"] = productionEngine_dict[productionEngine]
-            if productionEngine != 0 and self["platform"] != "21":
+            if (productionEngine == 0 and self["platform"] == "21") or (productionEngine != 0 and self["platform"] != "21"):
                 self.writing_error(25022,"Current Vray productionEngine is %s,Please modify" % scene_info_option_dict["productionEngine"])
     
         scene_info_option_dict['pre_render_mel'] = self.unicode_to_str(self.defaultRG.preMel.get())
@@ -508,7 +689,7 @@ class Analyze(dict, Maya):
         return self.scene_info_dict,self.tips_info_dict
 
     def getArnoldElementNames(self):
-        elementNames = [""]
+        elementNames = []
         arnold_options_node = pm.PyNode("defaultArnoldRenderOptions")
         aovMode = int(arnold_options_node.aovMode.get())
         # aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
@@ -526,7 +707,7 @@ class Analyze(dict, Maya):
         return elementNames
 
     def getArnoldElements(self):
-        elementNames = [""]
+        elementNames = []
         aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
         mergeAOV = int(pm.getAttr("defaultArnoldDriver.mergeAOVs"))
         imfType = str(pm.mel.getImfImageType())
@@ -543,7 +724,7 @@ class Analyze(dict, Maya):
 
     def getRedshiftElements(self):
 
-        elementNames = [""]
+        elementNames = []
         REs = pm.ls(type='RedshiftAOV')
         for RE in REs:
             enabled = int(pm.getAttr(str(RE) + ".enabled"))
@@ -554,7 +735,7 @@ class Analyze(dict, Maya):
 
     def getMentalRayElementNames(self, currentRenderLayer):
 
-        elementNames = [""]
+        elementNames = []
         # Format's in Maya are stored as integers.  For Mental ray EXR is stored as 51.
         exrFormat = 51
         if currentRenderLayer != "":
@@ -575,7 +756,7 @@ class Analyze(dict, Maya):
         return elementNames
 
     def getVRayElementNames(self):
-        elementNames = [""]
+        elementNames = []
         isMultichannelExr = int(False)
         multichannel = " (multichannel)"
         ext = ""
@@ -1028,8 +1209,7 @@ class Analyze(dict, Maya):
                            "renderManRIS": "RenderMan_for_Maya",
                            "renderMan": "RenderMan_for_Maya",
                            "renderman": "RenderMan_for_Maya",
-                           "MayaKrakatoa": "krakatoa",
-                           "mentalRay": "mentalray"
+                           "MayaKrakatoa": "krakatoa"
                            
                            }
         plugins_rederer.setdefault(renderer)
@@ -1038,7 +1218,7 @@ class Analyze(dict, Maya):
                 self.writing_error(25008, "render layer: %s \'s renderer is %s ,please confirm configure plugins" % (
                 layer, renderer))
                 return False
-        elif renderer == "mentalRay" and int(self["cg_version"]) > 2016.5 and plugins_rederer[renderer] not in self["cg_plugins"]:
+        elif renderer == "mentalRay" and float(self["cg_version"]) > 2016.5 and "mentalray" not in self["cg_plugins"]:
             self.writing_error(25008,
                                "render layer: %s \'s renderer is %s ,above version of maya2017(contain),  please confirm configure mentalRay" % (
                                layer, renderer))
@@ -1047,7 +1227,7 @@ class Analyze(dict, Maya):
             self.writing_error(25014, "render layer: %s \'s renderer is %s   please change" % (layer, renderer))
             return False
         
-        elif "RenderMan_for_Maya" in self["cg_plugins"] and "mtoa" in self["cg_plugins"] or "vrayformaya" in self["cg_plugins"] or "redshift" in self["cg_plugins"] or "mentalray" in self["cg_plugins"]:
+        elif "RenderMan_for_Maya" in self["cg_plugins"] and ("mtoa" in self["cg_plugins"] or "vrayformaya" in self["cg_plugins"] or "redshift" in self["cg_plugins"] or "mentalray" in self["cg_plugins"]):
             self.writing_error(25024, "plugins list : %s   please change" % (self["cg_plugins"]))
             return False
         else:
@@ -2629,6 +2809,9 @@ class Asset(dict, Maya):
                 for j in self.asset_dict[i]:
                     if len(self.asset_dict[i][j]["local_path"]) > 0:
                         asset.append({"node":j,"path":[self.str_to_unicode(k) for k in self.asset_dict[i][j]["local_path"]]})
+                        # for asset_i in self.asset_dict[i][j]["local_path"]:
+                        #     if self.get_FileSize(asset_i) == 0.0:
+                        #         self.writing_error(20007,asset_i)
                     if len(self.asset_dict[i][j]["missing"]) > 0:
                         missing_file.append({"node":j,"path":[self.str_to_unicode(l) for l in self.asset_dict[i][j]["missing"]]})
                     for env_i in self.asset_dict[i][j]["env"]:
@@ -2643,6 +2826,7 @@ class Asset(dict, Maya):
         if len(self.asset_info_dict["missing_file"])>0:
             self.writing_error(20001,tips_missing_file)
         return self.asset_info_dict,self.tips_info_dict,env_dict
+
 
 
 class Config(dict,Maya):
@@ -2762,6 +2946,94 @@ class Config(dict,Maya):
         if "defaultRenderLayer" in self.scene_info_dict:
             self.scene_info_dict["defaultRenderLayer"]["env"] = info_dict_2[2]
 
+    def gather_upload_dict(self):
+        upload_json_dict = {}
+        upload_asset = []
+        upload_scene = []
+    
+        # Add the cg file to upload.json
+        upload_scene.append({"local": self["cg_file"], "server": self.convert_path("", self["cg_file"])})
+        # Add the assets to upload.json
+        assets = self.asset_info_dict["asset"]
+        for asset_dict in assets:
+            path_list = asset_dict["path"]
+            for path in path_list:
+                d = {}
+                local = path
+                server = self.convert_path("", local)
+                d["local"] = local.replace("\\", "/")
+                d["server"] = server
+                if d not in upload_asset:
+                    upload_asset.append(d)
+        # Add the cg file to upload.json
+        upload_asset.append({
+            "local": self["cg_file"],
+            "server": self.convert_path("",self["cg_file"])
+        })
+
+    
+        upload_json_dict["scene"] = upload_scene
+        upload_json_dict["asset"] = upload_asset
+        self.upload_info_dict = upload_json_dict
+    
+        return self.upload_info_dict
+
+
+    def get_mnt_map_dict(self):
+        mnt_map_dict = {}
+        self.mnt_map = {}
+        locals, networks, all = self.get_windows_mapping()
+        self.server_config["used_drives"] = all
+        self.server_config["spare_drives"] = [i + ":" for i in self.server_config["spare_drives"]
+                                         if i not in [j.rstrip(":") for j in all]]
+
+        for asset_dict in self.upload_info_dict["asset"]:
+            local_path = asset_dict["local"]
+            first_two = local_path[0:2]
+            if first_two in ('//', '\\\\'):
+                self.writing_error(25012,local_path)
+                # norm_path = local_path.replace('\\', '/')
+                # index = norm_path.find('/', 2)
+                # if index <= 2:
+                #     return ''
+                # return local_path[:index]
+            else:
+                if first_two not in self.server_config["forbidden_drives"] and first_two not in mnt_map_dict:
+                    mnt_map_dict[first_two] = first_two[0:2].split(":")[0]
+                    # mnt_map_dict = mnt_map_dict.update({first_two:first_two[0:2].split(":")[0]})
+                else:
+                    self.writing_error(25012,local_path)
+        self.mnt_map = mnt_map_dict
+        return mnt_map_dict
+    
+
+    def write_task_info_client(self):
+        info_file_path = os.path.dirname(self["task_json"])
+        print "write info to task.json"
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self["task_json"]
+        
+            if os.path.exists(self["task_json"]):
+                with open(info_file, 'r') as f:
+                    json_src = json.load(f)
+            else:
+                json_src = {}
+                
+            json_src["scene_info"] = self.scene_info_dict
+            json_src["scene_info_render"] = self.scene_info_dict
+            json_src["mnt_map"] = self.get_mnt_map_dict()
+            with codecs.open(info_file, 'w', 'utf-8') as f:
+                json.dump(json_src, f, ensure_ascii=False, indent=4)
+                # task_json_str = json.dumps(json_src, ensure_ascii=False, indent=4)
+                # task_json_str = task_json_str.encode("utf-8")
+                # self.write_file(task_json_str,info_file)
+        except Exception as err:
+            print err
+            pass
+
+
 
     def write_task_info(self):
         info_file_path = os.path.dirname(self["task_json"])
@@ -2770,8 +3042,12 @@ class Config(dict,Maya):
             os.makedirs(info_file_path)
         try:
             info_file = self["task_json"]
-            with open(info_file, 'r') as f:
-                json_src = json.load(f)
+            
+            if os.path.exists(self["task_json"]):
+                with open(info_file, 'r') as f:
+                    json_src = json.load(f)
+            else:
+                json_src = {}
             json_src["scene_info"] = self.scene_info_dict
             with codecs.open(info_file, 'w', 'utf-8') as f:
                 json.dump(json_src, f, ensure_ascii=False, indent=4)
@@ -2796,6 +3072,21 @@ class Config(dict,Maya):
             print  err
             pass
 
+        
+    def write_upload_info(self):
+        info_file_path = os.path.dirname(self["upload_json"])
+        print "write info to upload.json"
+        if not os.path.exists(info_file_path):
+            os.makedirs(info_file_path)
+        try:
+            info_file = self["upload_json"]
+            with codecs.open(info_file, 'w', 'utf-8') as f:
+                json.dump(self.upload_info_dict, f, ensure_ascii=False, indent=4)
+        except Exception as err:
+            print  err
+            pass
+
+
     def write_tips_info(self):
         info_file_path = os.path.dirname(self["tips_json"])
         print "write info to tips.json"
@@ -2810,35 +3101,90 @@ class Config(dict,Maya):
             pass
 
 def analyze_maya(options):
-    print "88888888888888"
-    info_dict = json.dumps(options, ensure_ascii=False, indent=4)
-    print info_dict
-    print type(options)
-    analyze = Config(options)
     
-    analyze.check_maya_version(options["cg_file"],options["cg_version"])
-    analyze.check_scene_name()
-    analyze.start_open_maya()
+    if options["channel"] == "client":
+        task_json = options["task_json"]
+        client_script = options["client_script"]
+        client_script = os.path.abspath(client_script)
+        sys.path.append(client_script)
+        # from submitutil import RBFileUtil
+        analyze_options = {}
+        maya_base = Maya()
+        task_json_dict = maya_base.get_json_to_dict(task_json)
+        argument_json_dict = task_json_dict["argument_info"]
+        client_project_dir = argument_json_dict['client_setting']['client_project_dir']
+        client_project_dir = client_project_dir.replace("\\", "/")
 
-    analyze.gather_task_dict()
-    analyze.print_info("get layer setting info ok.")
+        analyze_options["cg_project"] = argument_json_dict["plugin_setting"]["project_dir"]
+        analyze_options["cg_file"] = argument_json_dict["cg_file"]
+        analyze_options["task_json"] = client_project_dir + "/" + "task.json"
+        analyze_options["asset_json"] = client_project_dir + "/" + "asset.json"
+        analyze_options["tips_json"] = client_project_dir + "/" + "tips.json"
+        analyze_options["upload_json"] = client_project_dir + "/" + "upload.json"
+        analyze_options["cg_version"] = argument_json_dict['plugin_setting']['software_config']['cg_version']
+        analyze_options["cg_plugins"] = argument_json_dict["plugin_setting"]["software_config"]['plugins']
+        analyze_options["platform"] = argument_json_dict["platform"]
 
-    analyze.gather_asset_dict()
-    analyze.print_info("gather assets  info ok.")
+        analyze_options["argument_json_dict"] = argument_json_dict
 
-    analyze.print_info("gather tips  info ok.")
+        analyze = Config(analyze_options)
 
+        analyze.check_scene_name()
+        analyze.start_open_maya()
 
-    analyze.write_task_info()
-    analyze.print_info("write task info ok.")
+        analyze.gather_task_dict()
+        analyze.print_info("get layer setting info ok.")
 
-    analyze.write_asset_info()
-    analyze.print_info("write asset info ok.")
+        analyze.gather_asset_dict()
+        analyze.print_info("gather assets  info ok.")
+        
+        analyze.gather_upload_dict()
+        analyze.print_info("gather upload  info ok.")
 
-    analyze.write_tips_info()
-    analyze.print_info("write tips info ok.")
+        analyze.print_info("gather tips  info ok.")
 
-    analyze.print_info("analyze maya info ok.")
+        analyze.write_task_info_client()
+        analyze.print_info("write task info ok.")
+
+        analyze.write_asset_info()
+        analyze.print_info("write asset info ok.")
+        
+        analyze.write_upload_info()
+        analyze.print_info("write upload info ok.")
+
+        analyze.write_tips_info()
+        analyze.print_info("write tips info ok.")
+
+        analyze.print_info("analyze maya info ok.")
+
+    else:
+        info_dict = json.dumps(options, ensure_ascii=False, indent=4)
+        print info_dict
+        analyze = Config(options)
+        
+        analyze.check_maya_version(options["cg_file"],options["cg_version"])
+        analyze.check_scene_name()
+        analyze.start_open_maya()
+    
+        analyze.gather_task_dict()
+        analyze.print_info("get layer setting info ok.")
+    
+        analyze.gather_asset_dict()
+        analyze.print_info("gather assets  info ok.")
+    
+        analyze.print_info("gather tips  info ok.")
+    
+    
+        analyze.write_task_info()
+        analyze.print_info("write task info ok.")
+    
+        analyze.write_asset_info()
+        analyze.print_info("write asset info ok.")
+    
+        analyze.write_tips_info()
+        analyze.print_info("write tips info ok.")
+    
+        analyze.print_info("analyze maya info ok.")
 
 if __name__ == '__main__':
     #linux
@@ -2857,6 +3203,7 @@ if __name__ == '__main__':
         with codecs.open(options["system_json"], 'r', 'utf-8') as f_system_json:
             system_json_dict = json.load(f_system_json)
         options["platform"] = system_json_dict['system_info']['common']['platform']
+        options["channel"] = "web"
         analyze_maya(options)
     else:
         print("task.json is not exists")

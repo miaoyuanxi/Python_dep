@@ -4,6 +4,7 @@ import sys
 import os
 import nuke
 import pprint
+import platform
 if sys.version_info[:2] == (2, 5):
     if sys.platform.startswith("win"):
         sys.path.append(os.path.join(os.path.dirname(__file__), "tim", "py25"))
@@ -59,15 +60,20 @@ def merge(kwargs):
     tile_output_folder= kwargs["tile_output"]
     print tile_output_folder
     if tile_output_folder.endswith(".iff"):
-        print "iff"
         tile_output_folder = tile_output_folder.replace(".iff",".exr")
     print tile_output_folder
     if len(kwargs["tile_files"]) <= tile_nums:
-        print tile_output_folder
-        merge_image(kwargs["tile_files"],tile_output_folder)  
+        merge_image(kwargs["tile_files"],tile_output_folder)
     else:
         tile_output_list=[]
-        temp_dir =  os.environ.get('TEMP').replace("\\",'/')   
+        current_os = platform.system().lower()
+        if current_os == "linux":
+            temp_dir = "/tmp/nzs-data/renderbuswork/temp_files"
+        else:
+            temp_dir = os.environ.get('TEMP').replace("\\",'/')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        
         name_ext = tile_output_folder.replace("\\",'/').rsplit('/',1)[1].rsplit('.',1)
         name = name_ext[0]
         ext = name_ext[1]

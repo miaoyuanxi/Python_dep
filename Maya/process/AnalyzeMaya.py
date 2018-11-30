@@ -240,6 +240,7 @@ class AnalyzeMaya(Maya):
             options["cg_version"] = self.CG_VERSION
             options["cg_plugins"] = self.G_CG_CONFIG_DICT["plugins"]
             options["platform"] = self.G_PLATFORM
+            options["channel"] = "web"
             self.G_DEBUG_LOG.info(options)
             self.G_DEBUG_LOG.info("current os is %s" % self.G_RENDER_OS)
             if self.G_RENDER_OS == '1':
@@ -287,7 +288,8 @@ class AnalyzeMaya(Maya):
             self.G_DEBUG_LOG.info("\n\n-------------------------------------------Start maya program-------------------------------------\n\n")
             self.G_DEBUG_LOG.info("analyse cmd info:\n")
             analyze_code,analyze_result=CLASS_COMMON_UTIL.cmd(analyse_cmd,my_log=self.G_DEBUG_LOG,continue_on_error=True,my_shell=True,callback_func=self.maya_cmd_callback)
-            self.G_DEBUG_LOG.info(analyze_code,analyze_result)
+            self.G_DEBUG_LOG.info(analyze_result)
+            self.G_DEBUG_LOG.info(analyze_code)
 
         self.G_DEBUG_LOG.info(self.tips_info_dict)
         if self.tips_info_dict:

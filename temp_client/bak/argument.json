@@ -1,0 +1,65 @@
+{
+    "cg_file": "E:/renderfile/TEST_maya2016_ocean.mb",
+    "cg_id": 2000,
+    "client_setting": {
+        "client": "Renderbus",
+        "client_cmd": "rendercmd.exe",
+        "client_inst_path": "D:/project/git/renderfarm/src/../release/bin",
+        "client_project_dir": "C:/renderfarm/project/389972",
+        "frame_timeout": "720",
+        "language": 0,
+        "mode": "normal",
+        "render_ram": "64",
+        "task_overtime": "72",
+        "tmp_path": "C:/Users/yanglong/AppData/Local/Temp/Renderbus/projects/2W389972",
+        "version": "4.0.10.3"
+    },
+    "job_id": 389972,
+    "job_id_alias": "2W389972",
+    "parent_id": 0,
+    "platform": 2,
+    "plugin_setting": {
+        "cg_id": 2000,
+        "cg_name": "Maya",
+        "cg_version": "2016",
+        "config_name": "test011",
+        "os_name": 1,
+        "project_dir": "",
+        "project_id": 1768,
+        "project_name": "render_project_default_value",
+        "project_output": "C:/RenderFarm/Download",
+        "render_layer_type": 0,
+        "software_config": {
+            "cg_id": 2000,
+            "cg_name": "Maya",
+            "cg_version": "2016",
+            "plugins": {
+                "DMM": "1.2",
+                "Domemaster3D": "2.1.1"
+            }
+        }
+    },
+    "render_setting": {
+        "assFileSwitchFlag": 0,
+        "forceAnalysisFlag": 0,
+        "ignoreMapFlag": 0,
+        "jobDurationLimit": 8,
+        "justUploadConfigFlagMax": 0,
+        "justUploadConfigFlagMaya": 0,
+        "manuallyStartAnalysisFlag": 0,
+        "miFileSwitchFlag": 0,
+        "separateAccountFlag": 0,
+        "taskOverTime": 8
+    },
+    "user_id": 10001384,
+    "user_key": "560c2af51b517e104a66cc8c6f3aa9f2",
+    "user_name": "TD_MAX",
+    "user_setting": {
+        "ram": "64",
+        "shareMainCapital": false,
+        "test_frames": ""
+    },
+    "user_type": 0,
+    "version": 0,
+    "zone": 1
+}

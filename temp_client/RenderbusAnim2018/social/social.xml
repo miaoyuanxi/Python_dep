@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<SocialConfig>	
+	<platform id="1" name="login-tk" proxy="partner-tk" logo="./social/TK_login.png" host=""></platform>
+	<platform id="2" name="AboutCG" proxy="partner-aboutcg" logo="./social/aboutcg_btn.png" host=""></platform>
+</SocialConfig>

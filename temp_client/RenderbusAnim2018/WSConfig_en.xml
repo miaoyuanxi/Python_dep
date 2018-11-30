@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WSConfig>
+    <Version>1</Version>
+    <HostUrl>https://cdl.foxrenderfarm.com/client/</HostUrl>
+    <Client>
+        <product>FoxRenderfarmAnim</product>
+        <partner>Rayvision</partner>
+        <loglevel>2</loglevel>
+        <cmdport>31011</cmdport>
+        <cmdportmax>100</cmdportmax>
+        <cmdtarget>QRenderBusVFX.exe</cmdtarget>
+        <windowtitle>RenderBus cloud rendering</windowtitle>
+        <detail_interval>10000</detail_interval>
+        <request_timeout>30000</request_timeout>
+    </Client>
+</WSConfig>

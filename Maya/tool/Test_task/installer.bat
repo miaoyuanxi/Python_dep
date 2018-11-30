@@ -1,0 +1,1 @@
+C:\Python35\Scripts\pyinstaller.exe -F  F:\Test_task\Task_win.py

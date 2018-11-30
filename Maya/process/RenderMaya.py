@@ -48,8 +48,12 @@ class RenderMaya(Maya):
         self.CG_PLUGINS_DICT = self.G_CG_CONFIG_DICT['plugins']
         self.CG_NAME = self.G_CG_CONFIG_DICT['cg_name']
         self.CG_VERSION = self.G_CG_CONFIG_DICT['cg_version']
-        self.ENABLE_LAYERED = self.G_TASK_JSON_DICT['scene_info_render']['enable_layered']
         self.TEMP_PATH = self.G_SYSTEM_JSON_DICT['system_info']['common']['temp_path']
+        
+        if 'task_info' in self.G_TASK_JSON_DICT:
+            self.ENABLE_LAYERED = self.G_TASK_JSON_DICT['task_info']['enable_layered']
+        else:
+            self.ENABLE_LAYERED = self.G_TASK_JSON_DICT['scene_info_render']['enable_layered']
         
         self.G_RN_MAYA_PRERENDER = os.path.join(self.G_NODE_MAYASCRIPT, self.G_PRERENDER_NAME).replace('\\', '/')
         self.G_RN_MAYA_POSTRENDER = os.path.join(self.G_NODE_MAYASCRIPT, self.G_POSTRENDER_NAME).replace('\\', '/')
@@ -97,7 +101,7 @@ class RenderMaya(Maya):
 
             if "License error" in result_line or "[mtoa] Failed batch render" in result_line or "error checking out license for arnold" in result_line or "No license for product (-1)" in result_line:
                 self.exitcode = -1
-                CLASS_MAYA_UTIL.killMayabatch(my_log)
+                # CLASS_MAYA_UTIL.killMayabatch(my_log)
                 return self.exitcode
             
             #任务渲染完，强制退出maya
@@ -105,6 +109,8 @@ class RenderMaya(Maya):
             if completed_key in result_line:
                 exit_maya_on = 1
                 print("success maya batch end !!!")
+                sys.stdout.flush()
+                time.sleep(1)
                 CLASS_MAYA_UTIL.killMayabatch(my_log)  # kill mayabatch.exe
                 return exit_maya_on
 
@@ -149,7 +155,7 @@ class RenderMaya(Maya):
             if os.path.exists(plugin_path):
                 return plugin_path
             elif self.G_PLUGIN_PATH:
-                self.my_print(self.G_PLUGIN_PATH)
+                # self.my_print(self.G_PLUGIN_PATH)
                 plugin_path_ip = plugin_path_ip.replace("\\","/")
                 # self.MyLog("plugins server path is :: %s" % plugin_path_ip)
                 plugin_path_ip = plugin_path_ip.split("/")[2]
@@ -269,10 +275,7 @@ class RenderMaya(Maya):
             self.cg_return_code = result_code
             end_time = int(time.time())
             self.G_FEE_PARSER.set('render', 'end_time', str(end_time))
-            
-            # if self.g_one_machine_multiframe is True:
-            #     CLASS_MAYA_UTIL.clean_dir(self.G_WORK_RENDER_TASK_OUTPUT, my_log=self.G_DEBUG_LOG)
-            
+           
             CLASS_MAYA_UTIL.kill_lic_all(my_log=self.G_DEBUG_LOG)
             self.G_FEE_PARSER.set('render', 'end_time', str(end_time))
             self.G_DEBUG_LOG.info('[RenderMaya.RB_RENDER.end.....]')
@@ -369,7 +372,6 @@ class RenderMaya(Maya):
         if self.g_one_machine_multiframe is True:
             self.renderSettings["output"] = os.path.join(os.path.normpath(self.G_WORK_RENDER_TASK_OUTPUT),
                                                          "temp_out").replace("\\", "/")
-        self.renderSettings["output_frame"] = os.path.normpath(self.G_WORK_RENDER_TASK_OUTPUT).replace("\\", "/")
         
         if not os.path.exists(self.renderSettings["output"]):
             os.makedirs(self.renderSettings["output"])
@@ -479,7 +481,7 @@ class RenderMaya(Maya):
                     sys.exit(555)
             
             else:
-                if self.renderer == "renderManRIS" or self.renderer == "renderMan" or self.renderer == "renderman" and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
+                if (self.renderer == "renderManRIS" or self.renderer == "renderMan" or self.renderer == "renderman") and "RenderMan_for_Maya" in self.CG_PLUGINS_DICT:
                     if float(self.CG_PLUGINS_DICT["RenderMan_for_Maya"]) >= 22:
                         cmd += " -r renderman"
                     else:
@@ -506,7 +508,7 @@ class RenderMaya(Maya):
                 gpu_n = "0,1"
                 cmd += " -gpu {%s}" % (gpu_n)
             
-            elif "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and "renderManRIS" in renderer_list or "renderMan" in renderer_list or "renderman" in renderer_list:
+            elif "RenderMan_for_Maya" in self.CG_PLUGINS_DICT and ("renderManRIS" in renderer_list or "renderMan" in renderer_list or "renderman" in renderer_list):
                 if float(self.CG_PLUGINS_DICT["RenderMan_for_Maya"]) >= 22:
                     cmd += " -r renderman"
                 else:
@@ -522,13 +524,11 @@ class RenderMaya(Maya):
             cmd += " -x %(width)s -y %(height)s" % self.renderSettings
 
         post_render_dict = {}
-        post_render_dict["output"] = self.renderSettings["output"]
-        post_render_dict["output_frame"] = self.renderSettings["output_frame"]
-        post_render_dict["g_one_machine_multiframe"] = self.g_one_machine_multiframe
-        
+        # post_render_dict["temp_out"] = self.renderSettings["output"]
+        post_render_dict["output"] = os.path.normpath(self.G_WORK_RENDER_TASK_OUTPUT).replace("\\", "/")
+       
         # -------------get custom render cmd-------------
-        
-        
+
         # -------------add post render cmd-------------
         if self.g_one_machine_multiframe is True:
             cmd += " -postFrame \"python \\\"post_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\";\"" % (

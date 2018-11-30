@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <update_xml>renderbus_update.xml</update_xml>
+    <url_xml_host>https://cdl.renderbus.com/</url_xml_root>
+    <url_xml_root>/client/newClient/crclient2/xml</url_xml_root>
+    <url_files_root>/client/newClient/crclient2/ali</url_files_root>
+    <url_install_root>/client/newClient/crclient2/install</url_install_root>
+    <tmp_files_root>.\rayvision_update</tmp_files_root>
+    <dst_files_root>..\desktop_update</dst_files_root>
+    <need_replace>false</need_replace>
+</root>

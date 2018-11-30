@@ -1,0 +1,61 @@
+{
+    "version": 0,
+    "user_key": "348520a79a526c97b149aab6a5c7e847",
+    
+    "user_id": 10000,
+    "user_type": 1,
+    "parent_id": 10002,
+    "zone": 1,
+    "platform": 20,
+    "user_name": "test",
+    "cg_file": "E:/NewPlatform/NewClient_config/scene/TEST_maya2016_ocean.mb",
+    "job_id": "123456",
+    "job_id_alias": "2W123456",
+    "user_setting": {
+        "shareMainCapital": true,
+        "ram": 128,
+        "test_frames": "010",
+        "project_dir": "", 
+        "output_dir": ""
+    },
+    "render_setting": {
+        "manuallyStartAnalysisFlag": 1,
+        "ignoreMapFlag": 1,
+        "justUploadConfigFlagMaya": 1,
+        "justUploadConfigFlagMax": 1,
+        "miFileSwitchFlag": 1,
+        "forceAnalysisFlag": 1,
+        "assFileSwitchFlag": 1,
+        "separateAccountFlag": 1,
+        "taskOverTime": 1,
+        "jobDurationLimit": 1
+    },
+    "plugin_setting": {
+        "software_config": {
+            "plugins": {
+            },
+            "cg_version": "2016",
+            "cg_name": "Maya"
+        },
+        "cg_id": 2002,
+        "cg_name": "maya",
+        "cg_version": "2016",
+        "config_name": "test_2016",
+        "os_name": 1,
+        "render_layer_type": 0,
+        "project_name": "test",
+        "project_id": 1256
+
+    },
+    "client_setting": {
+        "version": "4.0.5.5",
+        "mode": "fast",
+        "client": "renderbus",
+        "client_inst_path": "c:/rednerbus 4.0/",
+        "client_cmd": "rendercmd.exe",
+        "client_project_dir": "c:/renderfarm/project/", 
+        "language": 1,
+        "tmp_path": "/tmp/renderbus/" 
+    }
+    
+    }

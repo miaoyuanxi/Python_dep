@@ -1,0 +1,3 @@
+2018/10/30 14:15:39.000434 [E][init_license]g_secretkey:56010047d96b93.48992100[..\..\base\libAuthentication\YyAuthenticationManage.c, 187]
+2018/10/30 14:15:39.000434 [E][init_license]g_srv_url:https://fly.cloudtalkers.com/[..\..\base\libAuthentication\YyAuthenticationManage.c, 197]
+2018/10/30 14:15:39.000438 [E][init_license]macAddr : 74e9b52a66b9a4a0bf38354e35d20c19[..\..\base\libAuthentication\YyAuthenticationManage.c, 266]

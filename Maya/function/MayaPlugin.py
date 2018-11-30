@@ -330,113 +330,111 @@ class MayaPlugin(PluginBase):
         return plginInfoDict
     
     def do_clear_render_pre(self, *args):
-        input_SW = args[0]
-        _V_APP = args[1]
-        if input_SW == "maya":
-            os.environ['MAYA_RENDER_DESC_PATH'] = ""
-            os.environ['MAYA_MODULE_PATH'] = ""
-            # os.environ['MAYA_SCRIPT_PATH'] = ""
-            os.environ['MAYA_PLUG_IN_PATH'] = ""
-            _MAYA_ROOT = r"C:/Program Files/Autodesk/Maya" + _V_APP
-            if self.CURRENT_OS == "linux":
-                if float(_V_APP) < 2016:
-                    version_name = "%s-x64" % (_V_APP)
-                else:
-                    version_name = _V_APP
-                _MAYA_ROOT = "/usr/autodesk/maya%s" % (version_name)
-            curUserPath = os.environ.get('userprofile')
-            _MAYA_HOME = r"%s/Documents/maya/%s" % (curUserPath, _V_APP)
-            if int(_V_APP[:4]) <= 2015:
-                _MAYA_HOME = r"%s/Documents/maya/%s-x64" % (curUserPath, _V_APP)
-            _MAYA_HOME = _MAYA_HOME.replace('\\', "/")
-            del_list_mod = ['mtoa.mod', "VRayForMaya.module", "shaveHaircut.mod", "3delight_for_maya2013.mod",
-                            "pgYetiMaya.mod",
-                            "Maya2012ExocortexAlembic.mod", '3delight_for_maya2012.mod', '3delight_for_maya2013.5.mod',
-                            '3delight_for_maya2014.mod', "FumeFX.mod", 'MiarmyForMaya.txt',
-                            'Pixelux Digital Molecular Matter 64-bit.txt',
-                            'ArnoldDomemaster3D.mod', 'Domemaster3D.mod', 'glmCrowd.mod', 'KrakatoaForMaya.module',
-                            'maya2016.mod', "ArnoldDomemaster3D.mod",
-                            'Domemaster3D.mod', 'Maya2015ExocortexAlembic.mod', 'houdiniEngine-maya2015']
-            mode_path = r"%s/modules" % (_MAYA_ROOT)
-            if os.path.exists(mode_path):
-                mode_list = os.listdir(mode_path)
+        _V_APP = args[0]
+        os.environ['MAYA_RENDER_DESC_PATH'] = ""
+        os.environ['MAYA_MODULE_PATH'] = ""
+        # os.environ['MAYA_SCRIPT_PATH'] = ""
+        os.environ['MAYA_PLUG_IN_PATH'] = ""
+        _MAYA_ROOT = r"C:/Program Files/Autodesk/Maya" + _V_APP
+        if self.CURRENT_OS == "linux":
+            if float(_V_APP) < 2016:
+                version_name = "%s-x64" % (_V_APP)
             else:
-                self.MyLog("%s is not exists" % mode_path)
-                mode_list = []
-            del_mod_list = [val for val in del_list_mod if val in mode_list]
-            # del_list = list(set(del_list).intersection(set(listdir_path)))
-            for del_path in del_mod_list:
-                del_file_path = "%s/%s" % (mode_path, del_path)
-                self.do_del_path(del_file_path)
-                
-            if self.CURRENT_OS == "linux":
-                temp_ver = _V_APP
-                if "." in _V_APP:
-                    temp_ver = "".join(_V_APP.split(".")[:])
-                _maya_modules_linux = "/usr/autodesk/modules/maya/%s" % (temp_ver)
-                if os.path.exists(_maya_modules_linux):
-                    mode_list_linux = os.listdir(_maya_modules_linux)
-                else:
-                    self.MyLog("%s is not exists" % _maya_modules_linux)
-                    mode_list_linux = []
-                del_mod_list_linux = [val_linux for val_linux in del_list_mod if val_linux in mode_list_linux]
-                for del_path_linux in del_mod_list_linux:
-                    del_file_path = "%s/%s" % (_maya_modules_linux, del_path_linux)
-                    self.do_del_path(del_file_path)
-
-            del_list_plug = ['maxwell.mll', 'poseDeformer.mll', 'poseReader.mll', 'realflow.mll', "faceMachine.mll",
-                             'faceMachine', 'anzovin', \
-                             'wbDeltaMushDeformer.bundle', 'wbDeltaMushDeformer.mll', 'wbDeltaMushDeformer.so',
-                             'anzovinRigNodes.mll', 'hotOceanDeformer.mll', \
-                             'nPowerTrans.mll', 'nPowerSoftware', 'resetSkinJoint.mll', 'AWutils.dll', 'VoxelFlow.dll']
-            plug_path = r"%s/bin/plug-ins" % (_MAYA_ROOT)
-            if os.path.exists(plug_path):
-                plug_list = os.listdir(plug_path)
-            else:
-                plug_list = []
-            del_plug_list = [val for val in del_list_plug if val in plug_list]
-            # del_list = list(set(del_list).intersection(set(listdir_path)))
-            for del_path in del_plug_list:
-                del_file_path = "%s/%s" % (plug_path, del_path)
-                self.do_del_path(del_file_path)
-            # print "claer arnold "
-            del_mode_path_one = r"%s/modules/mtoa.mod" % (_MAYA_HOME)
-            del_DESC_path_one = r"%s/bin/rendererDesc/arnoldRenderer.xml" % (_MAYA_ROOT)
-            self.do_del_path(del_mode_path_one)
-            self.do_del_path(del_DESC_path_one)
-            # print "clear vray "
-            del_vray_one = r"%s/vray" % (_MAYA_ROOT)
-            self.do_del_path(del_vray_one)
-            vray_lic = r"C:\Program Files\Common Files\ChaosGroup\vrlclient.xml"
-            self.do_del_path(vray_lic)
-            maya_scripts = self.MAYA_SCRIPTS
-            self.do_del_path(maya_scripts)
-            fumefx_dll = r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\ffxDyna.dll" % (_V_APP)
-            self.do_del_path(fumefx_dll)
-            fume_mi = r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\include\ffxDyna.mi" % (_V_APP)
-            self.do_del_path(fume_mi)
-            mr_2017 = r"C:\Program Files\Common Files\Autodesk Shared\Modules\Maya\2017\mentalray.mod"
-            self.do_del_path(mr_2017)
+                version_name = _V_APP
+            _MAYA_ROOT = "/usr/autodesk/maya%s" % (version_name)
+        curUserPath = os.environ.get('userprofile')
+        _MAYA_HOME = r"%s/Documents/maya/%s" % (curUserPath, _V_APP)
+        if int(_V_APP[:4]) <= 2015:
+            _MAYA_HOME = r"%s/Documents/maya/%s-x64" % (curUserPath, _V_APP)
+        _MAYA_HOME = _MAYA_HOME.replace('\\', "/")
+        del_list_mod = ['mtoa.mod', "VRayForMaya.module", "shaveHaircut.mod", "3delight_for_maya2013.mod",
+                        "pgYetiMaya.mod",
+                        "Maya2012ExocortexAlembic.mod", '3delight_for_maya2012.mod', '3delight_for_maya2013.5.mod',
+                        '3delight_for_maya2014.mod', "FumeFX.mod", 'MiarmyForMaya.txt',
+                        'Pixelux Digital Molecular Matter 64-bit.txt',
+                        'ArnoldDomemaster3D.mod', 'Domemaster3D.mod', 'glmCrowd.mod', 'KrakatoaForMaya.module',
+                        'maya2016.mod', "ArnoldDomemaster3D.mod",
+                        'Domemaster3D.mod', 'Maya2015ExocortexAlembic.mod', 'houdiniEngine-maya2015']
+        mode_path = r"%s/modules" % (_MAYA_ROOT)
+        if os.path.exists(mode_path):
+            mode_list = os.listdir(mode_path)
+        else:
+            self.MyLog("%s is not exists" % mode_path)
+            mode_list = []
+        del_mod_list = [val for val in del_list_mod if val in mode_list]
+        # del_list = list(set(del_list).intersection(set(listdir_path)))
+        for del_path in del_mod_list:
+            del_file_path = "%s/%s" % (mode_path, del_path)
+            self.do_del_path(del_file_path)
             
-            C_MOD = [("C:/Program Files/Autodesk/Maya%s/modules/VRayForMaya.module" % (_V_APP))]
+        if self.CURRENT_OS == "linux":
+            temp_ver = _V_APP
+            if "." in _V_APP:
+                temp_ver = "".join(_V_APP.split(".")[:])
+            _maya_modules_linux = "/usr/autodesk/modules/maya/%s" % (temp_ver)
+            if os.path.exists(_maya_modules_linux):
+                mode_list_linux = os.listdir(_maya_modules_linux)
+            else:
+                self.MyLog("%s is not exists" % _maya_modules_linux)
+                mode_list_linux = []
+            del_mod_list_linux = [val_linux for val_linux in del_list_mod if val_linux in mode_list_linux]
+            for del_path_linux in del_mod_list_linux:
+                del_file_path = "%s/%s" % (_maya_modules_linux, del_path_linux)
+                self.do_del_path(del_file_path)
 
-            maya_bin = r'"C:/Program Files/Autodesk/Maya%s/bin"' % _V_APP
-            del_list_vary = ["libvraymdl.dll", "libvrayfreeimage.dll", "vray.dll", "vrayopenimageio.dll",
-                             "vrayoslcomp.dll",
-                             "vrayoslexec.dll", "vrayoslquery.dll"]
-            del_path_vray = []
-            for file in del_list_vary:
-                file_abs_path = maya_bin + "/" + file
-                del_path_vray.append(file_abs_path)
-            del_path_vray = del_path_vray + C_MOD
-            for vr in del_path_vray:
-                if os.path.isfile(vr) and os.path.exists(vr):
-                    try:
-                        os.remove(vr)
-                        self.MyLog("del file:" + vr)
-                    except Exception as error:
-                        self.MyLog(Exception)
-                        self.MyLog(error)
+        del_list_plug = ['maxwell.mll', 'poseDeformer.mll', 'poseReader.mll', 'realflow.mll', "faceMachine.mll",
+                         'faceMachine', 'anzovin', \
+                         'wbDeltaMushDeformer.bundle', 'wbDeltaMushDeformer.mll', 'wbDeltaMushDeformer.so',
+                         'anzovinRigNodes.mll', 'hotOceanDeformer.mll', \
+                         'nPowerTrans.mll', 'nPowerSoftware', 'resetSkinJoint.mll', 'AWutils.dll', 'VoxelFlow.dll']
+        plug_path = r"%s/bin/plug-ins" % (_MAYA_ROOT)
+        if os.path.exists(plug_path):
+            plug_list = os.listdir(plug_path)
+        else:
+            plug_list = []
+        del_plug_list = [val for val in del_list_plug if val in plug_list]
+        # del_list = list(set(del_list).intersection(set(listdir_path)))
+        for del_path in del_plug_list:
+            del_file_path = "%s/%s" % (plug_path, del_path)
+            self.do_del_path(del_file_path)
+        # print "claer arnold "
+        del_mode_path_one = r"%s/modules/mtoa.mod" % (_MAYA_HOME)
+        del_DESC_path_one = r"%s/bin/rendererDesc/arnoldRenderer.xml" % (_MAYA_ROOT)
+        self.do_del_path(del_mode_path_one)
+        self.do_del_path(del_DESC_path_one)
+        # print "clear vray "
+        del_vray_one = r"%s/vray" % (_MAYA_ROOT)
+        self.do_del_path(del_vray_one)
+        vray_lic = r"C:\Program Files\Common Files\ChaosGroup\vrlclient.xml"
+        self.do_del_path(vray_lic)
+        maya_scripts = self.MAYA_SCRIPTS
+        self.do_del_path(maya_scripts)
+        fumefx_dll = r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\ffxDyna.dll" % (_V_APP)
+        self.do_del_path(fumefx_dll)
+        fume_mi = r"C:\Program Files\Autodesk\mentalrayForMaya%s\shaders\include\ffxDyna.mi" % (_V_APP)
+        self.do_del_path(fume_mi)
+        mr_2017 = r"C:\Program Files\Common Files\Autodesk Shared\Modules\Maya\2017\mentalray.mod"
+        self.do_del_path(mr_2017)
+        
+        C_MOD = [("C:/Program Files/Autodesk/Maya%s/modules/VRayForMaya.module" % (_V_APP))]
+
+        maya_bin = r'"C:/Program Files/Autodesk/Maya%s/bin"' % _V_APP
+        del_list_vary = ["libvraymdl.dll", "libvrayfreeimage.dll", "vray.dll", "vrayopenimageio.dll",
+                         "vrayoslcomp.dll",
+                         "vrayoslexec.dll", "vrayoslquery.dll"]
+        del_path_vray = []
+        for file in del_list_vary:
+            file_abs_path = maya_bin + "/" + file
+            del_path_vray.append(file_abs_path)
+        del_path_vray = del_path_vray + C_MOD
+        for vr in del_path_vray:
+            if os.path.isfile(vr) and os.path.exists(vr):
+                try:
+                    os.remove(vr)
+                    self.MyLog("del file:" + vr)
+                except Exception as error:
+                    self.MyLog(Exception)
+                    self.MyLog(error)
 
     def create_user_setup(self):
         if not os.path.exists(self.MAYA_SCRIPTS):
@@ -451,6 +449,7 @@ global proc auto_load_plugins()
 {
 
     catch(`loadPlugin "AbcImport"`);
+    catch(`loadPlugin "MayaExocortexAlembic"`);
     catch(`loadPlugin "tiffFloatReader"`);
     catch(`loadPlugin "OpenEXRLoader"`);
     catch(`loadPlugin "vrayformaya"`);
@@ -644,15 +643,10 @@ auto_load_plugins();
         # self.MyLog(self.G_PLUGIN_DICT)
         validInfo = {}
         validInfoPost = {}
-        if "gpuid" in os.environ:
-            self.MyLog("this gpu dont clear")
-            self.do_clear_render_pre(self.G_CG_NAME, self.G_CG_VERSION)
-        else:
-            self.do_clear_render_pre(self.G_CG_NAME, self.G_CG_VERSION)
+        self.do_clear_render_pre(self.G_CG_VERSION)
         if self.G_PLUGIN_DICT and 'plugins' in self.G_PLUGIN_DICT:
             pluginDict = self.G_PLUGIN_DICT['plugins']
             plugin_list = pluginDict.keys()
-            # print plugin_list
             # self.do_auto_load_plu(self.G_CG_VERSION,plugin_list)
         self.create_user_setup()
         pluginValidList = self.get_plugin_ini()

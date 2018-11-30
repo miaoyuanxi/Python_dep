@@ -17,7 +17,6 @@ class RBMayaUtil(object):
         if sys.platform.startswith("win"):
             os_type = "win"
             self.is_win = 1
-            #add search path for wmic.exe
             os.environ["path"] += ";C:/WINDOWS/system32/wbem"
         elif sys.platform.startswith("linux"):
             os_type = "linux"
@@ -103,7 +102,11 @@ class RBMayaUtil(object):
             resultCode = my_popen.returncode
             if maya_result_code == 1:
                 resultCode = 0
+            elif maya_result_code == -1:
+                resultCode = -1
             if resultCode == 0:
+                self.killMayabatch(my_log)
+                self.kill_lic_all(my_log=my_log)
                 break
             else:
                 time.sleep(1)
@@ -364,7 +367,6 @@ class NukeMerge(dict):
         if sys.platform.startswith("win"):
             os_type = "win"
             self.is_win = 1
-            #add search path for wmic.exe
             os.environ["path"] += ";C:/WINDOWS/system32/wbem"
         elif sys.platform.startswith("linux"):
             os_type = "linux"
@@ -408,7 +410,6 @@ class NukeMerge(dict):
             self.merge_files(self["tiles"], i, tile_output)
 
     def merge_files(self, tiles, input_files, tile_output):
-        # nuke_exe = r"B:\nuke\Nuke5.1v5\Nuke5.1.exe"
         os.environ['foundry_LICENSE'] = r'4101@10.60.5.248'
         if self.is_win:
             nuke_exe = r"B:\nuke\Nuke10.5v5\Nuke10.5.exe"
@@ -429,7 +430,7 @@ class NukeMerge(dict):
                                                             input_files, tile_output)
 
         # print (cmd)
-        CLASS_COMMON_UTIL.cmd(cmd, my_log = self.mylog, continue_on_error=True, my_shell=True)
+        CLASS_COMMON_UTIL.cmd(cmd, my_log = self.mylog, continue_on_error=False, my_shell=True)
 
     def get_right_file_name(self, file_name):
         r = re.findall(r'.+(\.\d+$)', file_name, re.I)

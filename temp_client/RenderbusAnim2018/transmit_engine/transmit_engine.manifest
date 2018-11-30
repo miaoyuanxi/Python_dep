@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+    <noInheritable></noInheritable>
+    <assemblyIdentity 
+        type="win32" 
+        name="transmit_engine" 
+        processorArchitecture="x86"
+        version="1.0.0.0">
+    </assemblyIdentity>
+    <file name="udx_engine.dll"/>
+    <file name="udxer_engine.dll"/>
+    <file name="aspera_engine.dll"/>
+    <file name="typhoon_engine.dll"/>
+    <file name="tcp_engine.dll"/>
+    <file name="file_check_client.dll"/>
+    <file name="fast_udx.dll"/>
+    <file name="stupid_base.dll"/>
+    <file name="stupid_net.dll"/>
+    <file name="aes_ecb.dll"/>
+    <file name="RaySync.dll"/>
+    <file name="libAuthentication.dll"/>
+    <file name="xxhash.dll"/>
+    <file name="cmarkup.dll"/>
+</assembly>

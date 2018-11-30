@@ -1,0 +1,62 @@
+{
+    "cg_file": "C:/TEST_maya2016_ocean_ok.mb",
+    "cg_id": 2000,
+    "client_setting": {
+        "client": "Renderbus",
+        "client_cmd": "rendercmd.exe",
+        "client_inst_path": "D:/Codes/gitlab/renderfarm/release/bin",
+        "client_project_dir": "C:/renderfarm/project/389442",
+        "language": 0,
+        "mode": "normal",
+        "tmp_path": "C:/Users/heqingrui/AppData/Local/Temp/Renderbus/projects/2W389442",
+        "frame_timeout": "C:/Users/heqingrui/AppData/Local/Temp/Renderbus/projects/2W389442",
+        "version": "4.0.10.3"
+    },
+    "job_id": 389442,
+    "job_id_alias": "2W389442",
+    "parent_id": 0,
+    "platform": 2,
+    "plugin_setting": {
+        "cg_id": 2000,
+        "cg_name": "Maya",
+        "cg_version": "2015",
+        "config_name": "test01",
+        "os_name": 1,
+        "project_dir": "",
+        "project_id": 1768,
+        "project_name": "render_project_default_value",
+        "project_output": "",
+        "render_layer_type": 0,
+        "software_config": {
+            "cg_id": 2000,
+            "cg_name": "Maya",
+            "cg_version": "2016",
+            "plugins": {
+
+            }
+        }
+    },
+    "render_setting": {
+        "assFileSwitchFlag": 0,
+        "forceAnalysisFlag": 0,
+        "ignoreMapFlag": 0,
+        "jobDurationLimit": 8,
+        "justUploadConfigFlagMax": 0,
+        "justUploadConfigFlagMaya": 0,
+        "manuallyStartAnalysisFlag": 0,
+        "miFileSwitchFlag": 0,
+        "separateAccountFlag": 0,
+        "taskOverTime": 8
+    },
+    "user_id": 10001384,
+    "user_key": "a6ff1072bb983b3b047f8ab3bce9bfeb",
+    "user_name": "TD_MAX",
+    "user_setting": {
+        "ram": "64",
+        "shareMainCapital": false,
+        "test_frames": ""
+    },
+    "user_type": 0,
+    "version": 0,
+    "zone": 1
+}
