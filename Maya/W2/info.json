@@ -1,0 +1,73 @@
+{
+    "1000": {
+        "cfg_path": "//10.60.100.104/stg_data/input/d/ninputdata5", 
+        "json_path": "//10.60.100.104/stg_data/input/p5/config", 
+        "custom_config": "//10.60.100.102/td/custom_config", 
+        "py_path": "//10.60.100.104/stg_data/input/o5/py/model", 
+        "bat_path": "//10.60.100.104/stg_data/input/p5/script/maya", 
+        "auto_plugins": "//10.60.100.151/td", 
+        "home_path": "//10.60.100.104/stg_data/input/d/inputdata5"
+    }, 
+    "1002": {
+        "cfg_path": "//10.60.100.101/d/ninputdata5", 
+        "json_path": "//10.60.100.101/p5/config", 
+        "custom_config": "//10.60.100.151/td/custom_config", 
+        "py_path": "//10.60.100.101/o5/py/model", 
+        "bat_path": "//10.60.100.101/p5/script/maya", 
+        "auto_plugins": "//10.60.100.151/td", 
+        "home_path": "//10.60.100.101/d/inputdata5"
+    }, 
+    "1003": {
+        "cfg_path": "//10.30.100.102/d/ninputdata5", 
+        "json_path": "//10.30.100.102/p5/config", 
+        "custom_config": "//10.30.100.151/td01/custom_config", 
+        "py_path": "//10.30.100.102/o5/py/model", 
+        "bat_path": "//10.30.100.102/p5/script/maya", 
+        "auto_plugins": "//10.30.100.151/td01", 
+        "home_path": "//10.30.100.102/d/inputdata5"
+    }, 
+    "1004": {
+        "cfg_path": "//10.40.100.101/d/ninputdata5", 
+        "json_path": "//10.40.100.101/p5/config", 
+        "custom_config": "//10.40.100.151/td01/custom_config", 
+        "py_path": "//10.40.100.101/o5/py/model", 
+        "bat_path": "//10.40.100.101/p5/script/maya", 
+        "auto_plugins": "//10.40.100.151/td01", 
+        "home_path": "//10.40.100.101/d/inputdata5"
+    },   
+    "1005": {
+        "cfg_path": "//10.50.244.116/d/ninputdata5", 
+        "json_path": "//10.50.244.116/p5/config", 
+        "custom_config": "//10.50.1.22/td/custom_config", 
+        "py_path": "//10.50.5.29/o5/py/model", 
+        "bat_path": "//10.50.244.116/p5/script/maya", 
+        "auto_plugins": "//10.50.1.22/td_new/td"
+    }, 
+    "1008": {
+        "cfg_path": "//10.70.242.102/d/ninputdata5", 
+        "json_path": "//10.70.242.102/p5/config", 
+        "custom_config": "//10.70.242.50/td/custom_config", 
+        "py_path": "//10.70.242.102/o5/py/model", 
+        "bat_path": "//10.70.242.102/p5/script/maya", 
+        "auto_plugins": "//10.70.242.50/td", 
+        "home_path": "//10.70.242.102/d/inputdata5"
+    }, 
+    "1009": {
+        "cfg_path": "//10.80.100.101/d/ninputdata5", 
+        "json_path": "//10.80.100.101/p5/config", 
+        "custom_config": "//10.80.243.50/td/custom_config", 
+        "py_path": "//10.80.100.101/o5/py/model", 
+        "bat_path": "//10.80.100.101/p5/script/maya", 
+        "auto_plugins": "//10.80.243.50/td", 
+        "home_path": "//10.80.100.101/d/inputdata5"
+    },
+    "1016":{
+        "cfg_path":"//10.90.100.101/d/ninputdata5",
+        "json_path":"//10.90.100.101/p5/config",
+        "custom_config":"//10.90.96.51/td1/custom_config",
+        "py_path":"//10.90.100.101/o5/py/model",
+        "bat_path":"//10.90.100.101/p5/script/maya",
+        "auto_plugins":"//10.90.96.51/td1",
+        "home_path": "//10.90.100.101/d/inputdata5"
+    }
+}

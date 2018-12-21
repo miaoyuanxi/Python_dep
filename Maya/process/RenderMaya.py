@@ -18,6 +18,7 @@ import math
 import multiprocessing
 from imp import reload
 import platform
+import psutil
 reload(sys)
 # sys.setdefaultencoding('utf-8')
 from Maya import Maya
@@ -172,7 +173,17 @@ class RenderMaya(Maya):
             else:
                 self.my_print("Plugins path is not exists.............")
                 sys.exit(555)
-        
+
+    def start_monitor(self):
+    
+        self.monitorMaya = MonitorThread(60, log_obj=self.G_DEBUG_LOG)
+        self.monitorMaya.setDaemon(True)
+        self.monitorMaya.start()
+
+    def stop_monitor(self):
+        if self.monitorMaya != None:
+            self.monitorMaya.stop()
+
     def RB_CONFIG(self):
         self.G_DEBUG_LOG.info('[Maya.RBconfig.start.....]')
         self.PLUGINS_PATH = self.get_plugin_dir() + "/plugins"
@@ -258,6 +269,8 @@ class RenderMaya(Maya):
             sys.stdout.flush()
             self.G_DEBUG_LOG.info('render cmd info:')
             self.G_DEBUG_LOG.info(render_cmd)
+
+            self.start_monitor()  # 开启监控线程
             
             start_time = int(time.time())
             if self.g_one_machine_multiframe is True:
@@ -315,7 +328,8 @@ class RenderMaya(Maya):
 
         monitor_log = ErrorBase(monitor_ini_dict)
         monitor_log.run()
-
+        
+        self.stop_monitor()  # stop monitor  结束监控线程
         self.format_log('done', 'end')
     
     def get_region(self, tiles, tile_index, width, height):
@@ -494,6 +508,10 @@ class RenderMaya(Maya):
                     cmd += " -gpu {%s}" % (gpu_n)
                 elif self.renderer == "mayaSoftware":
                     cmd += " -r sw"
+                    
+                elif self.renderer == "arnold" and "mtoa" in self.CG_PLUGINS_DICT:
+                    cmd += " -r arnold"
+
                 else:
                     pass
         
@@ -637,4 +655,61 @@ class ErrorBase():
             #     self.renderSettings[i] = cmd_dict[i]
         else:
             self.my_log("error json is not exist")
-            
+
+
+class MonitorThread(threading.Thread):
+    """
+	监控占用的CPU、Memory
+	"""
+    
+    def __init__(self, interval, log_obj=None):
+        """
+		:param interval: 间隔时间
+		:param log_obj: 日志对象，用来打印执行过程日志信息，如self.G_DEBUG_LOG
+		"""
+        threading.Thread.__init__(self)
+        
+        self.interval = interval
+        self.log_obj = log_obj
+        self.thread_stop = False
+    
+    def log_print(self, my_log, log_str):
+        if my_log == None:
+            print(log_str)
+        else:
+            my_log.info(log_str)
+    
+    def get_mem_cpu(self):
+        data = psutil.virtual_memory()
+        total = float(round(data.total/(1024.0*1024.0*1024.0),2))  # 总内存,单位为byte
+        used = float(round(data.used/(1024.0 * 1024.0 * 1024.0), 2))  # 已用内存
+        free = float(round(data.available/(1024.0*1024.0*1024.0),2))  # 可用内存
+        memory = "%d" % (float(round(data.percent,2))) + "%" #内存使用比例
+        cpu = "%0.2f" % psutil.cpu_percent(interval=1) + "%"  #cpu   使用率
+        return str(total),str(used),str(free),memory,cpu
+    
+    
+    def loop(self):
+        print 'thread %s is running...' % threading.current_thread().name
+        while (True):
+            info = self.get_mem_cpu()
+            print 'thread %s >>> ' % (threading.current_thread().name)
+            time.sleep(0.2)
+            print info + "\b" * (len(info) + 1),
+        print 'thread %s ended.' % threading.current_thread().name
+    
+    def run(self):  # Overwrite run() method, put what you want the thread do here
+        self.log_print(self.log_obj, '------------------------- Start MonitorThread -------------------------')
+        while not self.thread_stop:
+            try:
+                self.log_print(self.log_obj, '[MonitorThread].___MonitorThread____')
+                total_str,used_str,free_str,mem_str,cpu_str = self.get_mem_cpu()
+                
+                self.log_print(self.log_obj, '[MonitorThread].Cpu={0}% Memory={1}B'.format(cpu_str, mem_str))
+                time.sleep(self.interval)
+            except Exception as e:
+                self.log_print(self.log_obj, e)
+    
+    def stop(self):
+        self.thread_stop = True
+        self.log_print(self.log_obj, '[MonitorThread].stop...')

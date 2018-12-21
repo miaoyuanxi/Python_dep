@@ -17,11 +17,7 @@ import math
 import multiprocessing
 import json
 import types
-import codecs
-import platform
-import socket
-import uuid
-import logging
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -39,12 +35,12 @@ else:
     sys.path.append(function_path)
     sys.path.append(script_path)
     import RayvisionPluginsLoader
-from MayaPlugin import MayaPlugin
+
 
 
 class Maya(object):
     def __init__(self):
-    
+		
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
         currentPath = currentPath.lower()
         if "user" in currentPath:
@@ -59,9 +55,8 @@ class Maya(object):
 
         self.info_json = os.path.join(process_path, 'info.json')
         print "json_path : %s" % self.info_json
-        
-        
-        
+
+
     def get_platfom(self,platform):
         platform = str(platform)
         info_dict = {}
@@ -160,7 +155,7 @@ class Maya(object):
             options["common"]["projectSymbol"] = cfg_info["projectSymbol"]
             options["common"]["parent_id"] = cfg_info.setdefault("parent_id", 0)
             options["common"]["chunk_size"] = cfg_info.setdefault("chunk_size", 1)
-            options["common"]["submit_mode"] = int(cfg_info.setdefault("submit_mode", 1))
+
             options["renderSettings"]["renderType"] = "render.exe"
             options["renderSettings"]["renderableCamera"] = cfg_info["renderableCamera"]
             options["renderSettings"]["renderableLayer"] = cfg_info["renderableLayer"]
@@ -580,6 +575,10 @@ class Render(dict, Zip7):
                 print "copy %s to %s" % (s, d)
                 shutil.copy2(s, d)
 
+
+
+
+
 class Nuke(Render):
 
     def __init__(self, options):
@@ -608,14 +607,10 @@ class NukeMerge(Nuke):
                 if not ignore:
                     all_files.append(os.path.join(root, i_file))
 
-        # self.tile_files_list = \
-            # [[re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) for index in range(16) if os.path.exists(re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) ) ]
-            # for i in all_files]
-            
         self.tile_files_list = \
-            [[re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) for index in range(self["renderSettings"]["tiles"]) if os.path.exists(re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) ) ]
-            for i in all_files]            
-            
+            [[re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/"))
+             for index in range(self["renderSettings"]["tiles"])]
+            for i in all_files]
         self.tile_files = []
         for i in self.tile_files_list:
             if i not in self.tile_files:
@@ -667,9 +662,7 @@ class NukeMerge(Nuke):
             line_str = line.strip()
             if line_str:
                 print line_str
-                if "exit return code is:" in line_str:
-                    exit(1)
-                
+
                 # if re_complete.findall(line_str):
                 # is_complete = 1
 
@@ -775,7 +768,7 @@ class MayaClass(Render):
         if self["common"]["userId"] in [1868564]:
             self.set_plugins_myx()
         else:
-            self.set_plugins_myx()
+            self.set_plugins()
 
     def get_maya_info(self):
         if os.path.exists(self["common"]["render_file"]):
@@ -936,6 +929,10 @@ class MayaClass(Render):
 
     def set_plugins_myx(self):
         print "--------------------Set Plugins start---------------------------"
+
+        if self["common"]["userId"] in [1868564]:
+            from MayaPlugin import MayaPlugin
+
         print self["common"]["plugin_file"]
         if self["common"]["plugin_file"]:
             sys.stdout.flush()
@@ -957,8 +954,8 @@ class MayaClass(Render):
                 sys.stdout.flush()
             print "[Plugin path]:"
             print self["common"]["plugin_file"]
-            self.CG_PLUGINS_DICT = self.get_plugin_dict(self["common"]["plugin_file"])
             sys.stdout.flush()
+
             maya_plugin = MayaPlugin(self["common"]["plugin_file"], [custom_file], self["common"]["userId"],
                                      self["common"]["taskId"])
             maya_plugin.config()
@@ -968,21 +965,6 @@ class MayaClass(Render):
             sys.stdout.flush()
         print "--------------------Set Plugins  end---------------------------"
 
-    def get_plugin_dict(self, pluginCfg):
-        plginInfoDict = None
-        if os.path.exists(pluginCfg):
-            fp = open(pluginCfg)
-            if fp:
-                listOfplgCfg = fp.readlines()
-                removeNL = [(i.rstrip('\n')) for i in listOfplgCfg]
-                combinedText = ''.join(removeNL)
-                plginInfoDict = eval('dict(%s)' % combinedText)
-                # print plginInfoDict
-                # for i in plginInfoDict.keys():
-                # self.MyLog(i)
-                # self.MyLog(plginInfoDict[i])
-    
-        return plginInfoDict
 
 class MayaRender(MayaClass):
 
@@ -1084,7 +1066,7 @@ class MayaRender(MayaClass):
                                                        "Maya2015_base/bin/render.exe"
                 self["renderSettings"]["mayabatch.exe"] = "C:/Program Files/Autodesk/" \
                                                           "Maya2015_base/bin/mayabatch.exe"
-        if self["common"]["userId"] in [1894815,1894816]:
+        if self["common"]["userId"] in [1894815]:
             if float(self["common"]["cgv"]) == 2017:
                 if "mtoa" in self["plugins"]["plugins"] and self["plugins"]["plugins"]["mtoa"] == "1.3.0.0":
                     self["renderSettings"]["render.exe"] = "C:/Program Files/Autodesk/" \
@@ -1126,69 +1108,20 @@ class MayaRender(MayaClass):
 
         # ------------------------------------------------------add preRender cmd---------------------------------------------------------------------
         # huaqiangfangte userid
-        HQID_YZC = [1821228,962413,1821226,1821229,1821231,1821234,1821235,1868236,1868237,1868238,1821230,1821232,1821237,1928906,1821227,1821225,1928908]
-        HQID_XCM = [1914329,1914331,1914334,1914336,1914342,1914343,1914344,1914345,1913765,1927256,1927258,1927259,1927260,1927262,1927263,1927264,1927265,1927266,1927268,1927269]
-        
-        HQID_XMXR01 = [1868370,1868371,1868372,1868373,1868374,1868375,1868376,1868377,1868378,1868379,1868380,1868381,1868382,1868383,1868384]
-        # if self["common"]["userId"] not in [1840038]:
-            # cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict,PreRender)
-        if "RenderMan_for_Maya" in self["plugins"]["plugins"] and float(self["plugins"]["plugins"]["RenderMan_for_Maya"])> 21.7:
-            pass
-        else:
+        HQID = [1821228, 962413, 1821226, 1821229, 1821231, 1821234, 1821235, 1868236, 1868237, 1868238, 1868370,
+                1868371, 1868372, 1868373, 1868374, 1868375, 1868376, 1868377, 1868379, 1868380, 1868382, 1868383,
+                1868384]
+
+        if self["common"]["userId"] not in [1818014, 1875231, 1846887, 1854355, 1814593, 963931, 1873017,
+                                            1812148, 1812148, 1830380, 1871175, 1899488, 1820991] and self["common"]["userId"] not in HQID:
             cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict,PreRender)
 
-        if self["common"]["userId"] in [1844854]:
-            cmd += " -preRender \"python \\\"user_id=%s;mapping=%s;plugins=%s;taskid=%s;rendersetting=%s;start=%s;execfile(\\\\\\\"//10.60.100.101/o5/py/model/prerender_1844854.py\\\\\\\")\\\"\"" % (
-            self["common"]["userId"], self["mappings"], self["plugins"]["plugins"], self["common"]["taskId"],
-            self["renderSettings"], self["renderSettings"]["start"])
+        # if self["common"]["userId"] in [1844854]:
+        #     cmd += " -preRender \"python \\\"user_id=%s;mapping=%s;plugins=%s;taskid=%s;rendersetting=%s;start=%s;execfile(\\\\\\\"//10.60.100.101/o5/py/model/prerender_1844854.py\\\\\\\")\\\"\"" % (
+        #     self["common"]["userId"], self["mappings"], self["plugins"]["plugins"], self["common"]["taskId"],
+        #     self["renderSettings"], self["renderSettings"]["start"])
 
-        if self["server"]["user_id"] in HQID_XCM or self["server"]["user_id"] in HQID_XMXR01:
-            # os.system(r'xcopy /y /f B:\custom_config\1913765\pluginPrefs.mel "B:\custom_config\1913765\MAYA_HOME\2017\prefs\"')
-            if self["common"]["taskId"] in [107]:
-                os.environ['MAYA_APP_DIR'] = r"B:/custom_config/1913765/MAYA_HOME_notlookdevkit"
-                print("set app dir : B:/custom_config/1913765/MAYA_HOME_notlookdevkit")
-            else:
-                os.environ['MAYA_APP_DIR'] = r"B:/custom_config/1913765/MAYA_HOME"
-                print("set app dir : B:/custom_config/1913765/MAYA_HOME")
-            _ARNOLD_PLUGIN_PATH=os.environ.get('ARNOLD_PLUGIN_PATH')                            
-            os.environ['ARNOLD_PLUGIN_PATH'] = (_ARNOLD_PLUGIN_PATH + r";" if _ARNOLD_PLUGIN_PATH else "") + r"B:\custom_config\962413\arnold_shader"
-            cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
-                  "-proj \"None\" -rd \"%(output)s\"" % self["renderSettings"]
-            #image_name = os.path.basename(self["renderSettings"]["maya_file"]).split("-")[0]
-            # image_name = "<RenderPass>/" + image_name + "_<RenderPass>"
-            # cmd += " -im \"%s\" -fnc 3" % image_name
-            #if "caml" in self["renderSettings"]["maya_file"].lower():
-            #    camera = "CamL"
-            #elif "camr" in self["renderSettings"]["maya_file"].lower():
-            #    camera = "CamR"
-            #else:
-            #    raise Exception("Can not find the right camera in the maya file name.")
-
-            # image_name = "<RenderPass>/" + image_name + "_" + camera + "_<RenderPass>"
-            # cmd += " -im \"%s\" -fnc 3" % image_name
-            if os.path.exists(r'B:\custom_config\962413\lzSolutionPackage\plug-ins\x64\2017\lzSolutionPackage.mll'):
-                os.system(r'xcopy /y /f B:\custom_config\962413\lzSolutionPackage\plug-ins\x64\2017\lzSolutionPackage.mll "C:\Program Files\Autodesk\Maya2017\bin\plug-ins\"')
-
-            cmd += " -preRender \"source \\\"B:/clientFiles/962413/render_command_light_new_2018DY_renderbus.mel\\\"\""
-            # cmd += " -cam \"%s\"" % camera
-
-        if self["server"]["user_id"] in HQID_YZC:
-            os.environ['MAYA_APP_DIR'] = r"B:/custom_config/1913765/MAYA_HOME"
-            _ARNOLD_PLUGIN_PATH=os.environ.get('ARNOLD_PLUGIN_PATH')
-            os.environ['ARNOLD_PLUGIN_PATH'] = (_ARNOLD_PLUGIN_PATH + r";" if _ARNOLD_PLUGIN_PATH else "") + r"B:\custom_config\962413\arnold_shader"
-            cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
-                  "-proj \"None\" -rd \"%(output)s\"" % self["renderSettings"]
-            cmd += " -preRender \"source \\\"//10.60.100.151/td/clientFiles/962413/render_command_light_new_2018DY_YZC.mel\\\"\"" 
-            
-        if self["server"]["user_id"] in [1919164]:
-            _ARNOLD_PLUGIN_PATH=os.environ.get('ARNOLD_PLUGIN_PATH')
-            os.environ['ARNOLD_PLUGIN_PATH'] = (_ARNOLD_PLUGIN_PATH + r";" if _ARNOLD_PLUGIN_PATH else "") + r"B:\custom_config\962413\arnold_shader"
-            if os.path.exists(r'B:\custom_config\962413\lzSolutionPackage\plug-ins\x64\2017\lzSolutionPackage.mll'):
-                os.system(r'xcopy /y /f B:\custom_config\962413\lzSolutionPackage\plug-ins\x64\2017\lzSolutionPackage.mll "C:\Program Files\Autodesk\Maya2017\bin\plug-ins\"')
-            #cmd += " -preRender \"source \\\"B:/clientFiles/962413/render_command_light_new_2018DY_hqft02.mel\\\"\"" 
-
-            
-        if self["server"]["user_id"] in []:
+        if self["server"]["user_id"] in HQID:
             cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
                   "-proj \"None\" -rd \"%(output)s\"" % self["renderSettings"]
             image_name = os.path.basename(self["renderSettings"]["maya_file"]).split("-")[0]
@@ -1203,11 +1136,29 @@ class MayaRender(MayaClass):
 
             # image_name = "<RenderPass>/" + image_name + "_" + camera + "_<RenderPass>"
             # cmd += " -im \"%s\" -fnc 3" % image_name
-            cmd += " -preRender \"source \\\"B:/clientFiles/962413/render_command_light_new_2018DY_renderbus1875231.mel\\\"\""
+            cmd += " -preRender \"source \\\"//10.60.100.151/td/clientFiles/962413/render_command_light_new_2018DY_renderbus.mel\\\"\""
+            # cmd += " -cam \"%s\"" % camera
+
+        if self["server"]["user_id"] in [1875231]:
+            cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
+                  "-proj \"None\" -rd \"%(output)s\"" % self["renderSettings"]
+            image_name = os.path.basename(self["renderSettings"]["maya_file"]).split("-")[0]
+            # image_name = "<RenderPass>/" + image_name + "_<RenderPass>"
+            # cmd += " -im \"%s\" -fnc 3" % image_name
+            if "caml" in self["renderSettings"]["maya_file"].lower():
+                camera = "CamL"
+            elif "camr" in self["renderSettings"]["maya_file"].lower():
+                camera = "CamR"
+            else:
+                raise Exception("Can not find the right camera in the maya file name.")
+
+            # image_name = "<RenderPass>/" + image_name + "_" + camera + "_<RenderPass>"
+            # cmd += " -im \"%s\" -fnc 3" % image_name
+            cmd += " -preRender \"source \\\"//10.60.100.151/td/clientFiles/962413/render_command_light_new_2018DY_renderbus1875231.mel\\\"\""
             # cmd += " -cam \"%s\"" % camera
 
         if self["common"]["userId"] in [1873017]:
-            cmd += " -preRender \"python \\\"user_id=%s;plugins=%s;taskid=%s;renderableCamera=\\\\\\\"%s\\\\\\\";maya_file=\\\\\\\"%s\\\\\\\";execfile(\\\\\\\"//10.60.100.101/o5/py/model/1873017.py\\\\\\\")\\\"\"" % (
+            cmd += " -preRender \"python \\\"user_id=%s;plugins=%s;taskid=%s;renderableCamera=\\\\\\\"%s\\\\\\\";maya_file=\\\\\\\"%s\\\\\\\";execfile(\\\\\\\"//10.60.100.101/o5/py/model/user/1873017/other/1873017.py\\\\\\\")\\\"\"" % (
             self["common"]["userId"], self["plugins"]["plugins"], self["common"]["taskId"],
             self["renderSettings"]["renderableCamera"], self['common']["render_file"])
 
@@ -1217,8 +1168,7 @@ class MayaRender(MayaClass):
             self["common"]["cgv"], self["renderSettings"])
         if self["common"]["userId"] in [963931]:
             cmd += " -preRender \"source \\\"//10.60.100.101/o5/py/model/963931.mel\\\"\""
-            
-            
+
         if self["common"]["userId"] in [1814593]:
             cmd += " -preRender \" optionVar  -iv \\\"renderSetupEnable\\\" 0;source \\\"//10.60.100.101/o5/py/model/1814593.mel\\\";\""
         if self["common"]["userId"] in [1846887]:
@@ -1232,10 +1182,7 @@ class MayaRender(MayaClass):
         # ----------------------------------------------------------------------------------------------------------------------------------------------
 
         if "RenderMan_for_Maya" in self["plugins"]["plugins"]:
-            if float(self["plugins"]["plugins"]["RenderMan_for_Maya"]) > 21.7:
-                cmd += " -r renderman"
-            else:
-                cmd += " -r rman"
+            cmd += " -r rman"
             if self["common"]["userId"] in [1814593]:
                 cmd += " -ris "
         elif "3delight" in self["plugins"]["plugins"]:
@@ -1283,33 +1230,12 @@ class MayaRender(MayaClass):
             if self["renderSettings"]["end"] > self["renderSettings"]["start"]:
                 cmd += " -postFrame \"python \\\"execfile(\\\\\\\"//10.60.100.101/o5/py/model/rendered_frames.py\\\\\\\");set_rendered_frame(\\\\\\\"%s\\\\\\\")\\\";\"" % (
                 self["platform"]["cfg_path"])
-        if self["server"]["user_id"] in [1911075]:
-            if not os.path.exists("X:\\"):
-                xpath = options["platform"]["home_path"] + "/1911000/1911075/X"
-                xpath = xpath.replace("/", "\\")
-                if os.path.exists(xpath):
-                    for j in range(3):
-                        if self.run_command("net use %s %s" % ("X:", xpath)):
-                            print "can not mapping %s to %s" % ("X:", xpath)
-                            time.sleep(5)
-                            print "Wait 5 seconds..."
 
-        if options["common"]["submit_mode"] ==1:            
-            if "-r rman" in cmd or "-r renderman" in cmd:
-                cmd += " \"%(maya_file)s\" " % self["renderSettings"]
-            else:
-                cmd += " \"%(maya_file)s\" " % self["renderSettings"]
-        elif  options["common"]["submit_mode"] ==2: 
-            if "-r rman" in cmd :
-                cmd += " -setAttr Format:resolution \"%(width)s %(height)s\" \"%(maya_file)s\"" % self["renderSettings"]
-            elif "-r renderman" in cmd:
-                cmd += " -res %(width)s %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-            else:
-                cmd += " -x %(width)s -y %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-        
-        
-        
-        
+        if "-r rman" in cmd:
+            cmd += " -setAttr Format:resolution \"%(width)s %(height)s\" \"%(maya_file)s\"" % self["renderSettings"]
+        else:
+            cmd += " -x %(width)s -y %(height)s \"%(maya_file)s\"" % self["renderSettings"]
+
         if self["server"]["user_id"] == 964309:
             self["server"]["father_id"] = 964309
 
@@ -1444,7 +1370,6 @@ class MayaRender(MayaClass):
                 # subprocess.call(cmd)
                 is_complete = 0
                 re_complete = re.compile(r'Scene.+completed\.$', re.I)
- 
                 for line in RvOs.run_command(cmd):
                     l.write(line + "\n")
                     if self["common"]["userId"] in [1813119]:
@@ -1456,16 +1381,23 @@ class MayaRender(MayaClass):
                     if line_str:
                         pass
                         print line_str
-                        
-                        if "failed to render" in line_str or "DL inf loop detected" in line_str or "Render interrupted" in line_str \
-                            or  "There was a fatal error building the scene for V-Ray" in line_str or  "Could not obtain a license" in line_str:
-                            #time.sleep(10)
+                        if "ASSERT FAILED" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
+                        if "failed to render" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
+                        if "DL inf loop detected" in line_str:
                             RvOs.kill_children()
                             is_complete = 0
                             break
 
-
-
+                        if "Stack trace:" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
                         if self["common"]["userId"] in [963287]:
                             if "Maya exited with status -1073741818" in line_str:
                                 exit(-1073741818)
@@ -1494,156 +1426,6 @@ class MayaRender(MayaClass):
                 line_str = line.strip()
                 if line_str:
                     print line_str
-                    
-                    
-                    
-                    
-        # 日志过滤调用errorbase类
-        monitor_ini_dict = {}
-        monitor_ini_dict["G_INPUT_CG_FILE"] = self["renderSettings"]["maya_file"]
-        monitor_ini_dict["CG_VERSION"] = self["common"]["cgv"]
-        monitor_ini_dict["CG_PLUGINS_DICT"] = self.CG_PLUGINS_DICT
-        monitor_ini_dict["G_INPUT_USER_PATH"] = self["platform"]["storage_path"]
-        monitor_ini_dict["G_OUTPUT_USER_PATH"] = self.G_OUTPUT_USER_PATH
-        monitor_ini_dict["G_WORK_RENDER_TASK_OUTPUT"] = self["renderSettings"]["output"]
-        monitor_ini_dict["G_DEBUG_LOG"] = self.G_DEBUG_LOG
-
-        monitor_log = ErrorBase(monitor_ini_dict)
-        monitor_log.run()
-
-
-
-
-
-class ErrorBase():
-    def __init__(self, ini_dict):
-        print(ini_dict)
-        self.G_DEBUG_LOG = logging.getLogger('debug_log')
-        self.G_RENDER_LOG = logging.getLogger('render_log')
-        
-        for key in list(ini_dict.keys()):
-            assign = 'self.{0} = ini_dict["{0}"]'.format(key)
-            exec (assign)
-    
-    
-    
-    def run(self):
-        self.print_trilateral(mode=1)
-        self.G_DEBUG_LOG.info('------------------------- start MonitorLog-------------------------')
-        self.get_ini()
-        self.G_DEBUG_LOG.info('-------------------------  end  MonitorLog-------------------------')
-        self.print_trilateral(mode=2)
-    
-    def my_log(self, message):
-        self.G_DEBUG_LOG.info('[MonitorLog] %s' % message)
-    
-    def print_trilateral(self, rows=4, mode=1):
-        '''
-        :param rows: rows counts
-        :param mode: up  or  down
-        :return: a trilateral
-        '''
-        for i in range(0, rows):
-            self.my_log(" * " * (i + 1 if mode == 1 else rows - i))
-            i += 1
-            # self.my_log("\n")
-    
-    def get_ini(self):
-        self.G_DEBUG_LOG.info('[MonitorLog].start...')
-        self.my_log('软件::%s' % ("Maya" + self.CG_VERSION))
-        self.my_log('插件::%s' % (self.CG_PLUGINS_DICT))
-        self.my_log('内存使用::%s' % ('None'))
-        self.my_log('INPUT  目录::%s' % (self.G_INPUT_USER_PATH.replace('/', '\\')))
-        self.my_log('OUTPUT 目录::%s' % (self.G_OUTPUT_USER_PATH.replace('/', '\\')))
-        self.my_log('节点机器IP::%s--%s' % (self.get_computer_hostname(), self.get_computer_ip()))
-        self.my_log('节点机器系统::%s' % (self.get_system()))
-        self.my_log('节点机器OUTPUT目录::%s' % (self.G_WORK_RENDER_TASK_OUTPUT.replace('/', '\\')))
-        self.my_log('MAYA文件::%s' % (self.G_INPUT_CG_FILE.replace('/', '\\')))
-        self.my_log('MAYA文件的大小::%s MB' % (self.get_FileSize(self.G_INPUT_CG_FILE)))
-        self.my_log('MAYA文件的时间::%s' % (self.get_FileModifyTime(self.G_INPUT_CG_FILE)))
-    
-    
-    
-    
-    def get_system_version(self):
-        return platform.platform()
-
-
-    def get_system(self):
-        return platform.system()
-
-    def get_computer_mac(self):
-
-        mac = uuid.UUID(int=uuid.getnode()).hex[-12:]
-        return ":".join([mac[e:e + 2] for e in range(0, 11, 2)])
-
-
-    def get_computer_hostname(self):
-        return socket.gethostname()
-
-
-    def get_computer_ip(self):
-        host_name = self.get_computer_hostname()
-        ip_str = socket.gethostbyname_ex(host_name)[2][0]
-        return ip_str
-
-    
-    def TimeStampToTime(self, timestamp):
-        '''把时间戳转化为时间: 1479264792 to 2016-11-16 10:53:12'''
-        timeStruct = time.localtime(timestamp)
-        return time.strftime('%Y-%m-%d %H:%M:%S', timeStruct)
-    
-    def get_FileSize(self, filePath):
-        '''获取文件的大小,结果保留两位小数，单位为MB'''
-        # filePath = unicode(filePath,'utf8')
-        fsize = os.path.getsize(filePath)
-        fsize = fsize / float(1024 * 1024)
-        return str(round(fsize, 2))
-    
-    def get_FileModifyTime(self, filePath):
-        '''获取文件的修改时间'''
-        # filePath = unicode(filePath,'utf8')
-        t = os.path.getmtime(filePath)
-        return self.TimeStampToTime(t)
-    
-    def get_FileCreateTime(self, filePath):
-        '''获取文件的创建时间'''
-        # filePath = unicode(filePath,'utf8')
-        t = os.path.getctime(filePath)
-        return self.TimeStampToTime(t)
-    
-    def get_FileAccessTime(self, filePath):
-        '''获取文件的访问时间'''
-        # filePath = unicode(filePath,'utf8')
-        t = os.path.getatime(filePath)
-        return self.TimeStampToTime(t)
-    
-    def get_error_texture(self, log_line):
-        error_file_list = []
-        if log_line.strip() and "ERROR | [texturesys] unspecified OIIO error" in log_line:
-            p1 = re.compile(r"\"(.*)\"", re.I)
-            error_file_path = p1.findall(log_line)
-            if error_file_path:
-                error_file_list.append(error_file_path[0])
-        return error_file_list
-    
-    def get_error_json(self):
-        if os.path.exists(self.G_RN_MAYA_ERROR_INFO):
-            with codecs.open(self.G_RN_MAYA_ERROR_INFO, 'r', 'utf-8') as fn:
-                error_info_dict = json.load(fn)
-                
-                # for i in cmd_dict:
-                #     self.renderSettings[i] = cmd_dict[i]
-        else:
-            self.my_log("error json is not exist")
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

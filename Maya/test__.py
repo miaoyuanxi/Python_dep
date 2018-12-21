@@ -14,6 +14,12 @@ import re
 import sys
 import math
 import traceback
+import psutil
+import threading
+import os,datetime,time
+
+
+
 # try:
 #     import _winreg
 # except ImportError:
@@ -423,28 +429,115 @@ import codecs
 #
 # print get_mnt_map_dict()
 import platform
-reference_list = []
+# reference_list = []
+# invalid_abc = []
+# error_list = []
+# def convertUnicode2Str(uStr):
+# 	CURRENT_OS = platform.system()
+# 	if isinstance(uStr, unicode):
+# 		if CURRENT_OS == 'Linux':
+# 			uStr = uStr.encode('utf-8')
+# 		else:
+# 			uStr = uStr.encode(sys.getfilesystemencoding())
+# 		return uStr
+# 	else:
+# 		return uStr
+#
+#
+# def print_info_err(info):
+# 	info = convertUnicode2Str(info)
+# 	r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
+# 	r1 = re.findall(r"Error: line \d+:(.*) is not a valid Alembic file", info, re.I)
+# 	if r:
+# 		if r[0] not in reference_list:
+# 			reference_list.append(r[0])
+#
+# 	if r1:
+# 		if r1[0] not in invalid_abc:
+# 			invalid_abc.append(r1[0])
+#
+# 	if info not in error_list:
+# 		error_list.append(info)
+# 	print ("[Analyze Error]%s" % (info))
+#
+# print_info_err(u"......二缺，场景中没有开渲染层，让客户开启要渲染的渲染层，再提交任务........")
 
-def convertUnicode2Str(uStr):
-	CURRENT_OS = platform.system()
-	if isinstance(uStr, unicode):
-		if CURRENT_OS == 'Linux':
-			uStr = uStr.encode('utf-8')
+# aa = "Warning: Reference file not found. : //10.70.242.101/d/inputdata5/100000000/100000056/maya_test/23.ma"
+# print_info_err(aa)
+# print reference_list
+
+
+
+
+
+
+def start_monitor(self):
+	
+	self.monitorMaya = MonitorThread(60, log_obj=self.G_DEBUG_LOG)
+	self.monitorMaya.setDaemon(True)
+	self.monitorMaya.start()
+
+
+def stop_monitor(self):
+	if self.monitorMaya != None:
+		self.monitorMaya.stop()
+
+
+
+
+
+
+class MonitorThread(threading.Thread):
+	"""
+	监控占用的CPU、Memory
+	"""
+	
+	def __init__(self, interval, log_obj=None):
+		"""
+		:param interval: 间隔时间
+		:param log_obj: 日志对象，用来打印执行过程日志信息，如self.G_DEBUG_LOG
+		"""
+		threading.Thread.__init__(self)
+		
+		self.interval = interval
+		self.log_obj = log_obj
+		self.thread_stop = False
+	
+	def log_print(self, my_log, log_str):
+		if my_log == None:
+			print(log_str)
 		else:
-			uStr = uStr.encode(sys.getfilesystemencoding())
-		return uStr
-	else:
-		return uStr
-def print_info_err(info):
-	info = convertUnicode2Str(info)
-	r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
-	if r:
-		if r[0] not in reference_list:
-			reference_list.append(r[0])
-
-	print ("[Analyze Error]%s" % (info))
+			my_log.info(log_str)
+	
+	def get_mem_cpu(self):
+		data = psutil.virtual_memory()
+		total = data.total  # 总内存,单位为byte
+		free = data.available  # 可用内存
+		memory = "Memory usage:%d" % (int(round(data.percent))) + "%" + " "
+		cpu = "CPU:%0.2f" % psutil.cpu_percent(interval=1) + "%"
+		return cpu,memory
+	
+	def loop(self):
+		print 'thread %s is running...' % threading.current_thread().name
+		while (True):
+			info = self.get_mem_cpu()
+			print 'thread %s >>> ' % (threading.current_thread().name)
+			time.sleep(0.2)
+			print info + "\b" * (len(info) + 1),
+		print 'thread %s ended.' % threading.current_thread().name
 	
 	
-aa = "Warning: Reference file not found. : //10.70.242.101/d/inputdata5/100000000/100000056/maya_test/23.ma"
-print_info_err(aa)
-print reference_list
+	def run(self):  # Overwrite run() method, put what you want the thread do here
+		self.log_print(self.log_obj,'------------------------- Start MonitorThread -------------------------')
+		while not self.thread_stop:
+			try:
+				self.log_print(self.log_obj, '[MonitorThread].___MonitorThread____')
+				cpu_str, mem_str = self.get_mem_cpu()
+				self.log_print(self.log_obj,'[MonitorThread].Cpu={0}% Memory={1}B'.format(cpu_str, mem_str))
+				time.sleep(self.interval)
+			except Exception as e:
+				self.log_print(self.log_obj, e)
+	
+	def stop(self):
+		self.thread_stop = True
+		self.log_print(self.log_obj, '[MonitorThread].stop...')

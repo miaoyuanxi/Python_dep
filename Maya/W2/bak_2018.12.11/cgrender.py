@@ -17,6 +17,7 @@ import math
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
 currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
 currentPath = currentPath.lower()
 if "user" in currentPath:
@@ -31,8 +32,6 @@ else:
     sys.path.append(function_path)
     sys.path.append(script_path)
     import RayvisionPluginsLoader
-    
-from MayaPlugin import MayaPlugin
 
 class Maya(object):
     def __init__(self):
@@ -777,9 +776,6 @@ class Render(dict, Zip7, RvOs):
     def mapping_plugins(self):
         drive = "B:"
         auto_plugins = self["platform"]["auto_plugins"]
-        if self["common"]["userId"] in [1840132,1898543]:
-            auto_plugins = r"//10.60.200.150/td"
-        os.system("cmdkey /add:10.40.100.151 /user:enfuzion /pass:Raywing@host8")
         if self.run_command("net use %s %s" % (drive, auto_plugins)):
             print "can not mapping %s to %s" % (drive, auto_plugins)
         else:
@@ -1016,7 +1012,7 @@ class NukeMerge(Nuke):
         tile_path = tile_path.replace("\\", "/")
 
         all_files = []
-        for root, dirs, files in os.walk(tile_path):
+        for root, dirs, files in os.walk(tile_path+"/0"):
             for i_file in files:
                 ignore = 0
                 for ignore_file in [".db"]:
@@ -1025,13 +1021,12 @@ class NukeMerge(Nuke):
                 if not ignore:
                     all_files.append(os.path.join(root, i_file))
 
-        self.tile_files_list = \
-            [[re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) for index in range(self["renderSettings"]["tiles"]) if os.path.exists(re.sub(r'(.+/tiles/\d+/[-]?\d+)/(\d+)/(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/")) ) ]
-            for i in all_files]
-        self.tile_files = []
-        for i in self.tile_files_list:
-            if i not in self.tile_files:
-                self.tile_files.append(i)
+        self.tile_files = [[re.sub(r'(.+/tiles/\d+/\d+)(/0/)(.+)', r"\1/%s/\3" % (index), i.replace("\\", "/"))
+                            for index in range(self["renderSettings"]["tiles"])]
+                           for i in all_files]
+
+        self.tile_files = [[self.get_right_file_name(j) for j in i]
+                           for i in self.tile_files]
 
         self["renderSettings"]["output"] = "c:/work/render/%s/output/" % \
             (self["common"]["taskId"])
@@ -1045,7 +1040,7 @@ class NukeMerge(Nuke):
             if self["common"]["debug"]:
                 print i
             print i
-            tile_output = self["renderSettings"]["output"] + re.sub(r'(.+/tiles/[-]?\d+/[-]?\d+)(/0/)(.+)', r"\3", i[0])
+            tile_output = self["renderSettings"]["output"] + re.sub(r'(.+/tiles/\d+/\d+)(/0/)(.+)', r"\3", i[0])
                      
             
          
@@ -1079,9 +1074,7 @@ class NukeMerge(Nuke):
             line_str = line.strip()
             if line_str:
                 print line_str
-                if "exit return code is:" in line_str:
-                    exit(1)
-                
+
                 # if re_complete.findall(line_str):
                     # is_complete = 1
 
@@ -1111,7 +1104,7 @@ class MayaClass(Render):
         if self["common"]["userId"] in [1868564]:
             self.set_plugins_myx()
         else:
-            self.set_plugins_myx()
+            self.set_plugins()
 
     def get_maya_info(self):
         self["renderSettings"]["maya_file"] = self["common"]["cgFile"]
@@ -1231,6 +1224,9 @@ class MayaClass(Render):
 
     def set_plugins_myx(self):
         print "--------------------Set Plugins start---------------------------"
+
+        if self["common"]["userId"] in [1868564]:
+            from MayaPlugin import MayaPlugin
 
         print self["common"]["plugin_file"]
         if self["common"]["plugin_file"]:
@@ -1391,9 +1387,7 @@ class MayaRender(MayaClass):
 
         # ------------------------------------------------------add preRender cmd---------------------------------------------------------------------
 
-        if "RenderMan_for_Maya" in self["plugins"]["plugins"] and float(self["plugins"]["plugins"]["RenderMan_for_Maya"])> 21.7:
-            pass
-        else:
+        if self["common"]["userId"] not in [1844428]:
             cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict,PreRender)
 
         print "plugin_file" + str(self["common"]["plugin_file"])
@@ -1404,10 +1398,7 @@ class MayaRender(MayaClass):
             cmd += " -preRender \"source \\\"//10.60.100.102/td/clientFiles/1812148/meshShapeAttrSet.mel\\\"\" "
 
         elif "RenderMan_for_Maya" in self["plugins"]["plugins"]:
-            if float(self["plugins"]["plugins"]["RenderMan_for_Maya"]) > 21.7:
-                cmd += " -r renderman"
-            else:
-                cmd += " -r rman"
+            cmd += " -r rman"
             if self["common"]["userId"] in [1875817]:
                 if "mtoa" in self["plugins"]["plugins"]:
                     cmd += " -setAttr Format:resolution \"1024 435\""
@@ -1452,19 +1443,7 @@ class MayaRender(MayaClass):
         elif " -r " not in cmd and float(self["common"]["cgv"]) < 2017:
             cmd += " -mr:art -mr:aml"				  
         
-        # if "width" in self["renderSettings"] and "height" in self["renderSettings"] :
-            # cmd += " -x %(width)s -y %(height)s " % self["renderSettings"] 
-        # cmd += " \"%(maya_file)s\"" % self["renderSettings"]
-        if "width" in self["renderSettings"] and "height" in self["renderSettings"] :
-            if "-r rman" in cmd :
-                cmd += " -setAttr Format:resolution \"%(width)s %(height)s\" \"%(maya_file)s\"" % self["renderSettings"]
-            elif "-r renderman" in cmd:
-                cmd += " -res %(width)s %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-            else:
-                cmd += " -x %(width)s -y %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-        else:
-            cmd += " \"%(maya_file)s\"" % self["renderSettings"]
-
+        cmd += " \"%(maya_file)s\"" % self["renderSettings"]
 
         if self["common"]["userId"] in [1818936]:
             self["renderSettings"]["ass_dir"] = r"d:\temp"
@@ -1579,13 +1558,32 @@ class MayaRender(MayaClass):
                         l.write(line)
                         l.flush()
                         print line_str
-                        
-                        if  "failed to render" in line_str or "DL inf loop detected" in line_str or "Render interrupted" in line_str \
-                            or  "There was a fatal error building the scene for V-Ray" in line_str or  "Could not obtain a license" in line_str:
-                            #time.sleep(10)
+
+                        if "ASSERT FAILED" in line_str:
                             RvOs.kill_children()
                             is_complete = 0
                             break
+                        if "failed to render" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
+                        if "DL inf loop detected" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
+                        
+                        if "Stack trace:" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break
+                        if "Could not obtain a license" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break                            
+                        if "Render interrupted" in line_str:
+                            RvOs.kill_children()
+                            is_complete = 0
+                            break 
                             
                         if self["common"]["userId"] in [963287]:
                             if "Maya exited with status -1073741818" in line_str:

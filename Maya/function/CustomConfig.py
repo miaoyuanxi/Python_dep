@@ -26,8 +26,13 @@ def main(*args):
     Base = PluginBase()
     mtoa_ver = plugins["mtoa"]    
     mtoa_plugin_dir = os.path.join(Base.get_json_ini('Node_D'),"mtoa",'software',cgName + cgVersion + '_' + "mtoa" + mtoa_ver).replace('\\','/')
-    
-    
+
+
+    #定制mklink
+    if os.path.exists('D:/METRO'):
+        os.system(r'rd /s/q "%s"' % "D:/METRO")
+    os.system(r"mklink /d  D:\METRO \\10.60.100.101\d\inputdata5\100016000\100016371\D\METRO")
+    print("mklink   \\10.60.100.101\d\inputdata5\100016000\100016371\D\METRO ---> D:\METRO ")
     
     
     #根据软件版本定制渲染层方式

@@ -13,6 +13,7 @@ import platform
 import json
 import types
 import datetime
+import traceback
 from imp import reload
 
 #reload(sys)
@@ -507,6 +508,7 @@ auto_load_plugins();
                     reload(cfg)
                     cfg.main(validInfoDict)
                 except Exception as err:
+                    print(traceback.format_exc())
                     self.MyLog('=== Error occur import/execute "%s"! ===\n=== Error Msg : %s ===' % (cfgFile, err))
                 try:
                     while True:

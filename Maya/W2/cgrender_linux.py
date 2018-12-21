@@ -1,21 +1,22 @@
 # ! /usr/bin/env python
 # coding=utf-8
-import argparse
 import os
 import subprocess
-import _subprocess
 import pprint
 import sys
 import shutil
 import filecmp
 import time
+#import RayvisionPluginsLoader
 import re
 import json
 import math
-
-
-reload(sys)
-sys.setdefaultencoding('utf-8')
+if sys.version_info[:2] == (2, 6):
+    if sys.platform.startswith("win"):
+        sys.path.append(r"\\10.50.5.29\o5\py\model\tim\py26")
+    elif sys.platform.startswith("linux"):
+        sys.path.append(r"/mnt_rayvision/o5/py/model/tim/")
+import argparse
 
 currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
 currentPath = currentPath.lower()
@@ -33,156 +34,250 @@ else:
     import RayvisionPluginsLoader
     
 from MayaPlugin import MayaPlugin
+    
 
-class Maya(object):
-    def __init__(self):
-        currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
-        currentPath = currentPath.lower()
-        if "user" in currentPath:
-            process_path = os.path.join(currentPath.split('user')[0], "process")
-            function_path = os.path.join(currentPath.split('user')[0], "function")
-            script_path = os.path.join(currentPath.split('user')[0], "script")
+def get_platfom(platform):
+    info = {"platform": platform,
+            "7z.exe": None,
+            "plugin_path": None,
+            "cfg_path": None,
+            "home_path": None,
+            "auto_plugins": None,
+            "custom_config": None,
+            }
 
-        else:
-            process_path = currentPath
-            function_path = currentPath.replace("process", "function")
-            script_path = currentPath.replace("process", "script")
+    if info["platform"] == 1002:
+        info["7z.exe"] = r"\\20.0.100.1\o5\py\model\7z\7z.exe"
+        info["plugin_path"] = r"\\20.0.100.1\d\plugins"
+        info["auto_plugins"] = r"\\20.0.100.1\td"
+        info["cfg_path"] = r"\\20.0.100.1\d\ninputdata"
+        info["home_path"] = r"\\20.0.100.1\d\inputdata"
+        info["custom_config"] = r"\\20.0.100.1\td\custom_config"
+    elif info["platform"] == 1005:
+        info["7z.exe"] = r"\\10.50.5.29\o5\py\model\7z\7z.exe"
+        info["plugin_path"] = r"\\10.50.24.10\d\plugins"
+        info["auto_plugins"] = r"\\10.50.1.22\td"
+        info["cfg_path"] = r"\\10.50.8.15\d\ninputdata5"
+        info["home_path"] = r"\\10.50.24.11\d\inputdata5"
+        info["custom_config"] = r"\\10.50.1.22\td\custom_config"
+    elif info["platform"] == 1007:
+        ''
+    elif info["platform"] == 1099:
+        ''
 
-        self.info_json = os.path.join(process_path, 'info.json')
-        print "json_path : %s" % self.info_json
+    for i in info:
+        if isinstance(info[i], str):
+            info[i] = info[i].replace("\\", "/")
+
+    info["auto_plugins"] = info["auto_plugins"].replace("/", "\\")
+
+    return info
 
 
-    def get_platfom(self, platform):
-        platform = str(platform)
-        info_dict = {}
-        with open(self.info_json, 'r') as fn:
-            fn_dict = json.load(fn)
-            info_dict = fn_dict[platform]
-        info_dict["auto_plugins"] = info_dict["auto_plugins"].replace("/", "\\")
-        return info_dict
+def get_json(**kwargs):
+    options = {"common": {},
+               "renderSettings": {},
+               "mappings": {},
+               "mount": {},
+               "variables": {},
+               "platform": {},
+               "server": {}}
 
+    options["common"]["debug"] = kwargs["debug"]
+    options["common"]["tmp"] = "%s/%s" % (os.environ["tmp"], kwargs["task_id"])
+    if not os.path.exists(options["common"]["tmp"]):
+        os.makedirs(options["common"]["tmp"])
+    
+    if kwargs["json"]:
+        if os.path.exists(kwargs["json"]):
+            options_json = eval(open(kwargs["json"]).read())
+            for i in options_json:
+                options[i] = options_json[i]
 
-
-    def get_json(self,**kwargs):
-        options = {"common": {},
-                   "renderSettings": {},
-                   "mappings": {},
-                   "mount": {},
-                   "variables": {},
-                   "platform": {},
-                   "server": {}}
-
-        options["common"]["debug"] = kwargs["debug"]
-        options["common"]["tmp"] = "%s/%s" % (os.environ["tmp"], kwargs["task_id"])
-        if not os.path.exists(options["common"]["tmp"]):
-            os.makedirs(options["common"]["tmp"])
-
-        if kwargs["json"]:
-            if os.path.exists(kwargs["json"]):
-                options_json = eval(open(kwargs["json"]).read())
-                for i in options_json:
-                    options[i] = options_json[i]
-
-                options["renderSettings"]["cg_file"] = options["common"]["cgFile"]
-
-                options["renderSettings"]["start"] = kwargs["start"]
-                options["renderSettings"]["end"] = kwargs["end"]
-                options["renderSettings"]["by"] = kwargs["by"]
-
-                options["renderSettings"]["tiles"] = kwargs.setdefault("tiles", 1)
-                options["renderSettings"]["tile_index"] = kwargs.setdefault("tile_index", 0)
-
-                options["common"]["debug"] = kwargs["debug"]
-                options["common"]["tmp"] = "%s/%s" % (os.environ["tmp"],
-                                                      options["common"]["taskId"])
-                if not os.path.exists(options["common"]["tmp"]):
-                    os.makedirs(options["common"]["tmp"])
-
-                options["common"]["plugin_file"] = kwargs["plugin_file"]
-
-                if os.path.exists(options["common"]["plugin_file"]):
-                    options["plugins"] = eval(open(options["common"]["plugin_file"]).read())
-                else:
-                    options["plugins"] = {}
-
-                options["platform"] = self.get_platfom(kwargs["platform"])
-                if kwargs["storage_path"]:
-                    options["platform"]["storage_path"] = kwargs["storage_path"]
-
-                if options["common"]["userId"] in [1811926]:
-                    options["common"]["plugin_file"] = None
-
-                return options
-            else:
-                raise Exception("Can not find the json file: %s." % kwargs["json"])
-
-        if kwargs["task_id"]:
-            options["platform"] = self.get_platfom(kwargs["platform"])
             options["renderSettings"]["start"] = kwargs["start"]
             options["renderSettings"]["end"] = kwargs["end"]
             options["renderSettings"]["by"] = kwargs["by"]
+            
+            options["renderSettings"]["tiles"] = kwargs.setdefault("tiles", 1)
+            options["renderSettings"]["tile_index"] = kwargs.setdefault("tile_index", 0)
 
-            cfg_path = "%s/%s/%s" % (options["platform"]["cfg_path"],
-                                     kwargs["task_id"], "temp")
+            options["common"]["debug"] = kwargs["debug"]
+            options["common"]["tmp"] = "%s/%s" % (os.environ["tmp"],
+                                                  options["common"]["taskId"])
+            if not os.path.exists(options["common"]["tmp"]):
+                os.makedirs(options["common"]["tmp"])
 
-            options["platform"]["cfg_path"] = cfg_path
+            options["common"]["plugin_file"] = kwargs["plugin_file"]
 
-            cfg_file = "%s/%s" % (cfg_path, "render.cfg")
-
-            server_info = eval(open(os.path.join(cfg_path, "server.cfg")).read())
-
-            result = {}
-            with open(os.path.join(cfg_path, "render.cfg"), "r") as f:
-                while 1:
-                    line = f.readline()
-                    if "=" in line:
-                        line_split = line.split("=")
-                        result[line_split[0].strip()] = line_split[1].strip()
-                    if ">>" in line:
-                        break
-                cfg_info = result
-
-            options["common"]["submitFrom"] = "client"
-            options["common"]["cgv"] = int(server_info["maya_version"])
-            options["common"]["cgFile"] = server_info["maya_file"]
-            options["common"]["cgSoftName"] = cfg_info["cgSoftName"]
-            options["common"]["userId"] = int(server_info["user_id"])
-            options["common"]["taskId"] = int(server_info["task_id"])
-            options["common"]["projectId"] = int(cfg_info["projectId"])
-            options["common"]["projectSymbol"] = cfg_info["projectSymbol"]
-
-            options["renderSettings"]["renderType"] = "render.exe"
-            options["renderSettings"]["renderableCamera"] = cfg_info["renderableCamera"]
-            options["renderSettings"]["projectPath"] = server_info["project"]
-
-            options["server"] = server_info
-            for i in options["server"]["variables"]:
-                options["variables"][i] = options["server"]["variables"][i]
-
-            cfg_info["mountFrom"] = eval(cfg_info["mountFrom"])
-
+            if os.path.exists(options["common"]["plugin_file"]):
+                options["plugins"] = eval(open(options["common"]["plugin_file"]).read())
+                print(options["plugins"])
+                print("9999999999")
+            else:
+                options["plugins"] = {}            
+            
+            
+            
+            options["platform"] = get_platfom(kwargs["platform"])
             if kwargs["storage_path"]:
-                kwargs["storage_path"] = kwargs["storage_path"].replace("\\", "/")
-                options["platform"]["home_path"] = re.findall(r'(.+?)/\d+/',
-                                                              kwargs["storage_path"], re.I)[0]
-
-            sys.stdout.flush()
-            print "storage path is: " + options["platform"]["home_path"]
-            sys.stdout.flush()
-
-            for i in cfg_info["mountFrom"]:
-                options["mount"][cfg_info["mountFrom"][i]] = options["platform"]["home_path"] + i
-
-            options["mappings"] = server_info["mappings"]
-
-            options["common"]["plugin_file"] = os.path.join(cfg_path,
-                "plugins.cfg")
-
-            if options["common"]["userId"] in [100001, 963493, 963494,
-                963495, 963336, 962796,  963496, 120151, 963433, 1811926]:
+                options["platform"]["storage_path"] = kwargs["storage_path"]
+                
+            if options["common"]["userId"] in [1811926]:
                 options["common"]["plugin_file"] = None
 
             return options
+        else:
+            raise Exception("Can not find the json file: %s." % kwargs["json"])
+
+    if kwargs["task_id"]:
+        options["platform"] = get_platfom(kwargs["platform"])
+        options["renderSettings"]["start"] = kwargs["start"]
+        options["renderSettings"]["end"] = kwargs["end"]
+        options["renderSettings"]["by"] = kwargs["by"]
+
+        cfg_path = "%s/%s/%s" % (options["platform"]["cfg_path"],
+                                 kwargs["task_id"], "temp")
+
+        options["platform"]["cfg_path"] = cfg_path
+
+        cfg_file = "%s/%s" % (cfg_path, "render.cfg")
+
+        server_info = eval(open(os.path.join(cfg_path, "server.cfg")).read())
+
+        result = {}
+        with open(os.path.join(cfg_path, "render.cfg"), "r") as f:
+            while 1:
+                line = f.readline()
+                if "=" in line:
+                    line_split = line.split("=")
+                    result[line_split[0].strip()] = line_split[1].strip()
+                if ">>" in line:
+                    break
+            cfg_info = result
+
+        options["common"]["submitFrom"] = "client"
+        options["common"]["cgv"] = int(server_info["maya_version"])
+        options["common"]["cgFile"] = server_info["maya_file"]
+        options["common"]["cgSoftName"] = cfg_info["cgSoftName"]
+        options["common"]["userId"] = int(server_info["user_id"])
+        options["common"]["taskId"] = int(server_info["task_id"])
+        options["common"]["projectId"] = int(cfg_info["projectId"])
+        options["common"]["projectSymbol"] = cfg_info["projectSymbol"]
+
+        options["renderSettings"]["renderType"] = "render.exe"
+        options["renderSettings"]["renderableCamera"] = cfg_info["renderableCamera"]
+        options["renderSettings"]["projectPath"] = server_info["project"]
+
+        options["server"] = server_info
+        for i in options["server"]["variables"]:
+            options["variables"][i] = options["server"]["variables"][i]
+
+        cfg_info["mountFrom"] = eval(cfg_info["mountFrom"])
+
+        if kwargs["storage_path"]:
+            kwargs["storage_path"] = kwargs["storage_path"].replace("\\", "/")
+            options["platform"]["home_path"] = re.findall(r'(.+?)/\d+/',
+                                                          kwargs["storage_path"], re.I)[0]
+
+        # if options["platform"]["platform"] == 1005:
+        #     if options["common"]["userId"] in [100001]:
+        #         # options["mount"]["vcfs"] = server_info["spare_drives"][0]
+        #         # options["platform"]["home_path"] = "%s/vcfs/cache/d/inputdata5" % (options["mount"]["vcfs"])
+        #         options["platform"]["home_path"] = r"\\www.vcfs.com\share\d\inputdata5"
+        #         # options["platform"]["home_path"] = r"\\10.50.100.7\share\d\inputdata5"
+        #     # else:
+        #     #     options["platform"]["home_path"] = r"\\10.50.24.11\d\inputdata5"
+
+        sys.stdout.flush()
+        print "storage path is: " + options["platform"]["home_path"]
+        sys.stdout.flush()
+
+        for i in cfg_info["mountFrom"]:
+            options["mount"][cfg_info["mountFrom"][i]] = options["platform"]["home_path"] + i
+
+        options["mappings"] = server_info["mappings"]
+
+        options["common"]["plugin_file"] = os.path.join(cfg_path,
+            "plugins.cfg")
+
+        if options["common"]["userId"] in [100001, 963493, 963494,
+            963495, 963336, 962796, 962413, 963496, 120151, 963433, 1811926]:
+            options["common"]["plugin_file"] = None
+
+        return options
+
+
+class OsMixin(object):
+    is_win = 0
+    is_linux = 0
+    is_mac = 0
+
+    if sys.platform.startswith("win"):
+        os_type = "win"
+        is_win = 1
+        # add search path for wmic.exe
+        os.environ["path"] += ";C:/WINDOWS/system32/wbem"
+        import _subprocess
+    elif sys.platform.startswith("linux"):
+        os_type = "linux"
+        is_linux = 1
+        os.environ["tmp"] = "/tmp"
+    else:
+        os_type = "mac"
+        is_mac = 1
+
+
+class CommandMixin(OsMixin):
+
+    def run_command(self, cmd, shell=0):
+        if self.is_win:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= self._subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = self._subprocess.SW_HIDE
+        else:
+            startupinfo = None
+
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, startupinfo=startupinfo,
+                             shell=shell)
+
+        while 1:
+            # returns None while subprocess is running
+            return_code = p.poll()
+            if return_code == 0:
+                break
+            # elif return_code == 1:
+            #     raise Exception(cmd + " was terminated for some reason.")
+            elif return_code is not None:
+                print "exit return code is: " + str(return_code)
+                break
+                # raise Exception(cmd + " was crashed for some reason.")
+            line = p.stdout.readline()
+            yield line
+
+    def timeout_command(self, command, timeout):
+        if self.is_win:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = _subprocess.SW_HIDE
+
+        start = time.time()
+        process = subprocess.Popen(command, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, shell=shell)
+        while process.poll() is None:
+#            print "return: " + str(process.poll())
+            time.sleep(0.1)
+            now = time.time()
+            if (now - start) > timeout:
+#                os.kill(process.pid, 9)
+                if self.is_win:
+                    os.system("taskkill /f /t /pid %s" % (process.pid))
+
+                return None
+        return process.poll()
+
+    def call_command(self, cmd, shell=0):
+        return subprocess.call(cmd, shell=shell)
 
 
 class RvOs(object):
@@ -195,9 +290,11 @@ class RvOs(object):
         is_win = 1
         #add search path for wmic.exe
         os.environ["path"] += ";C:/WINDOWS/system32/wbem"
+        import _subprocess
     elif sys.platform.startswith("linux"):
         os_type = "linux"
         is_linux = 1
+        os.environ["tmp"] = "/tmp"
     else:
         os_type = "mac"
         is_mac = 1
@@ -314,6 +411,78 @@ class Zip7(object):
     def __init__(self, exe):
         self.exe = exe
 
+    def compress(self, src):
+        zip_file = os.path.splitext(src)[0] + ".7z"
+
+        if self.is_same(zip_file, src):
+            print_info("compressed file %s exists, skip compress" % (zip_file))
+            result = 1
+        else:
+            print_info("compressing %s to %s" % (src, zip_file))
+
+            cmd = "\"%s\" a \"%s\" \"%s\" -mx3 -ssw" % (self.exe,
+                zip_file, src)
+
+            result = 0
+            for line in RvOs.run_command(cmd):
+                if line.strip() == "Everything is Ok":
+                    result = 1
+
+        if result:
+            return zip_file
+        else:
+            return src
+
+    def decompress(self, zip_file, mark_path):
+        zip_info = self.get_zip_info(zip_file)
+
+        out = os.path.dirname(zip_file)
+        src = os.path.join(out, zip_info["Path"])
+
+        decompress_ok = "%s/%s" % (mark_path, "decompress_ok")
+        start_decompress = "%s/%s" % (mark_path, "start_decompress")
+
+        if os.path.exists(start_decompress):
+            while 1:
+                if os.path.exists(decompress_ok):
+                    print "%s is already exists, skip decopress" % (src)
+                    return src
+
+                print "Waiting for decompress..."
+                time.sleep(1)
+        else:
+            with open(start_decompress, "w") as f:
+                ''
+
+            try:
+                print "decopress %s from %s" % (src, zip_file)
+                cmd = "\"%s\" e \"%s\" -o\"%s\" -y" % (self.exe, zip_file, out)
+                print cmd
+                result = 0
+                for line in RvOs.run_command(cmd):
+                    if line.strip() == "Everything is Ok":
+                        result = 1
+
+                if result:
+                    with open(decompress_ok, "w") as f:
+                        ''
+                    return src
+                else:
+                    os.remove(start_decompress)
+
+            except:
+                print "Catch except when decompress, delete %s" % (start_decompress)
+                os.remove(start_decompress)
+
+    def try_decompress(self, zip_file, retry=3):
+        if retry == 0:
+            return None
+        else:
+            try:
+                print "try decompress %s time" % (4-retry)
+                return self.decompress(zip_file)
+            except:
+                return self.try_decompress(zip_file, retry-1)
 
     def get_zip_info(self, zip_file):
         {'Attributes': 'A',
@@ -531,6 +700,8 @@ class FileSequence():
             path = search_path
 
         if files:
+#direcotiry add to others, one call of isfile spend 0.001s.
+#                            if os.path.isfile(os.path.join(search_path, i))])
             sequences, others = cls.find_in_list(files)
             for i in sequences:
                 padding = len(cls.PADDING_PATTERN.findall(i)[0])
@@ -599,8 +770,8 @@ class FileSequence():
 
         for i in sorted(numberIndex.keys(), reverse=1):
             r = re.findall(r'^(%s)(\d{%s})(%s)$' % ("".join(components[:i]),
-                            len(numberIndex[i]), "".join(components[i+1:])),
-                            file2)
+                           len(numberIndex[i]), "".join(components[i+1:])),
+                           file2)
             if r:
                 return ["".join([r[0][0], len(r[0][1])*"#", r[0][2]]),
                         int(numberIndex[i]), int(r[0][1])]
@@ -661,20 +832,11 @@ class Render(dict, Zip7, RvOs):
             return subprocess.call(command, shell=1)
 
     def clean_network(self):
-        # if self.run_command("net use * /delete /y"):
-            # print "clean mapping network failed."
         if self.is_win:
-            # print "clean mapping network successfully."
-            for j in range(3):
-                if self.run_command("net use * /delete /y"):
-                    print "clean mapping network failed."
-                    time.sleep(5)
-                    print "Wait 5 seconds..."
-                else:
-                    print "clean mapping network successfully."
-                    break
-        
-        
+            if self.run_command("net use * /delete /y"):
+                print "clean mapping network failed."
+            else:
+                print "clean mapping network successfully."
             sys.stdout.flush()
 
             self.clean_virtual_drive()
@@ -682,12 +844,13 @@ class Render(dict, Zip7, RvOs):
         if self.is_linux:
             if self.run_command("mount | grep -v '/mnt_rayvision' | awk '/cifs/ {print $3} ' | xargs umount"):
                 print "clean mapping network failed."
-                time.sleep(5)
-                print "Wait 5 seconds..."
             else:
                 print "clean mapping network successfully."
 
         sys.stdout.flush()
+
+        # if self["platform"]["platform"] == 1005:
+        #     self.clean_vcfs()
 
     def clean_vcfs(self):
         print "clean vcfs"
@@ -758,6 +921,24 @@ class Render(dict, Zip7, RvOs):
                     sys.stdout.flush()
                     print "can not start vcfs %s" % (self["mount"][i])
                     sys.stdout.flush()
+                # else:
+                #     mark = 120
+                #     while 1:
+                #         if os.path.exists(self["mount"][i]):
+                #             print self["mount"][i] + " is exist"
+                #             print "start vcfs %s" % (self["mount"][i])
+                #             sys.stdout.flush()
+                #             break
+                #         else:
+                #             if mark == 0:
+                #                 break
+                #             else:
+                #                 print self["mount"][i] + " is not exist"
+                #                 mark -= 1
+                #                 time.sleep(1)
+                #                 print "waiting 1 second for vcfs"
+                #                 sys.stdout.flush()
+
             else:
                 #on windows, we must use '\' slash when mount, not '/'
                 path = self["mount"][i].replace("/", "\\")
@@ -777,9 +958,6 @@ class Render(dict, Zip7, RvOs):
     def mapping_plugins(self):
         drive = "B:"
         auto_plugins = self["platform"]["auto_plugins"]
-        if self["common"]["userId"] in [1840132,1898543]:
-            auto_plugins = r"//10.60.200.150/td"
-        os.system("cmdkey /add:10.40.100.151 /user:enfuzion /pass:Raywing@host8")
         if self.run_command("net use %s %s" % (drive, auto_plugins)):
             print "can not mapping %s to %s" % (drive, auto_plugins)
         else:
@@ -843,7 +1021,7 @@ class ArnoldClass(Render):
         # self.get_arnold_version(self["common"]["cgFile"].startFileName)
 
     def get_arnold_info(self):
-        self["renderSettings"]["output"] = "c:/work/render/%s/output/" % \
+        self["renderSettings"]["output"] = "/tmp/nzs-data/work/render/%s/output/" % \
                                             (self["common"]["taskId"])
         if not os.path.exists(self["renderSettings"]["output"]):
             os.makedirs(self["renderSettings"]["output"])
@@ -856,46 +1034,22 @@ class ArnoldClass(Render):
         if self["platform"]["custom_config"]:
             custom_file = self["platform"]["custom_config"] + "/" + \
                 str(self["common"]["userId"]) + "/ass.json"
-            print "custom_config is: " + custom_file
+
         if os.path.exists(custom_file):
             print "custom_config is: " + custom_file
             plugin_info = json.load(open(custom_file, "r"))
-        if self["common"]["userId"] in [119768,1841236,1811805]:
-            os.system(r'wmic process where name="JGS_mtoa_licserver.exe" delete')
-            os.system(r'wmic process where name="rlm.exe" delete')
-            srcDir=r"B:\plugins\maya\mtoa\maya2017\mtoa_1.3.0.0\AMPED"  
-            dstDir=r'"C:\AMPED"'
-            os.system ("robocopy /s  %s %s" % (srcDir, dstDir))
-            os.environ['solidangle_LICENSE'] = r'5053@localhost'
-            os.system(r'start C:\AMPED\rlm.exe')            
-            plugin_info = {"kick.exe": "B:/plugins/maya/mtoa/maya2017/mtoa_1.3.0.0/maya_mtoa/bin/kick.exe",
-                           "args": {"-l": "B:/plugins/maya/mtoa/maya2017/mtoa_1.3.0.0/maya_mtoa/shaders",
+        if self["common"]["userId"] in [1813121]:     
+            plugin_info = {"kick.exe": "/opt/solidangle/mtoa/2017/bin/kick",
+                           "args": {"-l": "/opt/solidangle/mtoa/2017/shaders",
                                     "-g": 2.2,
                                     "-v": 2,
                                     "-t": 0
                                     }
                            }
-        
-        elif self["common"]["userId"] in [1865943]:
-            os.system(r'wmic process where name="JGS_mtoa_licserver.exe" delete')
-            os.system(r'wmic process where name="rlm.exe" delete')
-            srcDir=r"B:\plugins\maya\mtoa\maya2017\mtoa_2.0.2.3\AMPED"
-            dstDir=r'"C:\AMPED"'
-            os.system ("robocopy /s  %s %s" % (srcDir, dstDir))
-            os.system(r'start C:\AMPED\rlm.exe')
-            os.environ['solidangle_LICENSE'] = "5060@127.0.0.1;5060@10.60.96.203;5060@10.60.5.248"
-            
-            plugin_info = {"kick.exe": "B:/custom_config/1865943/mtoa_2023/maya_mtoa/bin/kick.exe",
-                           "args": {"-l": "B:/custom_config/1865943/mtoa_2023/maya_mtoa/shaders",
-                                    "-v": 6,
-                                     "-set": "options.abort_on_license_fail true",
-                                    "-t": 0
-                                    }
-                           }
         else:
             print "custom_config is not exists, use default settings."
-            plugin_info = {"kick.exe": "//10.60.100.151/td/custom_config/1811805/1.2.3.1/2014/bin/kick.exe",
-                           "args": {"-l": "//10.60.100.151/td/custom_config/1811805/1.2.3.1/2014/shaders",
+            plugin_info = {"kick.exe": "/opt/solidangle/mtoa/2015/bin/kick",
+                           "args": {"-l": "/opt/solidangle/mtoa/2015/shaders",
                                     "-g": 2.2,
                                     "-v": 2,
                                     "-t": 0
@@ -955,7 +1109,7 @@ class ArnoldKick(ArnoldClass):
         output = os.path.join(self["renderSettings"]["output"],
                               os.path.basename(input.replace(".ass", ".exr")))
 
-        cmd = "\"%s\" -nstdin -dw -dp -nocrashpopup %s -i \"%s\" -o \"%s\"" % \
+        cmd = "\"%s\" -nstdin -dw -dp  %s -i \"%s\" -o \"%s\"" % \
               (self["renderSettings"]["kick.exe"],
                " ".join([i + " " + str(self["renderSettings"]["args"][i])
                          for i in self["renderSettings"]["args"]]),
@@ -1033,7 +1187,7 @@ class NukeMerge(Nuke):
             if i not in self.tile_files:
                 self.tile_files.append(i)
 
-        self["renderSettings"]["output"] = "c:/work/render/%s/output/" % \
+        self["renderSettings"]["output"] = "/tmp/nzs-data/work/render/%s/output/" % \
             (self["common"]["taskId"])
 
     def render(self):
@@ -1062,8 +1216,8 @@ class NukeMerge(Nuke):
     def merge_files(self, tiles, input_files, tile_output):
         #nuke_exe = r"B:\nuke\Nuke5.1v5\Nuke5.1.exe"
         os.environ['foundry_LICENSE'] = r'4101@10.60.5.248'
-        nuke_exe = r"B:\nuke\Nuke10.5v5\Nuke10.5.exe"
-        merge_images = os.path.join(self["platform"]["py_path"],"function", "NukeMerge.py")
+        nuke_exe = r"/mnt_rayvision/p5/script/assemblage/Nuke10.5v4/Nuke10.5"
+        merge_images = os.path.join(os.path.dirname(__file__), "merge_images_new.py")
         cmd = "\"%s\" -t \"%s\" -tiles %s -width %s -height %s" \
               " -tile_files \"%s\" -tile_output \"%s\" " % (nuke_exe, merge_images,
                                                     tiles,
@@ -1108,10 +1262,7 @@ class MayaClass(Render):
         self.get_maya_info()
         self.create_setup_file()
         self.set_variables()
-        if self["common"]["userId"] in [1868564]:
-            self.set_plugins_myx()
-        else:
-            self.set_plugins_myx()
+        self.set_plugins()
 
     def get_maya_info(self):
         self["renderSettings"]["maya_file"] = self["common"]["cgFile"]
@@ -1212,9 +1363,6 @@ class MayaClass(Render):
                     pass
 
     def set_plugins(self):
-        # os.environ['MAYA_DISABLE_CIP'] = '1'
-        # os.environ['MAYA_DISABLE_CLIC_IPM'] = '1'
-        # os.environ['MAYA_DISABLE_CER'] = '1'
         if self["common"]["plugin_file"]:
             sys.stdout.flush()
             plginLd = RayvisionPluginsLoader.RayvisionPluginsLoader()
@@ -1229,65 +1377,10 @@ class MayaClass(Render):
             sys.stdout.flush()
 
 
-    def set_plugins_myx(self):
-        print "--------------------Set Plugins start---------------------------"
-
-        print self["common"]["plugin_file"]
-        if self["common"]["plugin_file"]:
-            sys.stdout.flush()
-
-            if "gpu_card_no" in os.environ:
-                print "gpu_card_no: " + os.environ["gpu_card_no"]
-            else:
-                print "gpu_card_no variable is not exists."
-            sys.stdout.flush()
-
-            print "MAYA_SCRIPT_PATH: " + os.environ["MAYA_SCRIPT_PATH"]
-
-            sys.stdout.flush()
-            if self["platform"]["custom_config"]:
-                custom_file = self["platform"]["custom_config"] + "/" + \
-                              str(self["common"]["userId"]) + "/RayvisionCustomConfig.py"
-                sys.stdout.flush()
-                print "[Custom_config] is: " + custom_file
-                sys.stdout.flush()
-            print "[Plugin path]:"
-            print self["common"]["plugin_file"]
-            sys.stdout.flush()
-
-            maya_plugin = MayaPlugin(self["common"]["plugin_file"], [custom_file], self["common"]["userId"],
-                                     self["common"]["taskId"])
-            maya_plugin.config()
-            sys.stdout.flush()
-
-            print "MAYA_SCRIPT_PATH: " + os.environ["MAYA_SCRIPT_PATH"]
-            sys.stdout.flush()
-        print "--------------------Set Plugins  end---------------------------"
-
-
-
-
-
-
 class MayaRender(MayaClass):
 
     def __init__(self, options):
         MayaClass.__init__(self, options)
-
-        self.cmd_json = os.path.join(self["platform"]["py_path"],'user',str(self["common"]["userId"]),'cmd','cmd.json')
-        if os.path.exists(self.cmd_json):
-            print "custome cmd.json path : %s" % self.cmd_json
-            self.get_cmd_json()
-            for i in self.cmd_dict:
-                self["renderSettings"][i] = self.cmd_dict[i]
-
-
-    def get_cmd_json(self):
-        with open(self.cmd_json ,'r') as fn:
-            cmd_dict = json.load(fn)
-        self.cmd_dict = cmd_dict
-        return self.cmd_dict
-
 
     def render(self):
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\','/')
@@ -1300,74 +1393,21 @@ class MayaRender(MayaClass):
                                           self["renderSettings"]["width"],
                                           self["renderSettings"]["height"])
             self["renderSettings"]["tile_region"] = " ".join([str(i) for i in tile_region])
-            if "gpuid" in os.environ:
-                self["renderSettings"]["output"] = "c:/work/render/%s/" \
-                "output/%s_%s_%s/%s/%s/" % (self["common"]["taskId"],
-                                      self["renderSettings"]["start"],
-                                      self["renderSettings"]["end"],
-                                      self["renderSettings"]["by"],
-                                      self["renderSettings"]["start"],
-                                      self["renderSettings"]["tile_index"])
-            else:
-                self["renderSettings"]["output"] = "c:/work/render/%s/output/%s/%s/" % \
-                    (self["common"]["taskId"], self["renderSettings"]["start"],
-                     self["renderSettings"]["tile_index"])
 
+            self["renderSettings"]["output"] = "/tmp/nzs-data/work/render/%s/output/%s/%s/" % \
+                (self["common"]["taskId"], self["renderSettings"]["start"],
+                 self["renderSettings"]["tile_index"])
+        
         if self["common"]["debug"]:
             print "json info:"
             pprint.pprint(self)
 
-        if float(self["common"]["cgv"])==2017:
-            os.system ("robocopy /e /ns /nc /nfl /ndl /np  \"//10.60.100.101/o5/py/model/2017updata3\"  \"C:/Program Files/Autodesk/Maya2017/scripts/others\"" )
-
-
         print "start maya render process..."
-        if self["renderSettings"]["projectPath"]:
-            if os.path.exists(self["renderSettings"]["projectPath"]):
-                os.chdir(self["renderSettings"]["projectPath"])
-                
-        if self["common"]["userId"] in [1849290]:
-            if float(self["common"]["cgv"])==2016:
-                self["renderSettings"]["render.exe"] = "C:/Program Files/Autodesk/" \
-                    "maya2016_sp6/bin/render.exe"
-                self["renderSettings"]["mayabatch.exe"] = "C:/Program Files/Autodesk/" \
-                    "maya2016_sp6/bin/mayabatch.exe"
-                
 
         cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
             "-proj \"%(projectPath)s\" -rd \"%(output)s\"" \
             % self["renderSettings"]
 
-        if self["common"]["userId"] in [1813119]:
-            if self.setdefault('customize',''):
-                if self['customize'].setdefault('cmd_flag',''):
-                    if "rd" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("rd")
-                    if "s" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("s")
-                    if "e" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("e")
-                    if "b" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("b")
-                    if "proj" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("proj")
-                    if "preRender" in  self['customize']['cmd_flag']:
-                        self['customize']['cmd_flag'].pop("preRender")
-                    if "r" in  self['customize']['cmd_flag']:
-                        cmd += ' -%s %s ' % ("r",self['customize']['cmd_flag']['r'])
-                        self['customize']['cmd_flag'].pop("r")
-
-                    for k, v in self['customize']['cmd_flag'].iteritems():
-                        cmd += ' -%s %s ' % (k,v)
-                
-        if self["common"]["userId"] in [1865352]:
-            self["renderSettings"]["output"] = "c:/work/render/%s/output/720/" % \
-                (self["common"]["taskId"])
-            
-            cmd = "\"%(render.exe)s\" -s %(start)s -e %(end)s -b %(by)s " \
-            "-proj \"%(projectPath)s\" -rd \"%(output)s\"" \
-            % self["renderSettings"]
-            
         if self["renderSettings"]["renderableCamera"]:
             if not "," in self["renderSettings"]["renderableCamera"] and \
                 not "{rayvision}" in self["renderSettings"]["renderableCamera"]:
@@ -1376,282 +1416,137 @@ class MayaRender(MayaClass):
         if self["renderSettings"].get("renderableLayer"):
             if not "," in self["renderSettings"]["renderableLayer"] and \
                 not "{rayvision}" in self["renderSettings"]["renderableLayer"]:
-                cmd += " -rl \"%(renderableLayer)s\"" % self["renderSettings"]
+                #cmd += " -rl \"%(renderableLayer)s\"" % self["renderSettings"]
+                print(self["common"]["userId"])
+                print(type(self["common"]["userId"]))
+                print("*"*100)
+                if self["common"]["userId"] in ["1878628"]:
+                    print(self["common"]["userId"])
+                    cmd += " -preRender \"python \\\"rendersetup_name=\\\\\\\"%s\\\\\\\";execfile(\\\\\\\"/mnt_rayvision/p5/script/of3d_3Below/prerender.py\\\\\\\")\\\"\"" % (self["renderSettings"]["renderableLayer"])
+                else:
+                    cmd += " -rl \"%(renderableLayer)s\"" % self["renderSettings"]
+        print "plugin_file: " + str(self["common"]["plugin_file"])
 
+                
 
-        PreRender = os.path.join(self["platform"]["py_path"],'script','PreRender.py').replace("\\","/")
+                      
+        if self["common"]["userId"] in [1869998,1833083,1868556,1852991]: # 88studio,td_test,td_test
+            cmd += " -r arnold -ai:lve 1"
+            if self["renderSettings"]["tile_region"]:
+                # cmd += " -r arnold -reg %(tile_region)s" % self["renderSettings"]
+                cmd += " -reg %(tile_region)s" % self["renderSettings"]
+                cmd += " -x %(width)s -y %(height)s " % self["renderSettings"]
+            elif "width" in self["renderSettings"] and "height" in self["renderSettings"] :
+                cmd += " -x %(width)s -y %(height)s " % self["renderSettings"] 
+            if self["common"]["userId"] in [1833083]:
+                if self["common"]["projectId"] in [92341]:
+                    os.environ["JOB_ASSETS"] = r'/prod/PROJECTS/3bl/prod/assets/publish'
+                    print "JOB_ASSETS: /prod/PROJECTS/3bl/prod/assets/publish "
+                else: 
+                    os.environ["JOB_ASSETS"] = r'/prod/PROJECTS/wag/prod/assets/publish'                    
+                    print "JOB_ASSETS: /prod/PROJECTS/wag/prod/assets/publish "
+                    
+            if self["common"]["userId"] in [1869998]:
+                if self["common"]["projectId"] in [74555]:
+                    os.environ["ASE_ASSETS"] = r'/ASE/01prj/ICE/prod'
+                    print "ASE_ASSETS: /ASE/01prj/ICE/prod"
+                else: 
+                    os.environ["ASE_ASSETS"] = r'/ASE/01prj/IC2/prod'
+                    os.environ["ARNOLD_PLUGIN_PATH"] = r'/mnt_rayvision/p5/script/assemblage/Jfnested/shaders'
+                    print "ASE_ASSETS: /ASE/01prj/IC2/prod "
+                    print "ARNOLD_PLUGIN_PATH: /mnt_rayvision/p5/script/assemblage/Jfnested/shaders "
+            
+        if self["common"]["projectId"] in [127958]:
+            os.environ["ANI_PATH"] = r'/aslan/projects/TWE'
+            print "ANI_PATH: /aslan/projects/TWE"
+        
+       
+        
+        if self["common"]["projectId"] in [127959]:
+            os.environ["ANI_PATH"] = r'/aslan/projects/Crazy_Alien'
+            print "ANI_PATH: /aslan/projects/Crazy_Alien "
+        
+
+        
+        if self["common"]["userId"] in [1841730,963287, 963492, 963250, 964462,965366,1867865]:
+            cmd += " -r arnold -ai:lve 1"
+        # elif self["common"]["userId"] in [961872]:
+        #     cmd += " -r rman"
+        
+        #else:
+        #    cmd += " -mr:art -mr:aml"
+
+        # if self["common"]["userId"] in [100001]:
+        #     self["renderSettings"]["output"] += "<pass>/<scene>_<pass>" \
+        #                                         "_<aov>_#.<ext>"
+        #     cmd = "\"%(render.exe)s\" -r 3delight -rp all -an 1" \
+        #           " -s %(start)s -e %(end)s -inc %(by)s " \
+        #           " -proj \"%(projectPath)s\" -img \"%(output)s\"" \
+        #           % self["renderSettings"]
+        if self["common"]["userId"] in [1841730]:
+            cmd += " -preRender \"python \\\"import cam_switch;cam_switch.main()\\\" \" "
+        if self["common"]["userId"] in [1882862]:
+            cmd += " -preRender \"python \\\"user_id=%s;execfile(\\\\\\\"/mnt_rayvision/o5/py/model/1882862.py\\\\\\\")\\\"\"" % (self["common"]["userId"])  
+            
+            
+        PreRender = "/mnt_rayvision/o5/py/model/script/PreRender.py"
         pre_render_dict = {}
         pre_render_dict["mapping"] = self["mappings"]
         pre_render_dict["user_id"] = self["common"]["userId"]
         pre_render_dict["task_id"] = self["common"]["taskId"]
-        pre_render_dict["rendersetting"] = self["renderSettings"]
-        pre_render_dict["plugins"] = self["plugins"]["plugins"]
         pre_render_dict["start"] = self["renderSettings"]["start"]
-        pre_render_dict["c_prerender"] = os.path.join(self["platform"]["py_path"],'user',str(self["common"]["userId"]),'prerender','C_PreRender.py').replace("\\","/")
-
-        # ------------------------------------------------------add preRender cmd---------------------------------------------------------------------
-
-        if "RenderMan_for_Maya" in self["plugins"]["plugins"] and float(self["plugins"]["plugins"]["RenderMan_for_Maya"])> 21.7:
-            pass
-        else:
-            cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict,PreRender)
-
-        print "plugin_file" + str(self["common"]["plugin_file"])
-        if not self["common"]["plugin_file"]:
-            if self["common"]["userId"] in [962413]:
-                cmd += " -preRender \"python \\\"user_id=%s;execfile(\\\\\\\"//20.0.100.1/o5/py/model/prerender.py\\\\\\\")\\\"\"" % (self["common"]["userId"])
-        if self["common"]["userId"] in [1812148]:
-            cmd += " -preRender \"source \\\"//10.60.100.102/td/clientFiles/1812148/meshShapeAttrSet.mel\\\"\" "
-
-        elif "RenderMan_for_Maya" in self["plugins"]["plugins"]:
-            if float(self["plugins"]["plugins"]["RenderMan_for_Maya"]) > 21.7:
-                cmd += " -r renderman"
-            else:
-                cmd += " -r rman"
-            if self["common"]["userId"] in [1875817]:
-                if "mtoa" in self["plugins"]["plugins"]:
-                    cmd += " -setAttr Format:resolution \"1024 435\""
-                    print "Test resolution 1024*435"
-                else:
-                    cmd += " -setAttr Format:resolution \"2048 871\""
-                    print "Render resolution 2048*871"
-
-
-        # ----------------------redshift cmd -------------------------------------------------------------
-
-
-
-
-        # ----------------------redshift cmd -------------------------------------------------------------
-
-
-
-
-        if [i for i in self["plugins"]["plugins"] if i.startswith("3delight")]:
-            self["renderSettings"]["output"] += "<pass>/<scene>_<pass>" \
-                                                "_<aov>_#.<ext>"
-            cmd = "\"%(render.exe)s\" -r 3delight -rp all -an 1" \
-                  " -s %(start)s -e %(end)s -inc %(by)s " \
-                  " -proj \"%(projectPath)s\" -img \"%(output)s\"" \
-                  % self["renderSettings"]
-				  
-
+        pre_render_dict["rendersetting"] = self["renderSettings"]
+        pre_render_dict["plugins"] = {}
+        pre_render_dict["c_prerender"] = "/mnt_rayvision/o5/py/model/user/%s/prerender/C_PreRender.py" % str(self["common"]["userId"])
         
-        if self["renderSettings"]["tile_region"]:
-            if "mtoa" in self["plugins"]["plugins"] and "vrayformaya" in self["plugins"]["plugins"]:
-                raise AssertionError("the tile render , only one renderer in the plug-in list")
-              
-            elif "mtoa" in self["plugins"]["plugins"]:
-                cmd += " -r arnold -reg %(tile_region)s" % self["renderSettings"]
-            elif "vrayformaya" in self["plugins"]["plugins"]:
-                cmd += " -r vray -reg %(tile_region)s" % self["renderSettings"]
-            else:
-                cmd += " -r mr -reg %(tile_region)s" % self["renderSettings"]
-
-
-        elif " -r " not in cmd and float(self["common"]["cgv"]) < 2017:
-            cmd += " -mr:art -mr:aml"				  
-        
-        # if "width" in self["renderSettings"] and "height" in self["renderSettings"] :
-            # cmd += " -x %(width)s -y %(height)s " % self["renderSettings"] 
-        # cmd += " \"%(maya_file)s\"" % self["renderSettings"]
-        if "width" in self["renderSettings"] and "height" in self["renderSettings"] :
-            if "-r rman" in cmd :
-                cmd += " -setAttr Format:resolution \"%(width)s %(height)s\" \"%(maya_file)s\"" % self["renderSettings"]
-            elif "-r renderman" in cmd:
-                cmd += " -res %(width)s %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-            else:
-                cmd += " -x %(width)s -y %(height)s \"%(maya_file)s\"" % self["renderSettings"]
-        else:
-            cmd += " \"%(maya_file)s\"" % self["renderSettings"]
-
-
-        if self["common"]["userId"] in [1818936]:
-            self["renderSettings"]["ass_dir"] = r"d:\temp"
-            if not os.path.exists(self["renderSettings"]["ass_dir"]):
-                os.makedirs(self["renderSettings"]["ass_dir"])
-
-            maya_base = os.path.basename(self["renderSettings"]["maya_file"])
-            split_ext = [os.path.splitext(maya_base)[0]]
-            split_ext.append(str(self["renderSettings"]["start"]).zfill(4))
-            split_ext.append("ass")
-            self["renderSettings"]["ass_path"] = os.path.join(self["renderSettings"]["ass_dir"], ".".join(split_ext))
-            self["renderSettings"]["image_name"] = maya_base
-
-            cmd1 = "Render.exe -r arnoldExport -s %(start)s -e %(end)s" \
-                   " -b %(by)s -pad 4 -x 1920 -y 1080 -cam \"Test_030:cam\"" \
-                   " -proj \"%(projectPath)s\" -rd \"%(output)s\"" \
-                   " -im %(image_name)s" \
-                   " -assDir \"%(ass_dir)s\"" \
-                   " \"%(maya_file)s\"" % self["renderSettings"]
-
-            cmd2 = "kick.exe -dw -dp -t 0 -v 5" \
-                   " -set options.abort_on_license_fail true" \
-                   " -i \"%(ass_path)s\"" % self["renderSettings"]
-
-            cmd = [cmd1, cmd2]
-        if self["common"]["userId"] in [1843630]:
-            if not os.path.exists(self["renderSettings"]["output"]):
-                os.makedirs(self["renderSettings"]["output"])
-            self["renderSettings"]["bat"] = r"B:\scripts\maya\com_cmd.bat"
-            self["renderSettings"]["user_id"] = 1843630
-            self["renderSettings"]["task_id"] = self["common"]["taskId"]
+        if "-preRender" not in cmd:
+            cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict,PreRender)    
             
-            if self["renderSettings"]["renderableCamera"]:
-                if "," in self["renderSettings"]["renderableCamera"] or \
-                        "{rayvision}" in self["renderSettings"]["renderableCamera"]:
-                    self["renderSettings"]["renderableCamera"] = ""
-            else:
-                self["renderSettings"]["renderableCamera"] = ""
-
-            if self["renderSettings"]["renderableLayer"]:
-                if "," in self["renderSettings"]["renderableLayer"]:
-                    self["renderSettings"]["renderableLayer"] = ""
-            else:
-                self["renderSettings"]["renderableLayer"] = ""
-            print self["renderSettings"]
-            if "width" in self["renderSettings"] :
-                if "," in self["renderSettings"]["width"]:
-                    self["renderSettings"]["width"] = ""
-            else:
-                self["renderSettings"]["width"] = ""
             
-            if "height" in self["renderSettings"] :
-                if "," in self["renderSettings"]["height"]:
-                    self["renderSettings"]["height"] = ""
-            else:
-                self["renderSettings"]["height"] = ""
-                
-                
+            
+        cmd += " \"%(maya_file)s\"" % self["renderSettings"]
 
-            cmd = "\"%(bat)s\" %(user_id)s %(task_id)s \"%(render.exe)s\" \"%(renderableCamera)s\" " \
-                "\"%(renderableLayer)s\" %(start)s %(end)s %(by)s " \
-                "\"%(projectPath)s\" \"%(maya_file)s\" \"%(output)s\" %(width)s %(height)s" \
-                % self["renderSettings"]
-           
         print "render cmd info:"
         print cmd
         sys.stdout.flush()
+
+        pprint.pprint(os.environ)
+        # subprocess.call(cmd)
+        is_complete = 0
+        re_complete = re.compile(r'^Scene.+completed\.$', re.I)
         G_JOB_NAME=os.environ.get('G_JOB_NAME')
-        render_log_path = "d:/log/render"
-        render_log = "%s/%s/%s_render.log" % (render_log_path,self["common"]["taskId"],G_JOB_NAME)
+        render_log_path = "/tmp/nzs-data/log/render"
+        render_log = "%s/%s/%s_render.log" % (render_log_path,self["common"]["taskId"],G_JOB_NAME)        
         print render_log
         with open(render_log,"ab+") as l:
-            start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            print "the render start time :: {} \n".format(start_time)
-            l.write("the render start time :: {} \n".format(start_time))
             l.write('render cmd info: \n')
             #l.write(cmd)
             l.flush()
-            if isinstance(cmd, list):
-                for i in cmd:
-
-                    print "render cmd info:"
-                    print i
-                    sys.stdout.flush()
-
-                    for line in RvOs.run_command(i):
-                        l.write(line)
-                        l.flush()
-                        line_str = line.strip()
-                        if line_str:
-                            print line_str
-
-                if self["common"]["debug"]:
-                    ''
-                else:
-                    if self["common"]["userId"] in [1818936]:
-                        try:
-                            os.remove(self["renderSettings"]["ass_path"])
-                        except:
-                            pass
-                end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print "the render end time :: {} \n".format(end_time)
-                l.write("the render end time :: {} \n".format(end_time))
+            for line in RvOs.run_command(cmd):
+                line_str = line.strip()
+                if len(line_str) > 6:
+                    l.write(line)
                 l.flush()
-            else:
-                # subprocess.call(cmd)
-                is_complete = 0
-                re_complete = re.compile(r'^Scene.+completed\.$', re.I)
-                for line in RvOs.run_command(cmd):
-                    line_str = line.strip()
-                    if line_str:
-                        l.write(line)
-                        l.flush()
-                        print line_str
+                if line_str:
+                    print line_str
+                       
+                    if "ASSERT FAILED" in line_str or "failed to render" in line_str or "DL inf loop detected" in line_str or "Render interrupted" in line_str or  "There was a fatal error building the scene for V-Ray" in line_str or  "Stack trace:" in line_str  or "Could not obtain a license" in line_str:
+                        time.sleep(10)
+                        RvOs.kill_children()
+                        is_complete = 0
+                        break
                         
-                        if  "failed to render" in line_str or "DL inf loop detected" in line_str or "Render interrupted" in line_str \
-                            or  "There was a fatal error building the scene for V-Ray" in line_str or  "Could not obtain a license" in line_str:
-                            #time.sleep(10)
-                            RvOs.kill_children()
-                            is_complete = 0
-                            break
-                            
-                        if self["common"]["userId"] in [963287]:
-                            if "Maya exited with status -1073741818" in line_str:
-                                exit(-1073741818)
-                            if "Maya exited with status -1073741819" in line_str:
-                                exit(-1073741819)
+                    if self["common"]["userId"] in [963287]:
+                        if "Maya exited with status -1073741818" in line_str:
+                            exit(-1073741818)
+                        if "Maya exited with status -1073741819" in line_str:
+                            exit(-1073741819)
 
-                        if re_complete.findall(line_str):
-                            RvOs.kill_children()
-                            is_complete = 1
-                            break
-                end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print "the render end time :: {} \n".format(end_time)
-                l.write("the render end time :: {} \n".format(end_time))
-                l.flush()
-                if not is_complete:
-                    exit(1)
+                    if re_complete.findall(line_str):
+                        is_complete = 1
 
-
-class LightWaveClass(Render):
-
-    def __init__(self, options):
-        Render.__init__(self, options)
-        self.get_info()
-        self.crack_lightwave()
-
-    def get_info(self):
-        self["renderSettings"]["exe"] = r"B:\NewTek\LightWave_%s\bin\lwsn.exe" \
-            % (self["common"]["cgv"])
-        self["renderSettings"]["config"] = r"C:\users\enfuzion\.NewTek\LightWave\2015.3"
-
-        self["renderSettings"]["lwsn.exe"] = "C:/Program Files/Autodesk/" \
-            "maya%s/bin/mayabatch.exe" % (self["common"]["cgv"])
-        self["renderSettings"]["output"] = "c:/work/render/%s/output/" % \
-            (self["common"]["taskId"])
-        if not os.path.exists(self["renderSettings"]["output"]):
-            os.makedirs(self["renderSettings"]["output"])
-
-        self["renderSettings"]["cg_file"] = os.path.splitext(self["renderSettings"]["cg_file"])[0] + "_rayvision.lws"
-
-    def crack_lightwave(self):
-        self.copytree2(r"B:\NewTek\LWK\LightWave_%s\.NewTek" % (self["common"]["cgv"]),
-                       r"C:\users\enfuzion\.NewTek")
-
-
-class LightWaveLwsn(LightWaveClass):
-
-    def __init__(self, options):
-        LightWaveClass.__init__(self, options)
-
-    def render(self):
-        pprint.pprint(self)
-
-        cmd = "\"%(exe)s\" -3 -c\"%(config)s\" -d\"%(projectPath)s\" \
-               -q \"%(cg_file)s\" %(start)s %(end)s %(by)s" \
-               % self["renderSettings"]
-
-        print "Info: Run render lightwave file command:"
-        print cmd
-        sys.stdout.flush()
-
-        for line in RvOs.run_command(cmd):
-            line_str = line.strip()
-            if line_str:
-                print line_str
-
+            if not is_complete:
+                exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Liu Qiang || MMmaomao')
@@ -1669,8 +1564,9 @@ if __name__ == '__main__':
     parser.add_argument("-d", dest="debug", default=False, action="store_true")
 
     kwargs = parser.parse_args().__dict__
-    maya_info = Maya()
-    options = maya_info.get_json(**kwargs)
+    kwargs["plugin_file"] = "ignore plugin file for test"
+    options = get_json(**kwargs)
+
     render = None
     if str(options["renderSettings"]["tiles"]) != '1' and options["renderSettings"]["tiles"] == options["renderSettings"]["tile_index"]:
         render = NukeMerge(options)
@@ -1685,9 +1581,7 @@ if __name__ == '__main__':
         elif options["common"]["cgSoftName"] == "arnold":
             if options["renderSettings"]["renderType"] == "kick.exe":
                 render = ArnoldKick(options)
-        elif options["common"]["cgSoftName"] == "lightwave":
-            if options["renderSettings"]["renderType"] == "lwsn.exe":
-                render = LightWaveLwsn(options)
+
     if render:
         render.render()
         if not options["common"]["debug"]:

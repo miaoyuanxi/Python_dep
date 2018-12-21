@@ -29,6 +29,7 @@ class Maya(object):
     def __init__(self):
         self.error_list = []
         self.reference_list = []
+        self.invalid_abc = []
         self.scene_open_success = 0
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
         currentPath = currentPath.lower()
@@ -97,12 +98,21 @@ class Maya(object):
 
     def print_info_err(self, info):
         info = self.convertUnicode2Str(info)
-        r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
-        if r:
-            if r[0] not in self.reference_list:
-                self.reference_list.append(r[0])
-        if info not in self.error_list:
-            self.error_list.append(info)
+        try:
+            r = re.findall(r"Reference file not found.+?: +(.+)", info, re.I)
+            r1 = re.findall(r"Error: line \d+:(.*) is not a valid Alembic file", info, re.I)
+            if r:
+                if r[0] not in self.reference_list:
+                    self.reference_list.append(r[0])
+                    
+            if r1:
+                if r1[0] not in self.invalid_abc:
+                    self.invalid_abc.append(r1[0])
+          
+            if info not in self.error_list:
+                self.error_list.append(info)
+        except Exception as e:
+            print(e)
         print ("[Analyze Error]%s" % (self.unicode_to_str(info)))
 
 
@@ -151,14 +161,33 @@ class Maya(object):
             if "Reference file not found" in resultLine:
                 self.print_info_err(resultLine)
                 
+            if "is not a valid Alembic file" in resultLine:
+                self.print_info_err(resultLine)
+                
+                
             if resultLine == "open maya file ok.":
                 self.scene_open_success = 1
                 
         resultStr = cmdp.stdout.read()
         resultCode = cmdp.returncode
 
-        if exitcode == -1:
-            sys.exit(-1)
+        if len(self.reference_list) != 0:
+            resultCode = 333
+            self.print_info_err(u".......以下reference未找到（未上传或上传位置不对），让客户上传到对应位置，重新分析,如果不需要，就清理掉..........")
+            for i in self.reference_list:
+                i_info = self.convertUnicode2Str(i)
+                i_info = self.unicode_to_str(i_info)
+                print("."*24 + i_info)
+
+        if len(self.invalid_abc) != 0:
+            resultCode = 333
+            self.print_info_err(u".......以下abc文件无效，请重新上传..........")
+            for i in self.reference_list:
+                i_info = self.convertUnicode2Str(i)
+                i_info = self.unicode_to_str(i_info)
+                print("." * 24 + i_info)
+
+
         if not continueOnErr:
             if resultCode != 0:
                 if self.scene_open_success == 0 and resultCode != 555:
@@ -166,10 +195,12 @@ class Maya(object):
                     print (
                     '\n\n---------------------------------------------[ERROR BASE]start--------------------------------------------------\n\n')
                     self.print_info_err(u"......场景打不开，问问客户本地测试正常不，问题可能比较复杂，联系TD吧........")
-                    print (
-                    '\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-                    self.print_trilateral(mode=2)
+                print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                self.print_trilateral(mode=2)
                 sys.exit(resultCode)
+                
+        print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+        self.print_trilateral(mode=2)
         return resultStr
 
     def get_encode(self, encode_str):
@@ -393,47 +424,49 @@ class MayaAnalyze(dict,Maya):
             self.MyLog("RunningTime----%s" % (str(timeOut)))
         
     
+    def missing_reference(self):
+    
+        print("99999999")
+        print(self.reference_list)
+        print("888888888")
+        if len(self.reference_list) != 0:
+            print ("[Analyze Error]%s" % (u".......以下reference未找到（未上传或上传位置不对），让客户上传到对应位置，重新分析,如果不需要，就清理掉.........."))
+            for i in self.reference_list:
+                print ("[Analyze Error]%s" % (self.unicode_to_str(i)))
+    
+    
     def ErrorBase(self):
         self.print_trilateral(mode=1)
         print ('\n\n---------------------------------------------[ERROR BASE]start--------------------------------------------------\n\n')
         print ('\n')
 
         if len(self.error_list) != 0:
-            print("99999999")
-            print(self.reference_list)
-            print("888888888")
-            if len(self.reference_list) != 0:
-                print ("[Analyze Error]%s" % (u".......以下reference未找到（未上传或上传位置不对），让客户上传到对应位置，重新分析,如果不需要，就清理掉.........."))
-                for i in self.reference_list:
-                    print ("[Analyze Error]%s" % (self.unicode_to_str(i)))
-
             if "..........Analysis  OK ,no error, analysis results have been written............" not in self.error_list:
                 if len(self.error_list) != 0:
                     for i in self.error_list:
                         print ("[Analyze Error]%s" % (self.unicode_to_str(i)))
-                self.running_time("running")
-                print (
-                '\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-                self.print_trilateral(mode=2)
+                # self.running_time("running")
+                # print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                # self.print_trilateral(mode=2)
                 cmds.quit(exitCode=555,force=True)
                 # os._exit(-1)
             else:
                 if len(self.reference_list) != 0:
-                    self.running_time("running")
-                    print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-                    self.print_trilateral(mode=2)
+                    # self.running_time("running")
+                    # print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                    # self.print_trilateral(mode=2)
                     cmds.quit(exitCode=555, force=True)
                 else:
                     self.print_info_err(u"..............没毛病.................")
-                    self.running_time("running")
-                    print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-                    self.print_trilateral(mode=2)
+                    # self.running_time("running")
+                    # print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+                    # self.print_trilateral(mode=2)
                     cmds.quit(exitCode=0, force=True)
         else:
             self.print_info_err(u"..............问题可能比较复杂，联系TD吧.................")
-            self.running_time("running")
-            print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
-            self.print_trilateral(mode=2)
+            # self.running_time("running")
+            # print ('\n\n---------------------------------------------[ERROR BASE]end----------------------------------------------------\n\n')
+            # self.print_trilateral(mode=2)
         print ('\n')
         
         
@@ -506,6 +539,7 @@ class MayaAnalyze(dict,Maya):
                             print ("Current Platform is CPU ,Vray  productionEngine is %s" % productionEngine_dict[productionEngine])
                             self.print_info_err(u"......客户用的vary 渲染器，但选的是gpu 引擎，让客户确认，是要gpu渲染还是cpu渲染........")
                             # sys.exit(555)
+                    
                 elif render_name == "arnold":
                     aovs_list = self.getArnoldElements()
                     denoise_list = []
@@ -565,7 +599,7 @@ class MayaAnalyze(dict,Maya):
         return my_str
 
     def getArnoldElements(self):
-        elementNames = [""]
+        elementNames = []
         aovMode = int(pm.getAttr("defaultArnoldRenderOptions.aovMode"))
         mergeAOV = int(pm.getAttr("defaultArnoldDriver.mergeAOVs"))
         imfType = str(pm.mel.getImfImageType())
