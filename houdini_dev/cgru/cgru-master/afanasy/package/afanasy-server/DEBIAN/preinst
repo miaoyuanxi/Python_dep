@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "Afanasy server PRE INSTALL"
+
+systemctl stop afserver || true
+systemctl disable afserver || true
+systemctl daemon-reload || true
+
+exit 0

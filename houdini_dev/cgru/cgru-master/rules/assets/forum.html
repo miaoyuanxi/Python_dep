@@ -1,0 +1,24 @@
+<style type="text/css">
+#forum_new_question div { padding: 4px 8px; }
+#forum_new_question .name_label { float: left; }
+#forum_new_question .name_info { font-style: italic; }
+#forum_new_question .label { text-align: center; }
+#forum_question_id { width: 200px; float: left; }
+#forum_question_body { min-height: 48px; }
+</style>
+
+<div id="forum_new_question" style="margin:4px; padding:4px;">
+
+<div class="name_label">Question Label</div>
+<div id="forum_question_id" contenteditable="true" class="editing" onblur="forum_QuestionIDOnBlur()"></div>
+<div class="name_info">required for navigation, <span id="qid_max_len">0</span> characters max</div>
+
+<div class="label">Question Body</div>
+<div id="forum_question_body" contenteditable="true" class="editing"></div>
+
+<div id="forum_guest_form" style="border: 1px solid #777; border-radius: 6px; margin: 8px 0px; display: none;"></div>
+
+<div class="button" onclick="forum_NewQuestionOnClick()">Create Question</div>
+
+</div>
+

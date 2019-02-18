@@ -455,6 +455,7 @@ class RenderMaya(Maya):
         pre_render_dict["user_id"] = self.G_USER_ID
         pre_render_dict["task_id"] = self.G_TASK_ID
         pre_render_dict["plugins"] = self.G_CG_CONFIG_DICT["plugins"]
+        pre_render_dict["rendersetting"] = self.renderSettings
         
         
         # cmd += " -preRender \"python \\\"pre_render_dict=%s;execfile(\\\\\\\"%s\\\\\\\")\\\"\"" % (pre_render_dict, self.G_RN_MAYA_PRERENDER)

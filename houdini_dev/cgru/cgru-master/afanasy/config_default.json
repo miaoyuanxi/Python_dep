@@ -1,0 +1,242 @@
+{"cgru_config":{
+
+	"af_servername":"127.0.0.1",
+		"":"Afanasy server name or direct IP address literals",
+
+	"af_serverport":51000,
+
+		"":"Afanasy server will use IPv6 if it is configured on server interface",
+	"af_ipv6_disable":1,
+		"":"IPv6 is disabled by default, to enable it, set this parameter value to 0",
+
+		"":"Afanasy server HTTP serve folder, if empty CGRU root folder will be used",
+	"-af_http_serve_dir":"/cgru",
+
+		"":"Trusted IP addresses masks. From these IPs no authentication needed.",
+	"af_ip_trust":["*.*","127.0.0.1","192.168.*","*:*","0:0:0:0:0:0:0:1","FC00:*","FD00:*"],
+		"":"Mask should have at least one '.' for IPv4 or one ':' for IPv6.",
+
+		"":"Digest authentication file path relative to CGRU_LOCATION folder",
+	"af_digest_file":".htdigest",
+
+		"":"Commands arguments:",
+		"":"@ARG@ - will be replaced with render name:",
+		"":"@ASK@ - raise dialog to ask a string:",
+		"":"@IP@  - will be replaced with render ip address:",
+
+	"OS_unix":{
+		"af_store_folder":"/var/tmp/afanasy",
+		"af_rendercmds":["vncviewer @ARG@","xterm -e \"ping @ARG@; read -s -n 1\"","xterm -e \"ping @IP@; read -s -n 1\""],
+		"af_rendercmds_admin":["xterm -e \"ssh @ARG@; read -s -n 1\"","xterm -e \"ssh @ARG@ \\\"@ASK@\\\"; read -s -n 1\""],
+		"":"Render:",
+		"af_render_cmd_reboot":"reboot",
+			"":"Command for render to reboot a machine.",
+			"":"For MS Windows you can use 'shutdown /r'.",
+
+		"af_render_cmd_shutdown":"shutdown -P 1 afrequest",
+			"":"Command for render to shutdown a machine.",
+			"":"For MS Windows you can use 'shutdown /s'.",
+
+		"af_render_cmd_wolsleep":"wolsleep",
+			"":"On UNIX sleep command usually needs root privileges.",
+			"":"Try to use 'sudo wolsleep' and add a line in /etc/sudoers:",
+			"":"render ALL = (ALL) NOPASSWD: /opt/cgru/bin/wolsleep",
+			"":"Or configure your own way to sleep.",
+		"":""
+	},
+	"OS_windows":{
+		"af_rendercmds":["vncviewer @ARG@","start ping /t @ARG@","start ping /t @IP@"],
+		"af_store_folder":"c:/temp/afanasy",
+		"af_render_cmd_reboot":"shutdown /r",
+		"af_render_cmd_shutdown":"shutdown /s",
+		"af_render_cmd_wolsleep":"cmd.exe /c wolsleep",
+		"af_render_windowsmustdie":[
+			"ImageMagick Studio library and utility programs",
+			"Microsoft Visual C++ Runtime Library",
+			"QuickTimeHelper-32.exe - Application Error",
+			"Visual Studio Just-In-Time Debugger"
+		]
+	},
+
+	"af_perm_user_mod_his_priority":true,
+	"af_perm_user_mod_job_priority":true,
+
+	"af_cmdprefix":"",
+		"":"If 'AF_CMD_PREFIX' environment variable exists, it will be used. All commands with be prefixed with it.",
+
+	"af_node_log_lines_max":100,
+		"":"Log history for any afnode (job, render, user)",
+
+	"af_priority":99,
+	"af_max_running_tasks":-1,
+
+"":"Job:",
+	"af_task_default_capacity":1000,
+	"af_task_default_service":"generic",
+	"af_task_log_linesmax":100,
+
+"":"Render:",
+	"af_render_heartbeat_sec":1,
+		"":"Render heartbeat in seconds.",
+		"":"It refresh tasks, update server, reveice an answer which can contain new tasks.",
+		"":"So every af_render_heartbeat_sec render connects, write, read and disconnects from server (TCP).",
+
+	"af_render_up_resources_period":5,
+		"":"Render resources update period.",
+		"":"If heartbeat is 3 and up_resources is 5, render will update resources every 15 seconds.",
+
+	"af_render_default_capacity":1000,
+		"":"Default render capacity value, if not set in farm config.",
+
+	"af_render_default_maxtasks":5,
+		"":"Maximum allowed simultaneously running tasks on render, if not set in farm config.",
+
+	"-af_render_networkif":"eth0",
+		"":"Network interface to measure traffic",
+		"":"If not specified all used except loopback",
+
+	"af_render_hddspace_path":"/",
+		"":"Path to measure free disk space.",
+		"":"'/' - for MS Windows means the root of the system disk.",
+
+	"af_render_iostat_device":"*",
+		"":"Device to measure disk IO statistics.",
+		"":"For MS Windows - statistics only for first disk available.",
+
+	"-af_render_resclasses":["example","iostat"],
+		"":"Custom resources meters:",
+			"":"example - simple resource meter for an example only",
+			"":"iostat - parse output of linux 'iostat' command",
+
+	"-af_render_customiostat_devices":"sda",
+		"":"Device(s) for custom python resource meter 'iostat'.",
+		"":"To watch several devices use regular expression, for example 'sda[2-4]'.",
+		"":"If several devices matching pattern are founded,",
+		"":"it calculates the sum of traffic parameters and maximum of utilization parameters.",
+
+	"af_render_nice":10,
+		"":"Renice task command process on render.",
+		"":"MS Windows priority:",
+		"":"DWORD priority = NORMAL_PRIORITY_CLASS;",
+		"":"if( nice >   0 ) priority = BELOW_NORMAL_PRIORITY_CLASS;",
+		"":"if( nice >  10 ) priority = IDLE_PRIORITY_CLASS;",
+		"":"if( nice <   0 ) priority = ABOVE_NORMAL_PRIORITY_CLASS;",
+		"":"if( nice < -10 ) priority = HIGH_PRIORITY_CLASS;",
+
+	"af_render_zombietime":60,
+		"":"If render will not send update its resources for this time(seconds),",
+		"":"server will put it in 'OFFLINE' state.",
+
+	"af_render_exit_no_task_time":-1,
+		"":"Program will exit if there will be no tasks for this time(seconds),",
+		"":"Negative value disables this feature",
+
+	"af_task_update_timeout":30,
+		"":"If task progress (state or percentage) has not been updated for this period,",
+		"":"It wiil considered as an error, and render will be push in error hosts list.",
+
+	"af_task_stop_timeout":30,
+		"":"If render was asked to stop a task, but it did not send task finish message,",
+		"":"it wiil be considered as not running any way.",
+
+	"af_task_progress_change_timeout":-1,
+		"":"If task progress did not change within this time, consider that it is erroneous.",
+		"":"A value of -1 will disable this feature.",
+
+	"af_render_connectretries":3,
+		"":"Connection fails number to consider that render can`t connect to server.",
+
+	"af_render_exec":"afrender",
+		"":"Was used, will be needed, but not used for now",
+
+	"af_render_cmd_wolwake":"wolwake",
+	"":"",
+
+"":"Thumbnail:",
+	"af_thumbnail_extensions":["exr","dpx","jpg","jpeg","png","tif","tiff","tga"],
+	"af_thumbnail_cmd":"convert -identify \"%(image)s\" %(pre_args)s -thumbnail \"100x100^\" -alpha Deactivate -gravity center -extent 100x100 -colorspace sRGB \"%(thumbnail)s\"",
+	"-af_thumbnail_naming":"%(job_id)d.%(block_id)d.%(task_id)d.%(thumbnail_filename)s",
+	"-af_thumbnail_http":"http://localhost:80/thumbnails/",
+	"-af_thumbnail_file":"//servername/sharename/thumbnails/",
+
+"":"User:",
+	"af_errors_avoid_host":3,
+	"af_task_error_retries":3,
+	"af_task_errors_same_host":3,
+	"af_errors_forgivetime":18000,
+	"af_max_run_tasks_per_host":-1,
+	"af_jobs_life_time":0,
+
+"":"Monitor: (server side - any gui)",
+	"af_monitor_zombietime":40,
+
+"":"Watch: (qt gui - client side)",
+	"af_watch_get_events_sec":1,
+	"af_watch_refresh_gui_sec":5,
+	"af_watch_connectretries":3,
+	"af_watch_render_idle_bar_max":3600,
+
+"":"Database:",
+		"":"sting to pass to PQconnectdb http://www.postgresql.org/docs/current/static/libpq-connect.html",
+	"af_db_conninfo":"host=localhost dbname=afanasy user=afadmin password=AfPassword",
+	"af_db_stringquotes":"$$",
+	"af_db_stringnamelen":512,
+	"af_db_stringexprlen":4096,
+
+"":"System job:",
+	"af_sysjob_tasklife":1800,
+	"af_sysjob_tasksmax":1000,
+	"af_sysjob_wol_service":"wakeonlan",
+	"af_sysjob_postcmd_service":"postcmd",
+	"af_sysjob_events_service":"events",
+
+"":"Network:",
+	"":"Number of threads to process clients connections.",
+	"af_server_sockets_processing_threads_num":10,
+		"":"Ten threads to process should be enough for any situation.",
+
+	"":"Number of threads to read/write clients connections.",
+	"af_server_sockets_readwrite_threads_num":10,
+		"":"Ten threads does not mean that server can handle only about 10 clients.",
+		"":"This only means that it can read/write to 10 clients at the same time.",
+		"":"Other clients will just wait in IO queue.",
+		"":"For a fast networks designed for rendering 10 IO threads should be enough for any farm size.",
+
+	"":"Server sockets processing stack size.",
+	"-af_server_sockets_processing_threads_stack":32768,
+	"-af_server_sockets_readwrite_threads_stack":32768,
+		"":"Zero, negative value or no parameter means to use system default",
+
+	"":"You can use non-blocking IO on Linux server, based on Linux epoll facility",
+	"af_server_linux_epoll":0,
+		"":"If it is disabled (by default), Linux server will use blocking IO based on threads, like other platforms",
+
+	"":"Server waits client close socket first. Web browsers do it, only if we ask it in HTTP header by special header",
+	"af_server_http_wait_close":1,
+		"":"If you browser ignores 'Connection: close' header, you can make server not to wait it.",
+
+	"":"Socket options that can be set to play with:",
+	"af_so_server_RCVTIMEO_sec":12,
+	"af_so_server_SNDTIMEO_sec":12,
+	"af_so_server_TCP_NODELAY":-1,
+	"af_so_server_REUSEADDR":-1,
+	"af_so_server_TCP_CORK":-1,
+	"af_so_server_LINGER":-1,
+
+	"af_so_client_RCVTIMEO_sec":12,
+	"af_so_client_SNDTIMEO_sec":12,
+	"af_so_client_TCP_NODELAY":-1,
+	"af_so_client_REUSEADDR":-1,
+	"af_so_client_TCP_CORK":-1,
+	"af_so_client_LINGER":-1,
+		"":"Use -1 value not to set socket option at all",
+		"":"See man socket for details.",
+
+	"af_server_profiling_sec":1024,
+		"":"Server will output some network statistics by this period",
+
+	"af_wolwake_interval":10,
+		"":"Number of cycles (seconds) between waking each render",
+
+	"":""
+}}

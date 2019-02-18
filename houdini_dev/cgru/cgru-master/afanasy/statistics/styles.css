@@ -1,0 +1,167 @@
+body {
+background-color: #DFEDA2;
+background-image:url('images/back.jpg');
+color: #002000;
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size: 14px;
+text-align: justify;
+overflow-x: hidden;
+overflow-y: scroll;
+}
+body, div, a, span { margin: 0; padding: 0; }
+div { overflow: hidden;}
+
+a { color: #040;}
+
+#top_panel {
+margin: 4px 20px;
+text-align: center;
+border-radius: 6px;
+box-shadow: 0 0 2px #000 inset, 0 0 2px #FFF;
+padding: 8px 8px;
+position: relative;
+}
+#waiting {
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+background-color: #000;
+opacity: .5;
+}
+#actions {
+/*border: 1px solid #000;*/
+text-align: center;
+position: relative;
+height: 26px;
+}
+#actions .action {
+cursor: pointer;
+position: relative;
+top: 4px;
+text-align: center;
+font-weight: bold;
+border-radius: 4px;
+box-shadow: 0 0 3px #000, 0 0 3px #FFF inset;
+margin: 2px 12px;
+padding: 2px 12px;
+opacity: 0.8;
+text-shadow: 0 0 2px #FFF;
+}
+#actions .action.enabled {
+box-shadow: 0 0 3px #000 inset, 0 0 3px #FFF;
+background: rgba(255,255,255,.3);
+}
+
+.time_div .label {
+font-weight: bold;
+opacity: 0.7;
+text-shadow: 0 0 2px #FFF;
+font-style: italic;
+}
+
+.title {
+text-transform: capitalize;
+text-align: center;
+font-size: 16px;
+font-weight: bold;
+opacity: 0.8;
+text-shadow: 0 0 2px #FFF;
+}
+
+.editing{
+background: #DDD;
+border-radius: 4px;
+box-shadow: 0 0 3px #000 inset, 0 0 3px #FFF;
+min-height: 18px;
+padding: 2px 8px;
+}
+
+.time_div  {
+/*border: 1px solid #000;*/
+}
+.time_div > div {
+float: left;
+width: 100px;
+padding: 2px;
+}
+
+#content {
+margin: 1px 20px;
+text-align: center;
+}
+
+#info {
+overflow: hidden;
+margin: 4px 20px;
+padding: 4px 12px;
+background: rgba(0,20,0,.8);
+color: rgba(200,255,100,.9);
+text-shadow: 0 0 4px rgba(0,255,0,.8);
+border-radius: 4px;
+box-shadow: 0 0 4px #000 inset, 0 0 4px rgba(255,255,255,.8);
+}
+#info.error{
+background: rgba(20,0,0,.8);
+color: rgba(255,100,100,1);
+text-shadow: 0 0 4px rgba(2550,0,0,.9);
+}
+
+#folders_div {
+margin: 2px;
+padding: 2px;
+}
+#folders_ctrl_div {
+float: right;
+}
+.folder {
+cursor: pointer;
+float: left;
+margin: 3px;
+padding: 2px 8px;
+box-shadow: 0 0 3px #000, 0 0 3px #FFF inset;
+border-radius: 2px;
+}
+#folders_root .folder { box-shadow: 0 0 3px #000 inset, 0 0 3px #FFF; }
+
+.table_div {
+text-align: center;
+background: rgba(255,255,255,.1);
+box-shadow: 0 0 3px rgba(0,0,0,.8) inset;
+border-radius: 12px 12px 4px 4px;
+margin: 12px 0px;
+padding: 4px;
+}
+table.table {
+width: 100%;
+}
+table.table th, table.table td {
+text-align: center;
+background: rgba(255,255,255,.1);
+box-shadow: 0 0 3px rgba(0,0,0,.8) inset;
+padding: 2px;
+}
+table.table th {
+border-radius: 8px 8px 0px 0px;
+background: rgba(255,255,255,.2);
+font-weight: normal;
+}
+
+svg {
+margin: 8px;
+border-radius: 8px;
+box-shadow: 0 0 4px #000 inset, 0 0 4px #FFF;
+background: rgba(0,20,0,.6);
+}
+
+#log {
+margin: 4px 20px;
+padding: 4px 12px;
+background: rgba(0,20,0,.8);
+color: rgba(200,255,100,.9);
+text-shadow: 0 0 4px rgba(0,255,0,.8);
+border-radius: 4px;
+box-shadow: 0 0 4px #000 inset, 0 0 4px rgba(255,255,255,.8);
+}
+.log_time {
+color: rgba(200,255,100,.5);
+padding-right: 6px;
+}

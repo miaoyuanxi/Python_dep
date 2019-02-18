@@ -41,7 +41,7 @@ def main(*args):
     
     #刷新当前帧的前一帧，因为有时候缓存读取有问题，或者绑定时候模型飞，刷新当前帧就可以了 
     if info_dict["start"]:
-        cmds.currentTime(int(start)-1, edit=True)
+        cmds.currentTime(int(info_dict["start"])-1, edit=True)
         print "update frame"        
     
     
@@ -78,6 +78,13 @@ def main(*args):
                 else:
                     i.srdml.set(20480)
                     print "Your vray version lower than  3.10.01,set srdml to 20480MB"    
+
+                    
+            if i.hasAttr("sys_message_level"):
+                i.sys_message_level.set(4) #设置vray的日志级别
+                print ("%s sys_message_level.set(4)" %i)    
+    
+    
     
     
         if i.hasAttr("sys_max_threads"):
@@ -91,6 +98,18 @@ def main(*args):
     
     
     print ("custome prerender  end ----------- ")
+    
+    
+def delete_unknown(self):
+    unknownNodes = cmds.ls(type='unknown')
+    if unknownNodes:
+        try:
+            for node in unknownNodes:
+                print 'deleting: ' + node
+                cmds.lockNode(node, lock=False)
+                cmds.delete(node)
+        except Exception as err:
+            print('=== Error(delete unknown node) Msg : %s ===' % (err))
     
     
     

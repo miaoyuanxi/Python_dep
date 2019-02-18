@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PLAYER</title>
+<link type="text/css" rel="stylesheet" href="lib/styles.css">
+<link type="text/css" rel="stylesheet" href="rules/styles.css">
+<link type="text/css" rel="stylesheet" href="rules/player.css">
+<script type="text/javascript" src="lib/js/cgru.js"></script>
+<script type="text/javascript" src="lib/js/md5.js"></script>
+<script type="text/javascript" src="rules/admin.js"></script>
+<script type="text/javascript" src="rules/common.js"></script>
+<script type="text/javascript" src="rules/player.js"></script>
+<script type="text/javascript" src="rules/network.js"></script>
+<script type="text/javascript" src="rules/news.js"></script>
+<script type="text/javascript" src="rules/ui.js"></script>
+<script type="text/javascript">
+
+if( document.location.host.indexOf('rules.cgru.info') != -1 )
+{
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36528898-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+}
+
+</script>
+</head>
+<body onload="p_Init()">
+
+<div id="player_content">
+	<div id="view">
+		<div id="canvases"></div>
+	</div>
+	<img id="preview"/>
+</div>
+
+<div id="comments" style="display:none">
+	<div id="comments_label">Comments</div>
+	<div id="comments_body" contenteditable="true"></div>
+</div>
+
+<div id="header">
+	<div style="box-shadow: 0px 0px 10px #000 inset, 0px 0px 10px #FFF; border-radius: 5px; position:absolute;top: 5px; bottom: 40px; left: 5px; right: 5px; font-size: 12px; background: #AAA">
+		<div style="top: 0px; bottom: 0px; width: 250px; position: absolute; /*border: 1px solid #000;*/">
+			<div class="cgru_parameter">
+				<div class="label">Browser Storage</div>
+				<div class="button" style="left:120px" onclick="cgru_LocalStorageShow()">Show</div>
+				<div class="button" style="left:170px" onclick="cgru_LocalStorageClearClicked()">Clear</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">CGRU Config</div>
+				<div class="button" style="left:120px" onclick="cgru_ConfigShow()">Show</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label" id="rules_label">RULES</div>
+				<div class="button" style="left:120px;width:80px" onclick="p_RulesShow()">Show Current</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">Platform:</div>
+				<div class="variable" id="platform" style="left:70px;right:15px">unknown</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">Browser:</div>
+				<div class="variable" id="browser" style="left:70px;right:15px">unknown</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label" title="Pre create all frames to speed up.
+Reduce flickering without WebGL.
+Need more RAM.
+Even more RAM with WebGL.
+Activated after reload (F5).">PreCreate:</div>
+				<div class="variable" id="player_precreate"
+					style="left:70px;right:120px;cursor:pointer"
+					onclick="p_PrecreateOnClick()">OFF</div>
+				<div class="label" style="left:120px" title="Use Browser OpenGL.
+CAN add more speed.
+Reduce flickering without 'PreCreate'.
+Need more RAM.
+Need lots of RAM with 'PreCreate'.
+Activated after reload (F5).">WebGL:</div>
+				<div class="variable" id="player_usewebgl"
+					style="left:175px;right:15px;cursor:pointer"
+					onclick="p_UseWebGLOnClick()">OFF</div>
+			</div>
+		</div>
+		<div id="cgru_parameters" style="position:absolute; left: 250px; width: 300px; top:0;bottom:0; /*border: 1px solid #000;*/"></div>
+		<div style="position:absolute; left: 550px; width: 200px; top:0;bottom:0; /*border: 1px solid #000;*/">
+			<div style="text-align:center; padding: 10px 0 0 0;">
+				<a href="http://cgru.info#rules/rules.html#ru_player" target="_blank">Documentation</a></div>
+		</div>
+	</div>
+	<div id="headeropenbtn" class="headeropenbtn button" onclick="p_OpenCloseHeader()"></div>
+	<div class="panel">
+		<a id="rules_link" target="_blank">RULES</a>
+		<div id="FPS">
+			<div style="float:left;margin:3px;padding:2px;">FPS:</div>
+			<div id="framerate"></div>
+		</div>
+		<div class="button" id="save_btn" onclick="p_Save()" title="Save comments and changed images
+Hotkey: S">Save</div>
+		<div class="button" onclick="p_NextEditedFrame(-1)" title="Previous edited frame
+Hotkey: ;" style="margin-right: 1px">'&lt;</div>
+		<div class="button" onclick="p_NextEditedFrame(+1)" title="Next edited frame
+Hotkey: '" style="margin-left: 1px">&gt;'</div>
+		<div class="button" id="comments_btn" onclick="p_Comment()" title="Show/Hide comments
+Hotkey: C">Com</div>
+		<div class="button" id="paint_btn" onclick="p_Paint()" title="Show/Hide painting tools and enable/disable painting
+Hotkey: P">Paint</div>
+		<div class="button" id="link_btn" onclick="p_Link()" title="Get a link to the current frame">Link</div>
+		<div id="info_panel">Initializing player</div>
+		<div id="paint_panel" style="display:none">
+			<div class="button" ondblclick="p_PaintClear()"title="Double click to clear painted canvas">Clear</div>
+			<div id="paint_size">
+				<div class="label" title="Paint brush size" style="margin-right: 0px">Size:</div>
+				<div class="button" onclick="p_PaintSizeChange(-1)" title="Increase brush size
+Hotkey: 9" style="margin-right: 1px; margin-left: 2px">-</div>
+				<div class="editing" id="paint_size_num" contenteditable="true"></div>
+				<div class="button" onclick="p_PaintSizeChange(1)" title="Decrease brush size
+Hotkey: 0" style="margin-left: 1px">+</div>
+			</div>
+			<div id="paint_color" title="Brush color"></div>
+			<div id="paint_palette"></div>
+		</div>
+	</div>
+</div>
+
+<div id="footer">
+	<div id="frame_bar">
+		<div id="play_slider"></div>
+		<canvas id="bar_canvas"></canvas>
+	</div>
+	<div id="footeropenbtn" class="headeropenbtn button"
+		title="Open/close system log" style="top:20px" onclick="p_OpenCloseFooter()"></div>
+	<div id="cycle" style="top:30px"></div>
+	<div id="footer_panel">
+		<div id="playback_controls">
+			<div id="btn_rewind"  class="button" title="Rewind backwards to the beginning
+Hotkey: Home"
+				onclick="p_Rewind(0)">&laquo;</div>
+			<div id="btn_reverse" class="button" title="Play reverse
+Hotkey: R, <"
+				onclick="p_Reverse()">&lt;</div>
+			<div id="btn_prev"    class="button" title="Previous frame
+Hotkey: [
+Page UP for 10 frames"
+				onclick="p_NextFrame(-1)">[&lt;</div>
+			<div id="btn_next"    class="button" title="Next frame
+Hotkey: ]
+Page UP for 10 frames"
+				onclick="p_NextFrame(1)">&gt;]</div>
+			<div id="btn_play"    class="button" title="Play
+Hotkey: P, >, Space"
+				onclick="p_Play()">&gt;</div>
+			<div id="btn_forward" class="button" title="Rewind forward to the end
+Hotkey: End"
+				onclick="p_Rewind(1)">&raquo;</div>
+		</div>
+		<div id="viewport_controls">
+			<div class="button" title="View zoom out
+Hotkey: -"
+				onclick="p_ViewZoomOut()">-</div>
+			<div id="view_zoom" title="Zoom">zoom</div>
+			<div class="button" title="View zoom in
+Hotkey: +"
+				onclick="p_ViewZoomIn()">+</div>
+			<div class="button" title="View left
+Hotkey: &larr;"
+				onclick="p_ViewLeft()">&larr;</div>
+			<div class="button" title="View right
+Hotkey: &rarr;"
+				onclick="p_ViewRight()">&rarr;</div>
+			<div class="button" title="View up
+Hotkey: &uarr;"
+				onclick="p_ViewUp()">&uarr;</div>
+			<div class="button" title="View down
+Hotkey: &darr;"
+				onclick="p_ViewDown()">&darr;</div>
+			<div class="button" title="Home view
+Hotkey: H"
+				onclick="p_ViewHome()">H</div>
+			<div class="button" title="Full Screen
+Hotkey: F"
+				onclick="p_FullScreen()">F</div>
+	</div>
+	<div id="info"></div>
+	</div>
+	<div id="log"></div>
+</div>
+
+</body>
+</html>

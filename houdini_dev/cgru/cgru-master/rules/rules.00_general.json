@@ -1,0 +1,378 @@
+{
+"root":"rules_root",
+"-root_link":"/data/prj",
+
+"rufolder":".rules",
+"company":"CGRU",
+"panel_logo_img":"rules/icons/rules.png",
+"playlist":"rules/playlist.json",
+"cache_time":60,
+
+"news":{
+	"limit":99,
+	"refresh":60,
+	"recent":99
+},
+
+"bookmarks":{
+	"refresh":300
+},
+
+"flags":{
+	"hold"    :{"title":"HOLD",    "clr":[111,111,111],"short":"Hl",              "excl":true, "tip":"On hold"},
+	"error"   :{"title":"ERROR",   "clr":[255, 55, 55],"short":"Err", "p_max":99, "excl":false,"tip":"Error"},
+	"comment" :{"title":"COMMENT", "clr":[222,111,222],"short":"Cmm", "p_max":99, "excl":true, "tip":"Comment"},
+	"omit"    :{"title":"OMIT",    "clr":[ 99, 99, 99],"short":"Om",  "p_max":-1, "excl":true, "tip":"Omit"},
+	"done"    :{"title":"DONE",    "clr":[121,155,121],"short":"D",   "p_min":100,"excl":true, "tip":"Done"},
+	"closed"  :{"title":"CLOSED",  "clr":[ 11, 55, 11],"short":"CLS", "p_min":100,"excl":true, "tip":"Closed"},
+	"aux"     :{"title":"AUX",     "clr":[127,127,127],"short":"AUX", "p_max":-1, "excl":true, "tip":"Auxiliary"}
+},
+
+"tags":{
+	"wirem"   :{"title":"WiRem",    "short":"WR",  "tip":"Wire remove"},
+	"roto"    :{"title":"Roto",     "short":"Ro",  "tip":"Rotoscoping"},
+	"key"     :{"title":"Keying",   "short":"Key", "tip":"Keying"},
+	"back"    :{"title":"Back",     "short":"Bk",  "tip":"Back placement"},
+	"cleanup" :{"title":"CleanUp",  "short":"Cl",  "tip":"Cleanup"},
+	"comp"    :{"title":"Comp",     "short":"Cp",  "tip":"Compositing"},
+
+	"concept" :{"title":"Concept",  "short":"Cc",  "tip":"Concept"},
+	"paint"   :{"title":"Paint",    "short":"Pt",  "tip":"Painting"},
+	"matte"   :{"title":"MtPaint",  "short":"Mp",  "tip":"Matte painting"},
+	"textur"  :{"title":"Textur",   "short":"Tx",  "tip":"Texturing"},
+
+	"model"   :{"title":"Model",    "short":"Md",  "tip":"Modeling"},
+	"anim"    :{"title":"Anim",     "short":"Am",  "tip":"Animation"},
+	"track"   :{"title":"Track",    "short":"Tr",  "tip":"Tracking"},
+	"sim"     :{"title":"Sim",      "short":"Sm",  "tip":"Simulating"},
+	"render"  :{"title":"Render",   "short":"Rn",  "tip":"Rendering"},
+
+	"rnd"     :{"title":"R&D",      "short":"RnD", "tip":"Research and development"},
+	"animatic":{"title":"Animatic", "short":"Ac",  "tip":"Animiatic"},
+	"fullcg"  :{"title":"FullCG",   "short":"FCG", "tip":"Full CG Shot"},
+	"titles"  :{"title":"Titles",   "short":"Tt",  "tip":"Titles"},
+
+	"other"   :{"title":"Other",    "short":"Ot",  "tip":"Something else"}
+},
+
+"comments":{
+	"report" :{"title":"Report" ,"color":[100,200,100]},
+	"client" :{"title":"Client" ,"color":[200,200,100]},
+	"message":{"title":"Message","color":[150,150,200]}
+},
+
+"aux_folders":[".","_","-","tmp","temp","tmp","common"],
+
+"execute":[
+	{
+		"label":"XTerm",
+		"icon":"icons/terminal.png",
+		"title":"Open terminal in this location.",
+		"cmd":"cd \"@PATH@\"; xterm"
+	}
+],
+
+"assets":{
+	"projects_root":{
+		"play_folders":false,
+		"show_files":true
+	},
+	"project":{
+		"seek":["[projects_root]/","/"],
+		"upload_dir":"_UPLOADS/@DATE@_@USER@",
+		"play_folders":false,
+		"scripts":["project.js"],
+		"show_files":true
+	},
+	"scenes":{
+		"seek":["[project]/SCENES","[project]/SHOTS"],
+		"uploads":{
+			"upload":{
+				"masks":[".*"],
+				"folder":"_UPLOADS/@DATE@_@USER@"
+			}
+		},
+		"-name":"",
+		"filter":"sc_FilterShots",
+		"scripts":["scenes.js"]
+	},
+	"scene":{
+		"seek":["[scenes]/"],
+		"uploads":{
+			"upload":{
+				"masks":[".*"],
+				"folder":"_UPLOADS/@DATE@_@USER@"
+			}
+		},
+		"filter":"sc_FilterShots",
+		"scripts":["scenes.js"]
+	},
+	"shot":{
+		"seek":["[scene]/"],
+		"uploads":{
+			"upload":{
+				"masks":[".*"],
+				"folder":"_UPLOADS/@DATE@_@USER@"
+			},
+			"result":{
+				"masks":[".*\\.(zip|rar|7z)$"],
+				"folder":"RESULT/ARCHIVES/@DATE@_@USER@",
+				"news_title":"upload"
+			},
+			"dailies":{
+				"masks":[".*\\.(mov|mp4|avi)$"],
+				"folder":"RESULT/DAILIES"
+			}
+		},
+		"scripts":["shot.js"],
+		"subfolders_status_hide":true,
+		"subfolders_dailies_hide":true,
+		"post":"shot_Post",
+			"":"custom post function",
+		"references":{
+			"path":["REF"]
+		},
+		"source":{
+			"path":["SRC","SOURCE"]
+		},
+		"result":{
+			"path":["RESULT/JPG","RESULT/PNG","RESULT/DPX","RESULT/TIF","RESULT/EXR","RESULT/ANIM"]
+		},
+		"dailies":{
+			"path":["RESULT/DAILIES"]
+		},
+		"template":"rules/assets/shot",
+
+		"shot_process":[
+			{
+				"label":"Nk New",
+				"title":"Create and open new Nuke scene.",
+				"cmd":"/cgru/rules/bin/shot_process -s nuke -r nuke @template@ @fps@ @colorspace@",
+				"template":"/cgru/plugins/nuke/_template.nk"
+			},{
+				"label":"Nk Latest",
+				"title":"Open the latest Nuke scene.",
+				"cmd":"/cgru/rules/bin/shot_open_latest -s nuke -e .nk -r nuke"
+			}
+		]
+	}
+},
+
+"cgru_config":{
+	"pathsmap":[
+			["/cgru/rules_root/","/rules_root/"],
+			["/rules_root/","/cgru/rules_root/"]
+		]
+},
+
+"OS_unix":{
+	"cmdexec":{
+		"play_sequence":[
+			{"name":"DJV",
+				"cmd":"djv_view \"@PATH@\"",
+				"tooltip":"Open sequence within 'djv_view'."},
+			{"name":"NkCp",
+				"cmd":"nukecopy \"@PATH@\"",
+				"tooltip":"Copy Nuke Read.\nPaste it in a scene.",
+				"submenu":true},
+			{"name":"Nuke",
+				"cmd":"nukeview \"@PATH@\"",
+				"tooltip":"Open Nuke with this sequence Reader.",
+				"submenu":true}
+		],
+		"play_movie":[
+			{"name":"VLC",
+				"cmd":"vlc \"@PATH@\"",
+				"tooltip":"Open with VLC media player."},
+			{"name":"Totem",
+				"cmd":"totem \"@PATH@\"",
+				"tooltip":"Open with Totem video player."}
+		]
+	}
+},
+
+"OS_windows":{
+	"cmdexec":{
+		"play_sequence":[
+			{"name":"Pd++",
+				"cmd":"pdplayer --fps=@FPS@ --attach @PATH@",
+				"tooltip":"Append sequence in opened PdPlayer."},
+			{"name":"PdP",
+				"cmd":"pdplayer --fps=@FPS@ @PATH@",
+				"tooltip":"Open sequence with PdPlayer."},
+			{"name":"NkCp",
+				"cmd":"nukecopy @PATH@",
+				"tooltip":"Copy Nuke Read.\nPaste it in a scene.",
+				"submenu":true},
+			{"name":"Nuke",
+				"cmd":"nukeview @PATH@",
+				"tooltip":"Open Nuke with this sequence Reader.",
+				"submenu":true}
+		],
+		"play_movie":[
+			{"name":"QT",
+				"cmd":"QuickTimePlayer @PATH@",
+				"tooltip":"Open with QuickTime."},
+			{"name":"VLC",
+				"cmd":"vlc @PATH@",
+				"tooltip":"Open with VLC media player."}
+		]
+	}
+},
+
+"thumbnail":{
+	"filename":"thumbnail.jpg",
+	"colorspace":"auto",
+	"cmd_asset":"rules/bin/thumbnail.sh -n 3 -i \"@INPUT@\" -t 600 -o \"@OUTPUT@\"",
+	"create_file":"rules/bin/thumbnail.sh -i \"@INPUT@\" -t 600 -o \"@OUTPUT@\""
+},
+
+"avcmd":"ffmpeg",
+"skipfiles":[".","Thumbs.db"],
+
+"-colorspace":"extension",
+"fps":24,
+"dailies":
+{
+	"format":"1280x720",
+	"fps":"25",
+	"codec":"h264_mid",
+	"container":"DEFAULT",
+	"colorspace":"auto",
+	"template":"dailies_withlogo",
+	"slate":"dailies_slate",
+	"-font":"DejaVuSans",
+	"naming":"(s)_(v)_(d)",
+	"logo_slate_path":"logo.png",
+	"logo_slate_size":20,
+	"logo_slate_grav":"SouthEast",
+	"logo_frame_path":"logo.png",
+	"logo_frame_size":10,
+	"logo_frame_grav":"North",
+	"activity":"comp",
+
+	"colorspaces":{
+		"auto":   {"name":"Auto",      "value":"auto",      "tooltip":"Try to read metadata"},
+		"ext":    {"name":"Extension", "value":"extension", "tooltip":"By image extension:\nDPX,CIN: cineon\nEXR: linear\nAny Other: sRGB"},
+		"linear": {"name":"Linear",    "value":"RGB"},
+		"srgb":   {"name":"sRGB",      "value":"sRGB"},
+		"log":    {"name":"Cineon",    "value":"Log"}
+	},
+
+	"formats":{
+		"asis":   {"name":"As Is",   "value":null},
+		"pal":    {"name":"PAL",     "value":"720x576x1.09"},
+		"pal768": {"name":"PAL 768", "value":"768x576"},
+		"1k43":   {"name":"1k 4:3",  "value":"1024x768"},
+		"sd360":  {"name":"640x360", "value":"640x360"},
+		"sd540":  {"name":"960x540", "value":"960x540"},
+		"hd720":  {"name":"HD720",   "value":"1280x720"},
+		"hd1080": {"name":"HD1080",  "value":"1920x1080"}
+	},
+
+	"codecs":{
+		"photojpg_high": {"name":"JPG Hi",   "tooltip":"PhotoJPG High [mp4]"},
+		"photojpg_mid":  {"name":"JPG Mid",  "tooltip":"PhotoJPG Mid [mp4]"},
+		"photojpg_low":  {"name":"JPG Lo",   "tooltip":"PhotoJPG Low [mp4]"},
+		"h264_high":     {"name":"H264 Hi",  "tooltip":"H.264 High [mp4]"},
+		"h264_mid":      {"name":"H264 Mid", "tooltip":"H.264 Mid [mp4]"},
+		"h264_low":      {"name":"H264 Lo",  "tooltip":"H.264 Low [mp4]"},
+		"theora_high":   {"name":"Th Hi",    "tooltip":"Theora High [ogg]"},
+		"theora_mid":    {"name":"Th Mid",   "tooltip":"Theora Mid [ogg]"},
+		"theora_low":    {"name":"Th Lo" ,   "tooltip":"Theora Low [ogg]"},
+		"dnxhd185":      {"name":"DNxHD" ,   "tooltip":"AVID DNxHD 1920x1080x25:185 [mov]"},
+		"prores444":     {"name":"Pro444",   "tooltip":"Apple ProRes444 10Bit [mov]"},
+		"prores422":     {"name":"Pro422",   "tooltip":"Apple ProRes422 10Bit [mov]"},
+		"copy":          {"name":"COPY",     "tooltip":"Just copy stream [mp4]"}
+	},
+
+	"containers":{
+		"DEFAULT": {"name":"Default", "tooltip":"Default container:\nProRes, DNxHD: MOV\nTheora: OGG\nAny other: MP4"},
+		"mp4": {"name":"MP4", "tooltip":"MPEG-4 Part 14\nIt is a common container."},
+		"mov": {"name":"MOV", "tooltip":"Apple QuickTime Movie"},
+		"m4v": {"name":"M4V", "tooltip":"Apple 'MP4'"},
+		"mxf": {"name":"MXF", "tooltip":"Material eXchange Format"},
+		"avi": {"name":"AVI", "tooltip":"Microsoft Audio Video Interleave"}
+	},
+
+	"preview":{
+		"codec":"h264_mid",
+		"args":"-vf scale=640:-1"
+	},
+
+	"af_capacity":500
+},
+
+"permissions":{
+	"default_groups":["admins","users"]
+},
+
+"cut":{
+	"input":"RESULT/JPG,RESULT/PNG,RESULT/TIF,RESULT/DPX",
+	"output":"COMMON/_cut",
+	"af_capacity":500,
+	"af_maxtasks":10,
+	"af_perhost":-1,
+	"af_pertask":100,
+	"af_maxruntime":120
+},
+
+"tmpfio":{
+	"template":"rules/assets/tmpfio"
+},
+
+"put":{
+	"input":"RESULT/PNG,RESULT/TIF,RESULT/DPX",
+	"dest":"OUT",
+	"-dest":"/incoming",
+	"cmd":"python /cgru/utilities/put.py",
+	"-ftp":{
+		"host":"localhost",
+		"user":"",
+		"pass":""
+	},
+	"post_delete":false,
+	"af_service":"generic",
+	"-af_service":"ftp",
+	"af_parser":"generic",
+	"af_capacity":500,
+	"af_maxtasks":5,
+	"af_perhost":1
+},
+
+"archive":{
+	"types":{
+		"zip": {"name":"ZIP", "tooltip":"Fastest, simplest, no special programs needed, recommended"},
+		"rar": {"name":"RAR", "tooltip":"For WinRAR lowers"},
+		"7z" : {"name":"7Z",  "tooltip":"Slowest, but small archive size"}
+	},
+	"default":"zip",
+	"cmd":"python /cgru/utilities/arch.py",
+	"cmd_x":"python /cgru/utilities/arch_x.py",
+	"dest":"",
+	"af_service":"arch",
+	"af_parser":"generic",
+	"af_capacity":500,
+	"af_maxtasks":5
+},
+
+"walk":{
+	"cmd":"python /cgru/rules/bin/walk.py",
+	"af_service":"walk",
+	"af_parser":"generic",
+	"af_capacity":100
+},
+
+"checksum":{
+	"md5":{
+		"cmd":"python /cgru/utilities/checksum.py",
+		"name":"MD5",
+		"af_service":"checksum",
+		"af_parser":"generic",
+		"af_capacity":500
+	}
+},
+
+"":""
+
+}

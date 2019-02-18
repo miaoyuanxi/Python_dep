@@ -1,0 +1,10 @@
+# Ignore other scenes:
+/PRO/
+/SHU/
+
+# Ignore images:
+*.jpg
+
+# Ignore movies:
+*.mov
+*.ogg

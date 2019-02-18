@@ -1,0 +1,44 @@
+<style type="text/css">
+
+.shot_files {
+clear: both;
+}
+.shot_files .filesview {
+margin: 10px;
+border: 1px solid #777;
+border-radius: 2px;
+}
+
+#shot_process_div > div {
+float:left;
+font-size: 12px;
+margin:2px 4px;
+}
+
+.shot_empty_result { float: left; padding: 2px 6px; }
+
+</style>
+
+<div id="shot_refs_div" style="float: left; display: none;">
+	<div id="shot_refs_btn" class="button"
+		title="Show shot folder with references."
+		onclick="shot_ShowRefs()">Show References</div>
+	<div id="shot_refs" class="shot_files" style="display: none;">Loading Shot References...</div>
+</div>
+
+<div id="shot_src_div" style="float: left; display: none;">
+	<div id="shot_src_btn" class="button" style="float: left;"
+		title="Scan shot sources folder and its subfolders for sequences and movies."
+		onclick="shot_SourcesScan()">Scan Sources</div>
+	<div id="shot_src_close_btn" class="button" style="float: left; display: none;"
+		title="Close shot sources view."
+		onclick="shot_SourcesClose()">Close Sources</div>
+	<div id="shot_src" class="shot_files" style="display: none;">Scanning Shot Source Sequences...</div>
+</div>
+
+<div id="shot_process_div" style="float:right"></div>
+
+<div class="button" style="float: left;" onclick="shot_ResultsRead(false)">Reread Shot Results</div>
+
+<div id="shot_results" class="shot_files">Reading Shot Results...</div>
+

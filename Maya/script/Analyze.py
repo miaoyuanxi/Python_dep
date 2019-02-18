@@ -417,16 +417,16 @@ class Analyze(dict, Maya):
             self.writing_error(25002, "renderlayer: %s --- %s" % (layer, scene_info_common_dict['image_file_prefix']))
         scene_info_common_dict['start'] = str(int(cmds.getAttr("defaultRenderGlobals.startFrame")))
         scene_info_common_dict['end'] = str(int(cmds.getAttr("defaultRenderGlobals.endFrame")))
-        scene_info_common_dict['by_frame'] = str(int(cmds.getAttr("defaultRenderGlobals.byFrame")))
+        scene_info_common_dict['by_frame'] = str(int(cmds.getAttr("defaultRenderGlobals.byFrameStep")))
         scene_info_common_dict['frames'] = scene_info_common_dict['start'] + '-' + scene_info_common_dict['end'] + '[' + scene_info_common_dict['by_frame'] + ']'
         if layer == "defaultRenderLayer":
             pass
         else:
             if pm.mel.eval('editRenderLayerAdjustment -remove "defaultRenderGlobals.endFrame";') or pm.mel.eval(
                     'editRenderLayerAdjustment -remove "defaultRenderGlobals.startFrame";') or pm.mel.eval(
-                    'editRenderLayerAdjustment -remove "defaultRenderGlobals.byFrame";'):
+                    'editRenderLayerAdjustment -remove "defaultRenderGlobals.byFrameStep";'):
                 self.writing_error(25015,
-                                   "render layer: %s \'s startFrame/endFrame/byFrame has Layer Override attribute ,advice Layered submitting" % (
+                                   "render layer: %s \'s startFrame/endFrame/byFrameStep has Layer Override attribute ,advice Layered submitting" % (
                                    layer))
         scene_info_common_dict['all_camera'] = self.GetRenderableCameras(False)
         scene_info_common_dict['render_camera'] = [i.name() for i in pm.ls(type="camera") if i.renderable.get()]

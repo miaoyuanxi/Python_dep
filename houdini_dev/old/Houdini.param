@@ -1,0 +1,189 @@
+[About]
+Type=label
+Label=About
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=Houdini Plugin for Deadline
+Description=Not configurable
+
+[ConcurrentTasks]
+Type=label
+Label=ConcurrentTasks
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=True
+Description=Not configurable
+
+[Houdini9_0_Hython_Executable]
+Label=Houdini 9 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=0
+Default=C:\Program Files\Side Effects Software\Houdini 9.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 9.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini10_0_Hython_Executable]
+Label=Houdini 10 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=1
+Default=C:\Program Files\Side Effects Software\Houdini 10.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 10.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini11_0_Hython_Executable]
+Label=Houdini 11 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=2
+Default=C:\Program Files\Side Effects Software\Houdini 11.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 11.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini12_0_Hython_Executable]
+Label=Houdini 12 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=3
+Default=C:\Program Files\Side Effects Software\Houdini 12.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 12.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini13_0_Hython_Executable]
+Label=Houdini 13 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=4
+Default=C:\Program Files\Side Effects Software\Houdini 13.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 13.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini14_0_Hython_Executable]
+Label=Houdini 14 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=5
+Default=C:\Program Files\Side Effects Software\Houdini 14.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 14.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini15_0_Hython_Executable]
+Label=Houdini 15 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=6
+Default=C:\Program Files\Side Effects Software\Houdini 15.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 15.0.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini15_5_Hython_Executable]
+Label=Houdini 15.5 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=7
+Default=C:\Program Files\Side Effects Software\Houdini 15.5.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 15.5.000\bin\Hython.exe;/Library/Frameworks/Houdini.framework/Resources/bin/hython;/usr/local/Houdini/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+
+[Houdini16_0_Hython_Executable]
+Label=Houdini 16 Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=8
+Default=C:\Program Files\Side Effects Software\Houdini 16.0.000\bin\Hython.exe;C:\Program Files (x86)\Side Effects Software\Houdini 16.0.000\bin\Hython.exe;/Applications/Houdini/Houdini16.0.000/Frameworks/Houdini.framework/Versions/16.0.000/Resources/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+
+[Houdini13_0_SimTracker]
+Label=Houdini 13 Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=0
+Default=C:\Program Files\Side Effects Software\Houdini 13.0.000\houdini\python2.7libs\simtracker.py;C:\Program Files (x86)\Side Effects Software\Houdini 13.0.000\houdini\python2.7libs\simtracker.py;/Library/Frameworks/Houdini.framework/Resources/houdini/python2.7libs/simtracker.py;/opt/hfs13/houdini/python2.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+
+[Houdini14_0_SimTracker]
+Label=Houdini 14 Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=1
+Default=C:\Program Files\Side Effects Software\Houdini 14.0.000\houdini\python2.7libs\simtracker.py;C:\Program Files (x86)\Side Effects Software\Houdini 14.0.000\houdini\python2.7libs\simtracker.py;/Library/Frameworks/Houdini.framework/Resources/houdini/python2.7libs/simtracker.py;/opt/hfs14/houdini/python2.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+
+[Houdini15_0_SimTracker]
+Label=Houdini 15 Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=2
+Default=C:\Program Files\Side Effects Software\Houdini 15.0.000\houdini\python2.7libs\simtracker.py;C:\Program Files (x86)\Side Effects Software\Houdini 15.0.000\houdini\python2.7libs\simtracker.py;/Library/Frameworks/Houdini.framework/Resources/houdini/python2.7libs/simtracker.py;/opt/hfs15/houdini/python2.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+
+[Houdini15_5_SimTracker]
+Label=Houdini 15.5 Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=3
+Default=C:\Program Files\Side Effects Software\Houdini 15.5.000\houdini\python2.7libs\simtracker.py;C:\Program Files (x86)\Side Effects Software\Houdini 15.5.000\houdini\python2.7libs\simtracker.py;/Library/Frameworks/Houdini.framework/Resources/houdini/python2.7libs/simtracker.py;/opt/hfs15.5/houdini/python2.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+
+[Houdini16_0_SimTracker]
+Label=Houdini 16 Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=4
+Default=C:\Program Files\Side Effects Software\Houdini 16.0.000\houdini\python2.7libs\simtracker.py;C:\Program Files (x86)\Side Effects Software\Houdini 16.0.000\houdini\python2.7libs\simtracker.py;/Applications/Houdini/Houdini16.0.000/Frameworks/Houdini.framework/Versions/16.0.000/Resources/houdini/python2.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+
+[Houdini_SimTracker_Tracker_Port]
+Label=Houdini Sim Tracker Port
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=Integer
+Index=100
+Default=8000
+Description=The port number that the Sim Tracker will listen on for communication.
+
+[Houdini_SimTracker_Web_Service_Port]
+Label=Houdini Sim Web Service Port
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=Integer
+Index=101
+Default=9000
+Description=The port number for the Sim Tracker's web service.
+
+[Houdini_SimTracker_Use_IP_Address]
+Label=Use IP Address for Sim Tracker
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=boolean
+Index=102
+Default=True
+Description=If True, the IP address of the machine running the Sim Tracker process will be used for communication instead of the host name.
+
+[ELicSlaves]
+Type=slavelist
+Category=Licensing Options
+CategoryOrder=1
+CategoryIndex=0
+Label=Slaves To Use Escape License
+Default=
+Description=A list of slaves that should use a Houdini Escape license instead of a Batch license. Use a , to separate multiple slave names, for example: slave001,slave002,slave003
+
+[EnablePathMapping]
+Type=boolean
+Category=Path Mapping (For Mixed Farms)
+CategoryOrder=2
+CategoryIndex=0
+Label=Enable Path Mapping
+Default=true
+Description=If enabled, Deadline will use Houdini's HOUDINI_PATHMAP environment variable to perform path mappings on the contents of the Houdini scene file. This feature can be turned off if there are no Path Mapping entries defined in the Repository Options.

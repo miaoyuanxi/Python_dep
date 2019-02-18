@@ -31,6 +31,7 @@ class Maya(object):
         self.reference_list = []
         self.invalid_abc = []
         self.scene_open_success = 0
+        self.renderlayer_error = 0
         currentPath = os.path.split(os.path.realpath(__file__))[0].replace('\\', '/')
         currentPath = currentPath.lower()
         if "user" in currentPath:
@@ -154,7 +155,8 @@ class Maya(object):
             if "fatal flex scanner internal error--end of buffer missed" in resultLine:
                 self.print_info_err("Please Check that the file is uploaded intact")
             if " This file contains legacy render layers and Maya is currently in Render Setup mode" in resultLine:
-                self.print_info_err(u".......渲染层方式不对，问问客户渲染层方式，然后联系TD定制一下...........")
+                self.renderlayer_error = 1
+                # self.print_info_err(u".......渲染层方式不对，问问客户渲染层方式，然后联系TD定制一下...........")
             # if resultLine =="write cg_info_file":
             #     self.print_info_err("..........Analysis  OK , analysis results have been written............")
                 # cmdp.kill()
@@ -171,9 +173,12 @@ class Maya(object):
         resultStr = cmdp.stdout.read()
         resultCode = cmdp.returncode
 
+        if self.renderlayer_error == 1:
+            self.print_info_err(u".......渲染层方式不对，客户的文件可能是用的传统渲染层，也可能reference中混用了，问问客户渲染层方式，然后联系TD定制一下...........")
+
         if len(self.reference_list) != 0:
             resultCode = 333
-            self.print_info_err(u".......以下reference未找到（未上传或上传位置不对），让客户上传到对应位置，重新分析,如果不需要，就清理掉..........")
+            self.print_info_err(u".......以下reference未找到（未上传或上传位置不对），可能导致切换不了渲染层，让客户上传到对应位置，重新分析,如果不需要，就清理掉,..........")
             for i in self.reference_list:
                 i_info = self.convertUnicode2Str(i)
                 i_info = self.unicode_to_str(i_info)

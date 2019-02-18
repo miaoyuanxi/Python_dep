@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RULES</title>
+<link type="text/css" rel="stylesheet" href="lib/styles.css">
+<link type="text/css" rel="stylesheet" href="rules/styles.css">
+<script type="text/javascript" src="lib/js/cgru.js"></script>
+<script type="text/javascript" src="lib/js/md5.js"></script>
+<script type="text/javascript" src="rules/admin.js"></script>
+<script type="text/javascript" src="rules/asset.js"></script>
+<script type="text/javascript" src="rules/bookmarks.js"></script>
+<script type="text/javascript" src="rules/comments.js"></script>
+<script type="text/javascript" src="rules/common.js"></script>
+<script type="text/javascript" src="rules/dailies.js"></script>
+<script type="text/javascript" src="rules/filesutils.js"></script>
+<script type="text/javascript" src="rules/filesview.js"></script>
+<script type="text/javascript" src="rules/general.js"></script>
+<script type="text/javascript" src="rules/gui.js"></script>
+<script type="text/javascript" src="rules/network.js"></script>
+<script type="text/javascript" src="rules/news.js"></script>
+<script type="text/javascript" src="rules/playlist.js"></script>
+<script type="text/javascript" src="rules/table.js"></script>
+<script type="text/javascript" src="rules/statistics.js"></script>
+<script type="text/javascript" src="rules/status.js"></script>
+<script type="text/javascript" src="rules/ui.js"></script>
+<script type="text/javascript" src="rules/search.js"></script>
+<script type="text/javascript" src="rules/upload.js"></script>
+<script type="text/javascript">
+
+if( document.location.host.indexOf('rules.cgru.info') != -1 )
+{
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36528898-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+}
+
+</script>
+</head>
+<body onload="g_Init()">
+
+<div id="navig_div">
+	<div id="navig"></div>
+	<div id="navig_loading" oncontextmenu="return false"></div>
+	<div id="navig_panel">
+		<div class="infotooltip" style="float: left; margin: 1px 4px;" title="Navigation Controls:
+LMB - go to folder (set current)
+LMB on the current folder - open/close
+RMB - open/close folder (faster)
+
+Use [ART],[TAG],[ANN] buttons
+to show/hide folder status info."
+			></div>
+		<div class="button" style="width:16px;" title="Scroll to current" onclick="g_NavigScrollCurrent()">&gt;&lt;</div>
+		<div class="button" id="navig_show_artists"    title="Show artists"    onclick="g_NavigShowInfo(this)">ART</div>
+		<div class="button" id="navig_show_tags"       title="Show tags"       onclick="g_NavigShowInfo(this)">TAG</div>
+		<div class="button" id="navig_show_annotation" title="Show annotation" onclick="g_NavigShowInfo(this)">ANN</div>
+		<div class="button" id="navig_show_size"       title="Show size
+Only if it was calculated
+Refresh browser to sort by size" onclick="g_NavigShowInfo(this)">SIZE</div>
+		<div class="button small" id="navig_show_duration"   title="Show duration" onclick="g_NavigShowInfo(this)">D</div>
+		<div class="button small" id="navig_show_price"      title="Show price" onclick="g_NavigShowInfo(this)">P</div>
+		<div class="button small" id="navig_show_frames"     title="Show frames number
+Only if it was calculated" onclick="g_NavigShowInfo(this)">F</div>
+		<div class="button small" id="navig_show_percent"    title="Show percentage"    onclick="g_NavigShowInfo(this)">%</div>
+	</div>
+	<div id="navig_handle" class="gui_size_handle" onmousedown="u_ResizeGUIStart('navig_width',1)"></div>
+</div>
+
+<div id="content">
+	<div id="panel">
+		<div id="annotations"></div>
+		<div id="search_panel" style="float:right">
+			<div id="search_btn" class="button" style= "float:right;" onclick="s_SearchOnClick()">Search</div>
+			<div id="search_btn_process" class="button" style="float:right;display:none" onclick="s_ProcessGUI()">Search</div>
+		</div>
+	</div>
+	<div id="search" style="display:none">
+		<div>
+			<div style="float:left">Percent:</div>
+			<div id="search_percentmin" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+			<div style="float:left"> - </div>
+			<div id="search_percentmax" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+			<div style="float:left">Finish:</div>
+			<div id="search_finishmin" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+			<div style="float:left"> - </div>
+			<div id="search_finishmax" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+		</div>
+		<div>
+			<div style="float:left;">Annotation:</div>
+			<div id="search_annotation" class="editing" contenteditable="true"></div>
+		</div>
+		<div id="search_artists_div" class="search_grp" style="display:none">
+			<div class="search_grp_ctrl">
+				<div>Artists:</div>
+				<div class="button" onclick="s_ShowDisabledArtists(this)" title="Show disabled artists.">Dis</div>
+				<div class="button" onclick="s_ShowNotArtists(this)" title="Show not only artists.">All</div>
+				<div class="button" id="search_artists_notassigned"
+					title="Search shots that not assigned to any artist.">
+					N/A
+				</div>
+			</div>
+			<div id="search_artists" class="artists"></div>
+		</div>
+		<div class="search_grp">
+			<div class="search_grp_ctrl">
+				<div>Flags:</div>
+				<div class="button" id="search_noflags"
+					title="Search shots that has not any flags.">
+					N/F
+				</div>
+			</div>
+			<div id="search_flags" class="flags"></div>
+		</div>
+		<div class="search_grp">
+			<div class="search_grp_ctrl">
+				<div>Tags:</div>
+				<div class="button" id="search_notags"
+					title="Search shots that has not any tags.">
+					N/T
+				</div>
+			</div>
+			<div id="search_tags" class="tags"></div>
+		</div>
+		<div class="search_grp">
+			<div>
+				<div style="float:left">Status Modified:</div>
+				<div id="search_statmodmin" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+				<div style="float:left"> - </div>
+				<div id="search_statmodmax" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+				<div style="float:left">Body Modified:</div>
+				<div id="search_bodymodmin" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+				<div style="float:left"> - </div>
+				<div id="search_bodymodmax" class="editing" style="float:left;width:40px;text-align:center;" contenteditable="true"></div>
+			</div>
+			<div>
+				<div style="float:left;">Body:</div>
+				<div id="search_body" class="editing" contenteditable="true"></div>
+			</div>
+			<div id="search_comment_div">
+				<div style="float:left;">Comments:</div>
+				<div id="search_comment" class="editing" contenteditable="true"></div>
+			</div>
+		</div>
+		<div id="search_result_div" style="display:none; box-shadow:0 0 3px #000 inset;">
+			<div id="search_info">
+				<div style="float:left;">Search Path = </div>
+				<a id="search_path"></a>
+				<div style="clear: both;">
+					<div style="float:left;">Results Count:</div>
+					<div style="float:left;" id="search_results_count"></div>
+				</div>
+			</div>
+			<div id="search_result" style="box-shadow:0 0 3px #000 inset; margin: 8px; padding: 8px;"></div>
+			<div id="search_result_none" style="display:none; box-shadow:0 0 3px #000 inset; margin: 8px; padding: 8px; text-align: center;">
+				No results found.</div>
+		</div>
+	</div>
+	<div style="text-align:center; clear: both;"><img id="thumbnail" class="thumbnail" style="margin-top:4px"></div>
+	<div id="status">
+		<div id="status_show">
+			<div class="infotooltip" style="float: left;" title="Info:
+This is current location (folder,shot,project) status.
+Artist, working with the shot, should be assigned here.
+Supervisor can assign artist by creating a task."
+				></div>
+			<div id="status_edit_btn" class="button edit" title="Edit status" style="display:none; float:right;"></div>
+			<div id="status_percentage"></div>
+			<div id="status_annotation"></div>
+			<div id="status_artists" class="artists"></div>
+			<div id="status_flags" class="flags"></div>
+			<div id="status_tags" class="tags"></div>
+			<div id="status_finish" class="finish"></div>
+			<div id="status_progress" class="progress"><div id="status_progressbar" class="progressbar"></div></div>
+			<div style="clear:both"></div>
+			<div id="status_framesnum_div">
+				<div id="status_framesnum"
+					style="font: 16px monospace; padding: 1px 6px; float: left;"></div>
+				<div style="padding: 1px 6px; float: right;">Frames</div>
+			</div>
+			<div id="status_modified"></div>
+			<div id="status_adinfo" style="clear:both; display: none;"></div>
+			<div style="clear:both;">
+				<div id="status_reports_div">
+					Reports:
+					<div id="status_reports" style="margin: 4px;"></div>
+				</div>
+				<div id="status_tasks_div">
+					Tasks:
+					<div id="status_tasks" style="margin: 4px;"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="execute_div" class="_view">
+		<div id="execute_btn" onclick="u_ExecuteShow()" class="button">EXECUTE</div>
+		<div id="execute_body"></div>
+	</div>
+	<div id="asset_div" class="view">
+		<div class="button show" onclick="u_OpenCloseView('asset')"
+			title="Show asset view">Asset
+			<img src="rules/icons/arrow_down.png"/>
+		</div>
+		<div class="view_show">
+			<div id="asset_tooltip" class="infotooltip" style="float: right; margin: 2px; display: none;"></div>
+			<div class="button openclose" onclick="u_OpenCloseView('asset')"
+				title="Hide asset view"></div>
+			<div id="asset_top_left"></div>
+			<div id="asset_label" style="text-align:center; margin-top: 4px;">Asset</div>
+			<div id="asset" class="view_view"></div>
+		</div>
+	</div>
+	<div id="files_div" class="view">
+		<div class="button show" onclick="u_OpenCloseView('files')"
+			title="Show files">Files
+			<img src="rules/icons/arrow_down.png"/>
+		</div>
+		<div class="view_show">
+			<div class="button openclose" onclick="u_OpenCloseView('files')"
+				title="Hide files"></div>
+			<div class="infotooltip" style="float: left; margin: 2px 4px;" title="Info:
+Here are shown current location files.
+"			></div>
+			<div id="files_label" style="text-align:center; margin-top: 4px;">Files</div>
+			<div id="files" class="view_view"></div>
+		</div>
+	</div>
+	<div id="buffer_div" style="display: none;">
+		<div id="buffer_panel">
+			<div class="label"><b>Buffer:</b></div>
+			<div class="button" ondblclick="fu_BufferClear()" title="Double click to clear buffer.">Clear</div>
+			<div class="label">Select</div>
+			<div class="button" onclick="fu_BufferSelectAll()">All</div>
+			<div class="button" onclick="fu_BufferSelectNone()">None</div>
+		</div>
+		<div id="buffer"></div>
+	</div>
+	<div id="body_div" class="view">
+		<div class="button show" onclick="u_OpenCloseView('body')"
+			title="Show body">Body
+			<img src="rules/icons/arrow_down.png"/>
+		</div>
+		<div class="view_show">
+			<div class="button openclose" onclick="u_OpenCloseView('body')"
+				title="Hide body"></div>
+			<div class="infotooltip" style="float: left; margin: 2px 4px;" title="Info:
+Body is designed to show some information.
+Usually shot specification is written here.
+Project input and output format.
+"			></div>
+			<div id="body_edit" style="float:right; display:none;">
+				<div id="body_btn_edit" class="button edit" style="float:right; display:none;"
+					onclick="u_BodyEditStart()" title="Edit body"></div>
+				<div id="body_btn_edit_cancel" class="button" title="Cancel body editing." style="padding:0px 4px; float:right; display:none;"
+					onclick="u_BodyEditCancel()">Cancel</div>
+			</div>
+			<div id="body_label" style="text-align:center; margin-top: 4px;">Body</div>
+			<div id="body" class="view_view">
+				<div id="body_panel" style="padding: 1px 30px;">
+					<img id="body_avatar_c">
+					<img id="body_avatar_m">
+					<div id="body_info"></div>
+				</div>
+				<div id="body_timecode">
+					<div id="body_timecode_label">Time Code:</div>
+					<div id="body_timecode_value" class="value"></div>
+					<div>Duration:</div>
+					<div id="body_timecode_duration" class="value"></div>
+					<div>Frames:</div>
+					<div id="body_timecode_framesnum" class="value frames_num" title="Double click to update shot length."
+						ondblclick="st_SetFramesNumber( this.m_frames_num);this.classList.remove('error')"></div>
+					<div>FPS:</div>
+					<div id="body_timecode_fps" class="value"></div>
+				</div>
+				<div id="body_panel_edit" style="display:none">
+					<div class="button" style="float:right" onclick="u_BodyEditSave()" title="Save body editing (CTRL+ENTER)">
+						<b>Save</b> <small>(CTRL+ENTER)</small></div>
+					<div class="toggle" id="body_edit_markup" onclick="u_BodyEditMarkup()"
+						title="HTML Markup Mode">Markup mode</div>
+					<div class="toggle" ondblclick="u_BodyEditMarkupRemove()"
+						title="Double click to remove all HTML markup from body">
+						Remove all markup</div>
+					<div id="body_timecode_edit">
+						<div id="body_timecode_edit_label">Time Code:</div>
+						<div id="body_timecode_edit_value" contenteditable="true" class="editing"></div>
+					</div>
+				</div>
+				<div id="body_body" style="padding: 5px 10px;"></div>
+			</div>
+		</div>
+	</div>
+	<div id="comments_div" class="view">
+		<div class="button show" onclick="u_OpenCloseView('comments')"
+			title="Show comments">Comments
+			<img src="rules/icons/arrow_down.png"/>
+		</div>
+		<div class="view_show" id="comments_show">
+			<div class="button openclose" onclick="u_OpenCloseView('comments')"
+				title="Hide comments"></div>
+			<div class="infotooltip" style="float: left; margin: 2px 4px;" title="Info:
+Comments are stored here.
+Comment can be an artist report with a tag and duration.
+"			></div>
+			<div id="comments_btn_add" class="button"
+				style="float:right; width: 20px; height: 20px; background-image: url(rules/icons/comment_add.png)"
+				title="Add a new comment"
+				onclick="cm_NewOnClick()"></div>
+			<div id="comments_label" style="text-align:center; margin-top: 4px;">Comments</div>
+			<div id="comments" class="view_view"></div>
+		</div>
+	</div>
+</div>
+
+<div id="sidepanel_div">
+<div id="sidepanel">
+	<div id="sidepanel_hide" class="button" title="Hide side panel" onclick="u_SidePanelHideOnClick()">&gt;&gt; H I D E &gt;&gt;</div>
+	<div id="sidepanel_news" style="display:none">
+		<div class="label button refresh" onclick="nw_NewsLoad()" title="Refresh news"></div>
+		<div class="label button" id="news_label" onclick="nw_NewsOnClick()">News</div>
+		<div class="body">
+			<div id="news_ctrl">
+				<div class="infotooltip" style="float: right; margin: 0; padding: 0;" title="News:
+If you assigned on any shot (location) you will receive all its changes.
+To receive all news from some location and all its subfolders (project,scene)
+you should subscribe on this location (add its path to channels).
+[Chan] - Open subscribed channels to show/remove them.
+To filter (show/hide) only specific news use buttons below.
+You can remove all [DA] news, only visible [DV] or hidden [DH] news during filtering.
+To remove only one news link double click [-] button at the top-left corner.
+Remember any delete operation buttons in RULES requires double-click.
+"				></div>
+				<div id="news_ctrl_btns">
+					<div class="button" title="Double click to delete all news"
+						style="background-image:url(rules/icons/delete_all.png);"
+						ondblclick="nw_DeleteNews()"></div>
+					<div class="button" title="Double click to delete visible news"
+						style="background-image:url(rules/icons/delete_visible.png);"
+						ondblclick="nw_DeleteFiltered(true)"></div>
+					<div class="button" title="Double click to delete hidden news"
+						style="background-image:url(rules/icons/delete_hidden.png);"
+						ondblclick="nw_DeleteFiltered(false)"></div>
+					<div class="button" id="news_settings_btn"
+						title="Click to open/close subscribed locations"
+						style="background-image:url(rules/icons/news_channels.png);"
+						onclick="c_ElDisplayToggle(document.getElementById('chanset'));
+						this.classList.toggle('pushed')"></div>
+					<div class="button" title="Change news sorting order"
+						style="background-image:url(rules/icons/sort_order_toggle.png);"
+						onclick="nw_SortOrderToggle()"></div>
+				</div>
+				<div id="chanset" style="display:none">
+					<div id="subscribe_path"
+						title="Subscribed parent location"></div>
+					<div id="subscribe_btn" class="button" onclick="nw_Subscribe()"
+						style="background-image:url(rules/icons/bell.png); display: none;"
+						title="Receive this location changes"></div>
+					<div id="news_make" class="button" onclick="nw_MakeNewsDialog()"
+						style="background-image:url(rules/icons/megaphone.png);"
+						title="Create some custom news"></div>
+					<div id="news_disable" class="button" onclick="nw_DisableNewsToggle( true)"
+						style="background-image:url(rules/icons/power_button.png); float: right;"
+						title="If news disabled, your changes does not produce any news"></div>
+					<div id="news_ignore_own" class="button" onclick="nw_IgnoreOwnToggle( true)"
+						style="background-image:url(rules/icons/listen_own.png); float: right;"
+						title="If you ignoring own news, you do not receive changes performed by yourself"></div>
+					<div id="channels"></div>
+				</div>
+			</div>
+			<div class="news_filter" style="font-size: 12px" title="News filter">
+				<div class="button nw_fb" title="Show All" id="news_filter_show_all" onclick="nw_FilterBtn(this,'_all_')">All</div>
+				<div class="button nw_fb" title="I Am Assigned" onclick="nw_FilterBtn(this,'_ia_')"   >IA</div>
+				<div class="button nw_fb" title="By me"         onclick="nw_FilterBtn(this,'_me_')"   >My</div>
+				<div class="button nw_fb" title="Body"          onclick="nw_FilterBtn(this,'body')"   >B</div>
+				<div class="button nw_fb" title="Status"        onclick="nw_FilterBtn(this,'status')" >S</div>
+				<div class="button nw_fb" title="Report"        onclick="nw_FilterBtn(this,'report')" >R</div>
+				<div class="button nw_fb" title="Dailies"       onclick="nw_FilterBtn(this,'dailies')">D</div>
+				<div class="button nw_fb" title="Comment"       onclick="nw_FilterBtn(this,'comment')">C</div>
+				<div class="button nw_fb" title="Upload"        onclick="nw_FilterBtn(this,'upload')" >U</div>
+			</div>
+			<div class="news_filter" id="news_projects" style="font: 10px monospace;" title="News Projects"></div>
+			<div id="news"></div>
+		</div>
+	</div>
+	<div id="sidepanel_bookmarks" style="display:none">
+		<div class="label button refresh" onclick="bm_Load()" title="Refresh bookmarks"></div>
+		<div id="bookmarks_label" class="label button" onclick="bm_OnClick()">Bookmarks</div>
+		<div class="body">
+			<div id="bookmarks_ctrl">
+				<div class="infotooltip" style="float: right; margin: 0; padding: 0;" title="Bookmarks:
+This is links to shots (locations) that you was assigned.
+Bookmark is created when you was added to the artists list.
+You can delete bookmark only in special cases:
+1. You are already not assigned.
+2. Shot was omitted.
+3. Location does not exist any more.
+"				></div>
+				<div class="button" id="bookmarks_thumbs_btn"
+					onclick="bm_ThumbnailsOnClick()"
+					title="Display thumbnails.">
+					Thmb</div>
+				<div class="button"
+					ondblclick="bm_DeleteObsoleteOnClick()"
+					title="Double click to delete obsolete bookmarks.">
+					DOB</div>
+			</div>
+			<div id="bookmarks"></div>
+		</div>
+	</div>
+	<div id="sidepanel_playlist">
+		<div class="label button refresh" onclick="p_RefreshOnClick()"></div>
+		<div class="label button" onclick="p_OnClick()">Playlist</div>
+		<div class="body">
+			<div class="playlist_ctrl playlist_ctrl_top">
+				<div class="infotooltip" style="float: right; margin: 2px 4px;" title="Playlist:
+It is designed to share links.
+If you bookmark some location in your browser
+this bookmark will be visible only for you.
+Use playlist for bookmarks for all users of the RULES site.
+Guests can't edit playlist.
+"				></div>
+				<div class="button" onclick="p_NewOnClick()" title="Create new folder"
+					style="background-image:url(rules/icons/folder_new.png);"></div>
+				<div class="button" onclick="p_AddLinkAbc()" title="Add current location to selected folder alphabetically"
+					style="background-image:url(rules/icons/bookmark.png);"></div>
+				<div class="button" onclick="p_RenameOnClick()" title="Rename current item"
+					style="background-image:url(rules/icons/rename.png);;"></div>
+			</div>
+			<div id="playlist"></div>
+			<div class="playlist_ctrl playlist_ctrl_bot">
+				<div class="button" onclick="p_AddLinkAfter()" title="Add item after current"
+					style="background-image:url(rules/icons/plus_down.png)"></div>
+				<div class="button" onclick="p_AddLinkBefore()" title="Add item before current"
+					style="background-image:url(rules/icons/plus_up.png)"></div>
+				<div class="button" onclick="p_MoveDown()" title="Move item down"
+					style="background-image:url(rules/icons/move_down.png)"></div>
+				<div class="button" onclick="p_MoveUp()" title="Move item up"
+					style="background-image:url(rules/icons/move_up.png)"></div>
+				<div class="button" onclick="p_MoveBottom()" title="Move item bottom"
+					style="background-image:url(rules/icons/move_bottom.png)"></div>
+				<div class="button" onclick="p_MoveTop()" title="Move item top"
+					style="background-image:url(rules/icons/move_top.png)"></div>
+				<div class="button" onclick="p_MakeCut()" title="Make cut"
+					style="background-image:url(rules/icons/cut.png)"></div>
+				<div class="button" onclick="p_Put()" title="Put shots results"
+					style="background-image:url(rules/icons/put.png)"></div>
+			</div>
+		</div>
+	</div>
+	<div id="sidepanel_upload" style="display:none;">
+		<div class="label button" onclick="up_OnClick()">Upload</div>
+		<div class="body">
+			<div class="infotooltip" style="float: right; margin: 2px 4px;" title="Upload:
+Upload files on file-server here.
+Drag&Drop or browse files to select.
+You can upload several files at once.
+To upload images sequence use its archive.
+Better to archive images sequence folder.
+So folder will appear on unpack.
+"			></div>
+			<div style="padding-left:8px;">
+				<div class="button" style="float:left;font-size:11px;padding:2px 4px"
+					title="Start unload all selected files" onclick="up_StartAll()">Start</div>
+				<div class="button" style="float:left;font-size:11px;padding:2px 4px"
+					title="Remove not started and uploaded items" onclick="up_ClearAll()">Clear</div>
+			</div>
+			<div id="upload">
+				<!--div><input type="file" id="upload_file" onchange="up_FileSelected()" style="float:left;width:100px"></input></div-->
+			</div>
+		</div>
+	</div>
+	<div id="sidepanel_permissions">
+		<div class="label button" style="font-size: 12px;" onclick="ad_PermissionsOnClick()">PERMISSIONS</div>
+		<div class="body">
+			<div style="padding-left:8px;">
+				<div class="button" style="float:left;font-size:11px;padding:2px 4px"
+					ondblclick="ad_PermissionsClearOnClick()"
+					title="Double click to remove any permissions.">Clear</div>
+				<div class="button" style="float:left;font-size:11px;padding:2px 4px"
+					onclick="ad_PermissionsGrpAddOnClick()">Add Group</div>
+				<div class="button" style="float:left;font-size:11px;padding:2px 4px"
+					onclick="ad_PermissionsUsrAddOnClick()">Add User</div>
+			</div>
+			<div id="permissions"></div>
+		</div>
+	</div>
+	<div id="sidepanel_recent">
+		<div class="label button refresh" onclick="nw_RecentRefresh()"></div>
+		<div class="label button" onclick="nw_RecentOnClick()">Recent</div>
+		<div class="body">
+			<div id="recent"></div>
+		</div>
+	</div>
+</div>
+<div id="sidepanel_handle" class="gui_size_handle" onmousedown="u_ResizeGUIStart('sidepanel_width',-1)"></div>
+</div>
+
+<div id="header">
+	<div id="header_params">
+		<div style="top: 0px; bottom: 0px; width: 250px; position: absolute; /*border: 1px solid #000;*/">
+			<div class="cgru_parameter">
+				<div class="label">Browser Storage</div>
+				<div class="button" style="left:120px" onclick="cgru_LocalStorageShow()">Show</div>
+				<div class="button" style="left:170px" onclick="cgru_LocalStorageClearClicked()">Clear</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">CGRU Config</div>
+				<div class="button" style="left:120px" onclick="cgru_ConfigShow()">Show</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">Platform:</div>
+				<div class="variable" id="platform" style="left:70px;right:15px">unknown</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">Browser:</div>
+				<div class="variable" id="browser" style="left:70px;right:15px">unknown</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label" id="rules_label">RULES</div>
+				<div class="button" style="left:120px;width:80px" onclick="u_RulesShow()">Show Current</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label" id="auth_user">Guest</div>
+				<div class="button" id="ad_login"  style="left:160px;width:40px" onclick="ad_Login()">Login</div>
+				<div class="button" id="ad_logout" style="left:160px;width:40px;display:none" onclick="ad_Logout()">Logout</div>
+			</div>
+		</div>
+		<div id="cgru_parameters" style="position:absolute; left: 250px; width: 250px; top:0;bottom:0; /*border: 1px solid #000;*/"></div>
+		<div class="rules_parameters" style="position:absolute; left: 500px; width: 200px; top:0px;bottom:0; /*border: 1px solid #000;*/">
+			<div class="cgru_parameter" title="Store Header/Footer opened state.">
+				<div class="label">Header Opened:</div>
+				<div class="variable button" id="store_opened" onclick="u_StoreOpened()">unknown</div>
+			</div>
+			<div class="cgru_parameter" title="Show Hidden Folders.
+Need restart (F5).
+Create '.hidden' in folder to hide.
+Link with hidden folder will not works.">
+				<div class="label">Show Hidden:</div>
+				<div class="variable button" id="show_hidden" onclick="u_ShowHiddenToggle()">unknown</div>
+			</div>
+			<div class="cgru_parameter">
+				<div class="label">Hide ScrollBars:</div>
+				<div class="variable button" id="hide_scrollbars" onclick="u_CalcGUI(true)">unknown</div>
+			</div>
+			<div class="cgru_parameter" title="Refresh required.">
+				<div class="label">Has Filesystem:</div>
+				<div class="variable button" id="has_filesystem" onclick="u_HasFilesystem()">unknown</div>
+			</div>
+			<div class="cgru_parameter" title="Refresh required.">
+				<div class="label">Execute Soft:</div>
+				<div class="variable button" id="execute_soft" onclick="u_ExecuteSoft()">unknown</div>
+			</div>
+		</div>
+		<div style="position:absolute; left: 700px; width: 200px; top:5px;bottom:0; /*border: 1px solid #000;*/">
+			<div class="button" id="admin_button"
+				style="display:none; background: rgba(200,0,0,.2)"
+				title="Administrate all users"
+				onclick="ad_OpenWindow()">Administrate</div>
+			<div style="text-align:center; padding: 10px 0 0 0;">
+				<a href="http://cgru.info/rules/general" target="_blank" onclick="u_OpenCloseHeader()">
+					Documentation</a></div>
+			<div style="text-align:center; padding: 10px 0 0 0;">
+				<a id="afanasy_webgui" target="_blank" onclick="u_OpenCloseHeader()">
+					AFANASY</a></div>
+			<!--div style="text-align:center; padding: 10px 0 0 0;">
+				<a href="afanasy/webvisor/" target="_blank">Database Statistics</a></div-->
+		</div>
+	</div>
+	<div id="headeropenbtn" class="headeropenbtn button" onclick="u_OpenCloseHeader()"
+		title="Open/close settings"></div>
+	<div class="panel">
+		<div id="navigation_buttons">
+			<a class="button" id="navigate_root" title="Navigate RULES root and refresh"
+				style="background-image:url(rules/icons/top.png);"></a>
+			<a class="button" id="navigate_up" title="Navigate up"
+				style="background-image:url(rules/icons/up.png);"></a>
+			<a class="button" id="navigate_prev" title="Navigate to the previous folder (shot)"
+				style="background-image:url(rules/icons/previous.png);"></a>
+			<a class="button" id="navigate_next" title="Navigate to the next folder (shot)"
+				style="background-image:url(rules/icons/next.png);"></a>
+		</div>
+		<div id="panel_logo"><img id="panel_logo_img" src="rules/icons/rules.png" width="90px" height="30px"></div>
+		<div id="profile_settings" title="Edit Profile Settings" onclick="ad_ProfileOpen()">
+			<img id="profile_settings_avatar"></img>
+			<div id="profile_settings_name">Guest</div>
+		</div>
+		<div id="assets"></div>
+	</div>
+</div>
+
+<div id="footer">
+	<div id="footeropenbtn" class="headeropenbtn button" onclick="u_OpenCloseFooter()"
+		title="Open/close system log"></div>
+	<div id="cycle"></div>
+	<div id="version" style="float:right;margin:10px;" title="CGRU version">v?</div>
+	<div id="log_ctrl">
+		<div class="button" onclick="n_LogResponses()" title ="Log Responses" id="log_responses">Responses</div>
+		<div class="button" onclick="c_LogClear()" title ="Clear Log">Clear</div>
+	</div>
+	<div id="open" class="open" style="height: 26px; float:right; margin:8px; display: none;" title="Open location in a file browser.
+Double click to launch."></div>
+	<div id="info"></div>
+	<div id="log"></div>
+</div>
+
+</body>
+</html>

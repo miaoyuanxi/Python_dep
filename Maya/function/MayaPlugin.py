@@ -134,7 +134,7 @@ class PluginBase(object):
         un_times = 1
         while un_times < 3:
             if self.CURRENT_OS == "linux":
-                cmd = 'unzip -o -d "%s" "%s"' % (to, zip_file)
+                cmd = '/usr/bin/unzip -o -d "%s" "%s"' % (to, zip_file)
             elif self.CURRENT_OS == "windows":
                 self.TOOL_DIR = self.get_json_ini('toolDir')
                 if not os.path.exists(self.TOOL_DIR):
@@ -161,7 +161,7 @@ class PluginBase(object):
             cp_log = open(my_log, "wt")
             cmds_copy = "copy \"%s\" \"%s\"" % (os.path.abspath(zip_file), os.path.abspath(to))
             if self.CURRENT_OS == "linux":
-                cmds_copy = "cp \"%s\" \"%s\"" % (os.path.abspath(zip_file), os.path.abspath(to))
+                cmds_copy = "/bin/cp \"%s\" \"%s\"" % (os.path.abspath(zip_file), os.path.abspath(to))
             source_copy = subprocess.Popen(cmds_copy, stdout=cp_log, shell=True)
             source_copy.wait()
             cp_times = (cp_times + 1) if not source_copy.returncode == 0 else 5
@@ -343,6 +343,10 @@ class MayaPlugin(PluginBase):
             else:
                 version_name = _V_APP
             _MAYA_ROOT = "/usr/autodesk/maya%s" % (version_name)
+            os.environ['MAYA_LOCATION'] = _MAYA_ROOT
+            print(os.environ['MAYA_LOCATION'])
+                        
+
         curUserPath = os.environ.get('userprofile')
         _MAYA_HOME = r"%s/Documents/maya/%s" % (curUserPath, _V_APP)
         if int(_V_APP[:4]) <= 2015:

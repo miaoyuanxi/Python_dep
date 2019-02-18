@@ -1,0 +1,7 @@
+# Generated make files:
+Makefile
+moc_*
+libpyaf.so.*
+
+# Qt Creator:
+project.pro.user
